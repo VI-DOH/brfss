@@ -1,0 +1,14 @@
+Package: brfss
+Type: Package
+Title: Process Statewide BRFSS Data
+Version: 0.1.1
+Author: John Orr
+Maintainer: John Orr <John.Orr@doh.vi.gov>
+Description: Functions to read in raw BRFSS data files and output processed data, reports and graphs.
+License: CC0
+LazyData: TRUE
+RoxygenNote: 5.0.1
+Imports: rmarkdown,
+        survey,
+        dplyr,
+        stringr
