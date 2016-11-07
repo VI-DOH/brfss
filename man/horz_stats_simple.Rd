@@ -2,7 +2,7 @@
 % Please edit documentation in R/output.R
 \name{horz_stats_simple}
 \alias{horz_stats_simple}
-\title{Title}
+\title{Simple horizontal table of summary stats for column}
 \usage{
 horz_stats_simple(df, coi, subsets, min_num = 0, percent = T, header = T,
   linesep, headsep, cat = F, invisible = F, ...)
@@ -34,7 +34,7 @@ horz_stats_simple(df, coi, subsets, min_num = 0, percent = T, header = T,
 - character
 }
 \description{
-Title
+Simple horizontal table of summary stats for column
 }
 \examples{
 

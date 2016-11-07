@@ -2,7 +2,7 @@
 % Please edit documentation in R/output.R
 \name{prep_stats}
 \alias{prep_stats}
-\title{Title}
+\title{Prepare the stats for printing}
 \usage{
 prep_stats(df, coi, subsets, min_num = 0, percent = T, df_fields)
 }
@@ -23,7 +23,7 @@ prep_stats(df, coi, subsets, min_num = 0, percent = T, df_fields)
 - data.frame
 }
 \description{
-Title
+Reformats
 }
 \examples{
 

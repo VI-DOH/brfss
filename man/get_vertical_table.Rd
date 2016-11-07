@@ -4,7 +4,7 @@
 \alias{get_vertical_table}
 \title{Title}
 \usage{
-get_vertical_table(df, coi, binary, num_vals, den_vals, ignore, weighting,
+get_vertical_table(df, coi, binary, num_vals, den_vals, exclude, weighting,
   min_num = 0, subsets, ques = "", ...)
 }
 \arguments{
