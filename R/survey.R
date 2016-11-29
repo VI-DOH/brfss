@@ -72,7 +72,7 @@ survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
 #'
 #' @examples
 #'
-survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting) {
+survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, strata=NULL) {
 
   require(package = "survey")
 
@@ -98,9 +98,13 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting) {
   df0<-df0[!is.na(df0[coi]),]
   cols<-coi
   if(nsubs>0) cols<-c(cols,subset)
-  if(!missing(weighting)) cols<-c(cols,weighting)
-  df0<-df0[,cols]
-  if(!missing(exclude)) df0<-df0[!df0[[coi]]%in%exclude,]
+  if(!is.null(weighting)) cols<-c(cols,weighting)
+  if(!is.null(strata)) cols<-c(cols,strata)
+  df0<-as.data.frame(df0[,cols])
+  if(ncol(df0)==1) colnames(df0)<-coi
+
+  if(!missing(exclude)) df0<-as.data.frame(df0[!df0[[coi]]%in%exclude,])
+  if(ncol(df0)==1) colnames(df0)<-coi
 
   all_vals<-as.vector(unique(df0[coi]))
 
@@ -117,16 +121,16 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting) {
   ##
   if (nsubs==0) frmla<- reformulate(c("fcoi")) else  frmla<- reformulate(c("fcoi",subset))
 
-  if(!missing(weighting)) weights<-reformulate(weighting) else weights=NULL
+  if(!is.null(weighting)) weighting<-reformulate(weighting)   #else weights=NULL
 
   #  ids<- reformulate(all_vals)
 
   des<-survey::svydesign(ids = ~1,
-                 strata = NULL,
-                 variables =  frmla,
-                 data = df0,
-                 weights = weights,
-                 deff=F)
+                         strata = strata,
+                         variables =  frmla,
+                         data = df0,
+                         weights = weighting,
+                         deff=F)
 
   if (nsubs==0) {
     mysvymean<-survey::svymean(frmla,des,na.rm = T,deff = F)

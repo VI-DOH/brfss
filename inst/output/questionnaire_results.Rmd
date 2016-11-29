@@ -1,0 +1,981 @@
+---
+# title: |  
+#   | Behavioral Risk Factor Surveillance System  
+#   | Results  
+# author: |
+#   | Virgin Islands Department of Health  
+#   | Chronic Disease Prevention Program
+# date: "April 3, 2016"
+
+documentclass: article
+classoption: twoside
+output: pdf_document  
+header-includes:
+   - \usepackage{fancyhdr}
+   - \usepackage{color}
+   - \usepackage{changepage}
+   - \usepackage{makeidx}
+   
+geometry: top=1in, bottom=0.75in, left=1in, right=1in
+params:
+  year:
+    label: "Year"
+    value: 2016
+    input: numeric
+  month:
+    label: "Month"
+    value: None
+    input: select
+    choices: [None,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec,]
+  use_age:
+    label: "Filter by age"
+    value: FALSE
+    input: checkbox
+  min_age:
+    label: "Minimum Age"
+    value: 18
+    input: slider
+    min: 18
+    max: 120
+  prep_for:
+    label: "Prepared For"
+    value: ""
+    input: text
+---
+
+
+\newcommand\blankifeven{
+  \strictpagecheck
+  \checkoddpage
+  \ifoddpage
+
+  \else
+
+    \vspace*{\fill}
+    This page intentionally blank.
+    \vspace*{\fill}
+
+    \newpage
+
+  \fi
+}
+
+\newcommand\blankifodd{
+  \strictpagecheck
+  \checkoddpage
+  \ifoddpage
+  
+    \vspace*{\fill}
+    This page intentionally blank.
+    \vspace*{\fill}
+
+    \newpage
+
+  \else
+
+
+  \fi
+}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+##################################
+##                              ##
+##  Enter year and month here   ##
+##                              ##
+##################################
+year<-params$year
+yy<-format(year%%100,digits=2)
+
+if (params$month=="None") {
+  month<-0
+  mm_ext<-""
+  mm_name<-""
+} else {
+  month<-which(params$month==month.abb)
+  mm_ext<-sprintf("_%02d",month)
+  mm_name<-month.name[month]
+}
+
+if(params$use_age) {
+  age_end<-120
+  age_int<-10
+  min_age<-params$min_age
+  if(as.integer(min_age/5)!=min_age/5) {
+    age_start<-(as.integer(min_age/5)+2)*5
+  } else {
+    age_start<-min_age+age_int
+  }
+  age_breaks<-c(min_age-1,seq(age_start-1,age_end,age_int ))
+  
+} else {
+  age_breaks<-c(17,seq(25,105,10 ))
+}
+#-----------------------------------------
+wd<-getwd()
+
+wd<-gsub("(^.*BRFSS).*","\\1/",wd)
+lib_fldr<-paste(wd,"code/2016/",sep="")
+lib_file<-paste(lib_fldr,"lib_fields_2016.R",sep="")
+source(lib_file)
+
+lib_fldr2<-paste(wd,"code/libs/",sep="")
+lib_file2<-paste(lib_fldr2,"lib_reports.R",sep="")
+
+source(lib_file2)
+
+
+data_fldr<-paste(wd,"data/",year,"/",sep="")
+data_file<-paste(data_fldr,"data_",year,mm_ext,".RData",sep="")
+data_file_yr<-paste(data_fldr,"data_",year,".RData",sep="")
+fields_file<-paste(data_fldr,"fields_",year,".RData",sep="")
+questions_file<-paste(data_fldr,"questions_",year,".RData",sep="")
+img_fldr<-paste(gsub("BRFSS/","",wd),"misc/images/",sep="")
+
+load(data_file)
+load(data_file_yr)
+load(fields_file)
+load(questions_file)
+
+#################################
+##
+##  get the data for the report
+##
+df_data<-get(dfName(grp="vi",year=year, month=month))
+if(params$use_age) {
+  df_data<-df_data[df_data$AGE>=params$min_age,]
+}
+
+col1_def<-50
+# fmtcomp<-paste(" %",col1,"s %4d \n",sep="")
+# fmt<-paste(" %",col1,"s %4d  %5.1f \n",sep="")
+# fmthdr<-paste(" %",col1,"s Count  Pct\n",sep="")
+# fmthdr_nopct<-paste(" %",col1,"s Count \n",sep="")
+# fmtttl<-paste(" ",paste(rep(" ",col1),collapse="")," ----  \n %",col1,"s %4d  \n",sep="")
+
+min_mo<-min(df_data$FMONTH)
+max_mo<-max(df_data$FMONTH)
+
+mos<-paste( month.abb[min_mo],ifelse(min_mo==max_mo, "",paste("-",month.abb[max_mo], sep="")), " ", year, sep="")
+
+```
+\pagestyle{empty}
+\huge
+
+Behavioral Risk Factor Surveillance System (BRFSS)  
+\large
+\textit {Virgin Islands Department of Health  \\}
+\textit {Chronic Disease Prevention Program  }
+  
+\vspace {1.75in}
+Results\footnote{The data contained in this report are raw numbers, and have not been subjected to weighting or raking} of BRFSS survey conducted `r mos`  
+  
+  
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+if (nchar(params$prep_for)>0) {
+  cat("\n\n")
+  cat(paste("Prepared for",params$prep_for))
+  
+}
+
+if(params$use_age) {
+  cat(paste("Respondents age",params$min_age,"and older"))
+}
+sentence<-sprintf("Completed interviews: %d\n",  nrow(df_data))
+  cat(split_sentence(sentence,80))
+
+```
+\clearpage
+\normalsize
+
+\newpage
+\small
+
+\vspace*{\fill}
+
+This publication was supported by the Cooperative Agreement Number, NU58DP006062, 
+funded by the Centers for Disease Control and Prevention. Its
+contents are solely the responsibility of the authors and do not necessarily represent the
+official views of the Centers for Disease Control and Prevention or the Department of Health
+and Human Services.
+\vspace*{\fill}
+
+
+\newpage
+\pagenumbering{roman}
+
+\tableofcontents
+
+\newpage
+
+\blankifeven
+
+\pagestyle{fancy}
+\fancyfoot{} 
+
+\fancyfoot[LE,RO]{\thepage}
+
+\pagenumbering{arabic}
+\vspace*{\fill}
+
+\section{Core Questions}
+\vspace*{\fill}
+
+
+\newpage
+
+\subsection{Section 1: Health Status}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+catMeasure(x=df_data,meas="GENHLTH",year=year,rm.na=T,total=T,order = F,col1=col1_def)
+
+```
+\newpage
+
+\subsection{Section 2: Healthy Days - Health Related Quality of Life}
+
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+catMeasureBreaks(x=df_data,meas="PHYSHLTH",year=year,month=month,breaks=c(-1,0,7,14,21,30),
+                 rm.na=T,total=T,replace=88,replace_vals=0,col1=col1_def)
+catMeasureBreaks(x=df_data,meas="MENTHLTH",year=year,month=month,breaks=c(-1,0,7,14,21,30),
+                 rm.na=T,total=T,replace=88,replace_vals=0,col1=col1_def)
+catMeasureBreaks(x=df_data,meas="POORHLTH",year=year,month=month,breaks=c(-1,0,7,14,21,30),
+                 rm.na=T,total=T,replace=88,replace_vals=0,col1=col1_def)
+
+
+
+```
+
+\newpage
+
+\subsection{Section 3: Health Care Access}  
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+catMeasure(x=df_data,meas="HLTHPLN1",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+
+
+catMeasure(x=df_data,meas="PERSDOC2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="MEDCOST",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="CHECKUP1",year=year,month= month,rm.na=T,total=T,col1=55)
+
+
+```
+\newpage
+
+\subsection{Section 4: Exercise}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 4: Exercise
+# 04.01 During the past month, other than your regular job, did you participate in any physical activities or exercises such as running, calisthenics, golf, gardening, or walking for exercise? (EXERANY2)	1 = Yes
+# 2 = No
+# 7 = Don’t know/Not Sure
+# 9 = Refused
+
+
+catMeasure(x=df_data,meas="EXERANY2",year=year,month=month,
+           rm.na=T,total=T,col1=col1_def)
+
+
+```
+\newpage
+
+\subsection{Section 5: Inadequate Sleep}
+
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 5: Inadequate Sleep
+# I would like to ask you about your sleep pattern.
+# 
+# 05.01 On average, how many hours of sleep do you get in a 24-hour period? (SLEPTIM1)
+# 
+# INTERVIEWER NOTE: Enter hours of sleep in whole numbers, rounding 30 minutes (1/2 hour) or more up to the next whole hour and dropping 29 or fewer minutes.	1-24 = Number of hours [1-24]
+# 77 = Don’t know/Not Sure
+# 99 = Refused
+
+
+catMeasureBreaks(x=df_data,meas="SLEPTIM1",year=year,month=month,breaks=c(-1,seq(0,24,2 )),
+                 rm.na=T,total=T,col1=col1_def)
+
+
+
+```
+
+\newpage
+
+
+\subsection{Section 6: Chronic Health Conditions }
+
+Has a doctor, nurse, or other health professional ever told you that you had any of the following?
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+#06.01 (Ever told) you had a heart attack, also called a myocardial infarction? (CVDINFR4)
+catMeasure(x=df_data,meas="CVDINFR4",year=year,month= month,total=T,col1=col1_def)
+
+#06.02 (Ever told) you had angina or coronary heart disease? (CVDCRHD4)
+catMeasure(x=df_data,meas="CVDCRHD4",year=year,month= month,total=T,col1=col1_def)
+
+#06.03 (Ever told) you had a stroke. (CVDSTRK3)
+catMeasure(x=df_data,meas="CVDSTRK3",year=year,month= month,total=T,col1=col1_def)
+
+#06.04 (Ever told) you had asthma? (ASTHMA3)
+catMeasure(x=df_data,meas="ASTHMA3",year=year,month= month,total=T,col1=col1_def)
+
+# 06.05 Do you still have asthma? (ASTHNOW)
+catMeasure(x=df_data,meas="ASTHNOW",year=year,month= month,total=T,col1=col1_def)
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# 06.06 (Ever told) you had skin cancer? (CHCSCNCR)
+catMeasure(x=df_data,meas="CHCSCNCR",year=year,month= month,total=T,col1=col1_def)
+# 
+# 06.07 (Ever told) you had any other types of cancer? (CHCOCNCR)
+catMeasure(x=df_data,meas="CHCOCNCR",year=year,month= month,total=T,col1=col1_def)
+# 
+# 06.08 (Ever told) you have Chronic Obstructive Pulmonary Disease or COPD, emphysema or chronic bronchitis? (CHCCOPD1)
+catMeasure(x=df_data,meas="CHCCOPD1",year=year,month= month,total=T,col1=col1_def)
+# 
+# 06.09 (Ever told) you have some form of arthritis, rheumatoid arthritis, gout, lupus, or fibromyalgia? (HAVARTH3)
+catMeasure(x=df_data,meas="HAVARTH3",year=year,month= month,total=T,col1=col1_def)
+#  
+# Note: Arthritis diagnoses include: rheumatism, polymyalgia rheumatica; osteoarthritis (not osteporosis); tendonitis, bursitis, bunion, tennis elbow; carpal tunnel syndrome, tarsal tunnel syndrome; joint infection, etc.
+# 
+# 06.10 (Ever told) you that you have a depressive disorder, including depression, major depression, dysthymia, or minor depression? (ADDEPEV2)
+catMeasure(x=df_data,meas="ADDEPEV2",year=year,month= month,total=T,col1=col1_def)
+# 
+# 06.11 (Ever told) you have kidney disease? Do NOT include kidney stones, bladder infection or incontinence. (CHCKIDNY)
+catMeasure(x=df_data,meas="CHCKIDNY",year=year,month= month,total=T,col1=col1_def)
+#  
+# Note: Incontinence is not being able to control urine flow.
+# 
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# 06.12 (Ever told) you have diabetes (DIABETE3)
+catMeasure(x=df_data,meas="DIABETE3",year=year,month= month,total=T,col1=col1_def)
+#  
+# Note: If "Yes" and respondent is female, ask "Was this only when you were pregnant?". If Respondent says pre-diabetes or borderline diabetes, use response code 4.
+# Skip Question 06.13, if \subsection{Section 06.12, DIABETE3, is coded 2, 3, 4, 7, 9, or Missing
+# 06.13 How old were you when you were told you have diabetes? (DIABAGE2)
+
+catMeasureBreaks(x=df_data,meas="DIABAGE2",year=year,month=month,breaks=c(seq(0,97,5 )),
+                 rm.na=T,total=T,col1=col1_def)
+
+
+```
+
+\newpage
+
+
+\subsection{Section 7: Oral Health  }
+
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 7: Oral Health
+# 07.01 How long has it been since you last visited a dentist or a dental clinic for any reason? Include visits to dental specialists, such as orthodontists. (LASTDEN3)
+# 
+# 07.02 How many of your permanent teeth have been removed because of tooth decay or gum disease? Include teeth lost to infection, but do not include teeth lost for other reasons, such as injury or orthodontics. (RMVTETH3)
+#  
+# Note: If wisdom teeth are removed because of tooth decay or gum disease, they should be included in the count for lost teeth
+catMeasure(x=df_data,meas="LASTDEN3",year=year,month= month, rm.na=T,total=T,col1=60)
+catMeasure(x=df_data,meas="RMVTETH3",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+```
+
+\newpage
+
+
+\subsection{Section 8: Demographics  }
+
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+catMeasure(x=df_data,meas="SEX",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasureBreaks(x=df_data,meas="AGE",year=year,month=month,breaks=age_breaks,
+                 rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="HISPANC3",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+# 
+# <!-- 08.04 Which one or more of the following would you say is your race? -->
+catMeasure(x=df_data,meas="VIRACE",year=year,month= month, order=T, rm.na=T,total=T,col1=col1_def)
+# 
+# <!-- Select all that apply. (MRACE1) -->
+# 
+# <!-- Note: If 40 (Asian) or 50 (Pacific Islander) is selected read and code subcategories underneath major heading.	10 = White -->
+# <!-- 20 = Black or African American -->
+# <!-- 30 = American Indian or Alaska Native -->
+# <!-- 40 = Asian -->
+# <!-- 41 = Asian Indian -->
+# <!-- 42 = Chinese -->
+# <!-- 43 = Filipino -->
+# <!-- 44 = Japanese -->
+# <!-- 45 = Korean -->
+# <!-- 46 = Vietnamese -->
+# <!-- 47 = Other Asian -->
+# <!-- 50 = Pacific Islander -->
+# <!-- 51 = Native Hawaiian -->
+# <!-- 52 = Guamanian or Chamorro -->
+# <!-- 53 = Samoan -->
+# <!-- 54 = Other Pacific Islander -->
+# <!-- 60 = Other -->
+# <!-- 1020-6054535251 = Multiple responses -->
+# <!-- 88 = No additional choices -->
+# <!-- 77 = Don’t know/Not Sure -->
+# <!-- 99 = Refused -->
+# <!-- Skip Question 08.05, if \subsection{Section 08.04, MRACE1,has only one valid race code (10-60) -->
+# <!-- 08.05 Which one of these groups would you say best represents your race? (ORACE3) -->
+# 
+# <!-- Note: If 40 (Asian) or 50 (Pacific Islander) is selected read and code subcategory underneath major heading.	10 = White -->
+# <!-- 20 = Black or African American -->
+# <!-- 30 = American Indian or Alaska Native -->
+# <!-- 40 = Asian -->
+# <!-- 41 = Asian Indian -->
+# <!-- 42 = Chinese -->
+# <!-- 43 = Filipino -->
+# <!-- 44 = Japanese -->
+# <!-- 45 = Korean -->
+# <!-- 46 = Vietnamese -->
+# <!-- 47 = Other Asian -->
+# <!-- 50 = Pacific Islander -->
+# <!-- 51 = Native Hawaiian -->
+# <!-- 52 = Guamanian or Chamorro -->
+# <!-- 53 = Samoan -->
+# <!-- 54 = Other Pacific Islander -->
+# <!-- 60 = Other -->
+# <!-- 77 = Don't know/Not Sure -->
+# <!-- 99 = Refused -->
+# 
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+catMeasure(x=df_data,meas="MARITAL",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="EDUCA",year=year,month= month, rm.na=T,total=T,col1=60)
+
+catMeasure(x=df_data,meas="RENTHOM1",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="CTYCODE1",year=year,month= month,
+           rm.na=T,total=T,col1=col1_def)
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+catMeasureEach(x=df_data,meas="ZIPCODE",year=year,month= month, format="%05d", rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="NUMHHOL2",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasureEach(x=df_data,meas="NUMPHON2",year=year,format="%d",month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="CPDEMO1",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+catMeasure(x=df_data,meas="VETERAN3",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="EMPLOY1",year=year,month= month, rm.na=T,total=T,col1=col1_def,order = T)
+
+catMeasureEach(x=df_data,meas="CHILDREN",year=year,month= month, replace=88,replace_vals=0,format="%d", rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="INCOME2",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+catMeasure(x=df_data,meas="INTERNET",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasureBreaks(x=df_data,meas="WEIGHT2",year=year,month=month,breaks=c(seq(60,300,20 ),Inf),
+                 rm.na=T,total=T,col1=col1_def)
+# 
+# <!-- 08.20 About how tall are you without shoes? -->
+# 
+# <!-- Round fractions down. (HEIGHT3) -->
+# 
+# <!-- Note: If respondent answers in metrics, put a 9 in the first column	200-711 = Height (ft/inches) -->
+# <!-- 9000-9998 = Height (meters/centimeters) -->
+# <!-- 7777 = Don’t know/Not sure -->
+# <!-- 9999 = Refused -->
+# <!-- Skip Question 08.21, if \subsection{Section 08.01, SEX, is coded 1; or \subsection{Section 08.02, AGE,  is greater than 44 -->
+
+catMeasure(x=df_data,meas="PREGNANT",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="DEAF",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="BLIND",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+catMeasure(x=df_data,meas="DECIDE",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+catMeasure(x=df_data,meas="DIFFWALK",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+# 
+
+catMeasure(x=df_data,meas="DIFFDRES",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+# 
+
+catMeasure(x=df_data,meas="DIFFALON",year=year,month= month, rm.na=T,total=T,col1=col1_def)
+
+
+
+```
+
+
+\newpage
+
+
+\subsection{Section 9: Tobacco Use  }
+
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE, results='hold'}
+
+catMeasure(x=df_data,meas="SMOKE100",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+catMeasure(x=df_data,meas="SMOKDAY2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+catMeasure(x=df_data,meas="STOPSMK2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+catMeasure(x=df_data,meas="LASTSMK2",year=year,month= month,rm.na=T,total=T,col1=64)
+```
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE, results='hold'}
+catMeasure(x=df_data,meas="USENOW3",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+```
+\newpage
+
+\subsection{Section 10: E-Cigarettes}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE, results='hold'}
+catMeasure(x=df_data,meas="ECIGARET",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+catMeasure(x=df_data,meas="ECIGNOW",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# 
+```
+
+
+\newpage
+
+
+\subsection{Section 11: Alcohol Consumption}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE, results='hold'}
+
+# \subsection{Section 11: Alcohol Consumption
+# 11.01 During the past 30 days, how many days per week or per month did you have at least one drink of any alcoholic beverage such as beer, wine, a malt beverage or liquor? (ALCDAY5)
+# Skip Question 11.02, if \subsection{Section 11.01, ALCDAY5, is coded 888, 777, or 9999;
+catMeasureBreaks(x=df_data,meas="VIALCWEEK",year=year,month=month,breaks=c(-1,0,1,2,4,6,7),
+                 rm.na=T,total=T,replace=888,replace_vals=0,col1=col1_def)
+# 11.02 One drink is equivalent to a 12-ounce beer, a 5-ounce glass of wine, or a drink with one shot of liquor. During the past 30 days, on the days when you drank, about how many drinks did you drink on the average? (AVEDRNK2)
+
+catMeasureEach(x=df_data,meas="AVEDRNK2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Note: A 40 ounce beer would count as 3 drinks, or a cocktail drink with 2 shots would count as 2 drinks.
+# Skip Question 11.03, if \subsection{Section 11.01, ALCDAY5, is coded 888, 777, or 999;
+# 11.03 Considering all types of alcoholic beverages, how many times during the past 30 days did you have 5 or more drinks for men or 4 or more drinks for women on an occasion? (DRNK3GE5)
+# Skip Question 11.04, if \subsection{Section 11.01, ALCDAY5, is coded 888, 777, or 999;
+catMeasureEach(x=df_data,meas="DRNK3GE5",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# 11.04 During the past 30 days, what is the largest number of drinks you had on any occasion? (MAXDRNKS)
+catMeasureEach(x=df_data,meas="MAXDRNKS",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+```
+
+
+
+\newpage
+
+
+\subsection{Section 12: Immunization}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 12: Immunization
+# Now I will ask you questions about the flu vaccine.  There are two ways to get the flu vaccine, one is a shot in the arm and the other is a spray, mist, or drop in the nose called FluMist™.
+# 
+# 12.01 During the past 12 months, have you had either a flu shot or a flu vaccine that was sprayed in your nose? (FLUSHOT6)
+catMeasureEach(x=df_data,meas="FLUSHOT6",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+#  
+# Note: A new flu shot came out in 2011 that injects vaccine into the skin with a very small needle. It is called Fluzone Intradermal vaccine. This is also considered a flu shot.
+# Skip Question 12.02, if \subsection{Section 12.01, FLUSHOT6, is coded 2, 7, or 9
+# 12.02 During what month and year did you receive your most recent flu shot injected into your arm or flu vaccine that was sprayed in your nose? (FLSHTMY2)
+catMeasureEach(x=df_data,meas="FLSHTMY2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# 
+# 12.03 A pneumonia shot or pneumococcal vaccine is usually given only once or twice in a person´s lifetime and is different from the flu shot.  Have you ever had a pneumonia shot? (PNEUVAC3)
+catMeasure(x=df_data,meas="PNEUVAC3",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# 
+# 12.04 Since 2005, have you had a tetanus shot? (TETANUS)
+#  
+catMeasure(x=df_data,meas="TETANUS",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Note: If yes, ask: “Was this Tdap, the tetanus shot that also has pertussis or whooping cough vaccine?”
+
+```
+
+
+
+\newpage
+
+
+\subsection{Section 13: Falls}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 13: Falls
+# 
+# Skip Question 13.01, if \subsection{Section 08.02, AGE, coded 18-44
+# Next, I will ask about recent falls. By a fall, we mean when a person unintentionally comes to rest on the ground or another lower level.
+# 
+# 13.01 In the past 12 months, how many times have you fallen? (FALL12MN)
+catMeasureEach(x=df_data,meas="FALL12MN",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 13.02, if \subsection{Section 08.02, AGE, coded 18-44; or \subsection{Section 13.01, FALL3MN2, is coded 77, 88, 99 or Missing
+# 13.02 How many of these falls caused an injury? By an injury, we mean the fall caused you to limit your regular activities for at least a day or to go see a doctor. (FALLINJ2)
+catMeasureEach(x=df_data,meas="FALLINJ2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+
+```
+
+
+
+\newpage
+
+
+\subsection{Section 14: Seatbelt Use}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 14: Seatbelt Use
+# 14.01 How often do you use seat belts when you drive or ride in a car? Would you say— (SEATBELT)
+catMeasureEach(x=df_data,meas="SEATBELT",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# 
+
+```
+
+
+
+\newpage
+
+
+\subsection{Section 15: Drinking and Driving}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# Skip Question 15.01, if \subsection{Section 11.01, ALCDAY5, is coded 888 or: \subsection{Section 14.01, SEATBELT, is coded 8
+# 15.01 During the past 30 days, how many times have you driven when you’ve had perhaps too much to drink? (DRNKDRI2)
+catMeasureEach(x=df_data,meas="DRNKDRI2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+
+```
+
+
+
+\newpage
+
+
+\subsection{Section 16: Breast and Cervical Cancer Screening}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 16: Breast and Cervical Cancer Screening
+# 
+# Skip Question 16.01, if \subsection{Section 08.01, SEX, is coded 1
+# The next questions are about breast and cervical cancer.
+# 
+# 16.01 A mammogram is an x-ray of each breast to look for breast cancer. Have you ever had a mammogram? (HADMAM)
+catMeasureEach(x=df_data,meas="HADMAM",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 16.02, if \subsection{Section 08.01, SEX, is coded 1; or Module 14.01, HADMAM, is coded 2, 7, 9, or Missing
+# 16.02 How long has it been since you had your last mammogram? (HOWLONG)
+catMeasure(x=df_data,meas="HOWLONG",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 16.03, if \subsection{Section 08.01, SEX, is coded 1
+# 16.03 A Pap test is a test for cancer of the cervix. Have you ever had a Pap test? (HADPAP2)
+catMeasure(x=df_data,meas="HADPAP2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 16.04, if \subsection{Section 08.01, SEX, is coded 1; or \subsection{Section 16.03, HADPAP2, is coded 2, 7, 9, or Missing
+# 16.04 How long has it been since you had your last Pap test? (LASTPAP2)
+# Skip Question 16.05, if \subsection{Section 08.01, SEX, is coded 1
+# Now, I would like to ask you about the Human Papillomavirus (Pap•uh•loh•muh Virus) or HPV.
+# 
+# 16.05 An HPV test is sometimes given with the Pap test for cervical cancer screening. Have you ever had an HPV test? (HPVTEST)
+catMeasure(x=df_data,meas="HPVTEST",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 16.06, if \subsection{Section 08.01, SEX, is coded 1; or Module 16.05, HPVTEST, is coded 2, 7, 9 or Missing
+# 16.06 How long has it been since you had your last HPV test? (HPLSTTST)
+catMeasureEach(x=df_data,meas="HPLSTTST",year=year,month= month,rm.na=T,total=T,col1=64)
+# Skip Question 16.07, if \subsection{Section 08.01, SEX, is coded 1; or \subsection{Section 08.21, PREGNANT, is coded 1
+# 16.07 Have you had a hysterectomy? (HADHYST2)
+catMeasure(x=df_data,meas="HADHYST2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+#  
+# Note: A hysterectomy is an operation to remove the uterus (womb).
+
+```
+
+
+
+\newpage
+
+
+\subsection{Section 17: Prostate Cancer Screening}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 17: Prostate Cancer Screening
+# 
+# Skip Question 17.01, if \subsection{Section 08.02, AGE, is less than 40; or \subsection{Section 08.01, SEX, is coded 2;
+# Now, I will ask you some questions about prostate cancer screening.
+# 
+# A Prostate-Specific Antigen test, also called a PSA test, is a blood test used to check men for prostate cancer.
+# 
+# 17.01 Has a doctor, nurse, or other health professional EVER talked with you about the advantages of the PSA test? (PCPSAAD2)
+catMeasure(x=df_data,meas="PCPSAAD2",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 17.02, if \subsection{Section 08.02, AGE, is less than 40; or \subsection{Section 08.01, SEX, is coded 2
+# 17.02 Has a doctor, nurse, or other health professional EVER talked with you about the disadvantages of the PSA test? (PCPSADI1)
+catMeasure(x=df_data,meas="PCPSADI1",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 17.03, if \subsection{Section 08.02, AGE, is less than 40; or \subsection{Section 08.01, SEX, is coded 2;
+# 17.03 Has a doctor, nurse, or other health professional EVER recommended that you have a PSA test? (PCPSARE1)
+catMeasure(x=df_data,meas="PCPSARE1",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 17.04, if \subsection{Section 08.02, AGE, is less than 40; or \subsection{Section 08.01, SEX, is coded 2;
+# 17.04 Have you EVER HAD a PSA test? (PSATEST1)
+catMeasure(x=df_data,meas="PSATEST1",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 17.05, if \subsection{Section 08.02, AGE, is less than 40; or \subsection{Section 08.01, SEX, is coded 2; or \subsection{Section 17.04, PSATEST1, is coded, 2, 7, 9, or Missing
+# 17.05 How long has it been since you had your last PSA test? (PSATIME)
+catMeasure(x=df_data,meas="PSATIME",year=year,month= month,rm.na=T,total=T,col1=65)
+# Skip Question 17.06, if \subsection{Section 08.02, AGE, is less than 40; or \subsection{Section 08.01, SEX, is coded 2; or \subsection{Section 17.04, PSATEST1, is coded, 2, 7, 9, or Missing
+# 17.06 What was the MAIN reason you had this PSA test – was it …? (PCPSARS1)
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+catMeasure(x=df_data,meas="PCPSARS1",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+
+```
+
+
+\newpage
+
+
+\subsection{Section 18: Colorectal Cancer Screening}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 18: Colorectal Cancer Screening
+# 
+# Skip Question 18.01, if \subsection{Section 08.02, AGE, is less than 50
+# The next questions are about colorectal cancer screening.
+# 
+# 18.01 A blood stool test is a test that may use a special kit at home to determine whether the stool contains blood.  Have you ever had this test using a home kit? (BLDSTOOL)
+catMeasure(x=df_data,meas="BLDSTOOL",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 18.02, if \subsection{Section 08.02, AGE, is less than 50; or \subsection{Section 18.01, BLDSTOOL, is coded 2, 7, 9, or Missing
+# 18.02 How long has it been since you had your last blood stool test using a home kit? (LSTBLDS3)
+catMeasure(x=df_data,meas="LSTBLDS3",year=year,month= month,rm.na=T,total=T,col1=65)
+# Skip Question 18.03, if \subsection{Section 08.02, AGE, is less than 50
+# 18.03 Sigmoidoscopy and colonoscopy are exams in which a tube is inserted in the rectum to view the colon for signs of cancer or other health problems. Have you ever had either of these exams? (HADSIGM3)
+catMeasure(x=df_data,meas="HADSIGM3",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 18.04, if \subsection{Section 08.02, AGE, is less than 50; or \subsection{Section 18.03, HADSIGM3, is coded 2, 7, 9, or Missing
+# 18.04 For a SIGMOIDOSCOPY, a flexible tube is inserted into the rectum to look for problems. A COLONOSCOPY is similar, but uses a longer tube, and you are usually given medication through a needle in your arm to make you sleepy and told to have someone else drive you home after the test. Was your MOST RECENT exam a sigmoidoscopy or a colonoscopy? (HADSGCO1)
+catMeasure(x=df_data,meas="HADSGCO1",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 18.05, if \subsection{Section 08.02, AGE, is less than 50; or \subsection{Section 18.03, HADSIGM3, is coded 2, 7, 9, or Missing
+
+```
+
+\newpage
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# 18.05 How long has it been since you had your last sigmoidoscopy or colonoscopy? (LASTSIG3)
+catMeasure(x=df_data,meas="LASTSIG3",year=year,month= month,rm.na=T,total=T,col1=65)
+
+```
+
+
+
+\newpage
+
+
+\subsection{Section 19: HIV/AIDS}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+# \subsection{Section 19: HIV/AIDS
+# The next few questions are about the national health problem of HIV, the virus that causes AIDS.  Please remember that your answers are strictly confidential and that you don’t have to answer every question if you do not want to. Although we will ask you about testing, we will not ask you about the results of any test you may have had.
+# 
+# 19.01 Have you ever been tested for HIV?  Do not count tests you may have had as part of a blood donation. Include testing fluid from your mouth. (HIVTST6)
+catMeasure(x=df_data,meas="HIVTST6",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# Skip Question 19.02, if \subsection{Section 19.01, HIVTST6, is coded 2, 7, 9, or Missing
+# 19.02 Not including blood donations, in what month and year was your last HIV test? (HIVTSTD3)
+catMeasure(x=df_data,meas="HIVTSTD3",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+#  
+# Note: If response is before January 1985, code "777777".
+# 
+# INTERVIEWER NOTE: If the respondent remembers the year but cannot remember the month, code the first two digits 77 and the last four digits for the year.
+# 
+# 19.03 I am going to read you a list. When I am done, please tell me if any of the situations apply to you. You do not need to tell me which one.  You have used intravenous drugs in the past year.  You have been treated for a sexually transmitted or venereal disease in the past year. You have given or received money or drugs in exchange for sex in the past year. You had anal sex without a condom in the past year. You had four or more sex partners in the past year.  Do any of these situations apply to you? (HIVRISK4)
+catMeasure(x=df_data,meas="HIVRISK4",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+# 
+```
+
+
+
+\newpage
+
+
+\blankifeven
+
+\vspace*{\fill}
+
+\section{Optional Modules}
+
+\vspace*{\fill}
+
+\newpage
+
+
+\subsection{Module 1: Pre-diabetes}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+catMeasure(x=df_data,meas="PDIABTST",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+catMeasure(x=df_data,meas="PREDIAB1",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+```
+\newpage
+
+\subsection{Module 2: Diabetes}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+catMeasure(x=df_data,meas="INSULIN",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+catMeasure(x=df_data,meas="BLDSUGAR",year=year,month= month,rm.na=T,total=T,col1=col1_def)
+
+# catMeasure(x=df_data,meas="FEETCHK2",year=year,month= month)
+
+catMeasureBreaks(x=df_data,meas="DOCTDIAB",year=year,month=month,breaks=c(-1,seq(0,75,5)),
+                 rm.na=T,total=T,replace=88,replace_vals=0,col1=col1_def)
+
+catMeasureEach(x=df_data,meas="CHKHEMO3",year=year,month=month,
+                 rm.na=T,total=T,replace=88,replace_vals=0,col1=col1_def)
+
+catMeasureBreaks(x=df_data,meas="FEETCHK",year=year,month=month,breaks=c(-1,seq(0,75,5)),
+                 rm.na=T,total=T,replace=88,replace_vals=0,col1=col1_def)
+
+# catMeasure(x=df_data,meas="EYEEXAM",year=year,month= month)
+catMeasure(x=df_data,meas="EYEEXAM",year=year,month= month,rm.na=T,col1=col1_def+12)
+catMeasure(x=df_data,meas="DIABEYE",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="DIABEDU",year=year,month= month,rm.na=T,col1=col1_def)
+# 
+```
+
+
+\newpage
+
+
+
+
+\subsection{Module 4: Health Care Access}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE, results='hold'}
+
+
+catMeasure(x=df_data,meas="MEDICARE" ,year=year,month= month,rm.na=T,col1=col1_def)
+catMeasure(x=df_data,meas="HLTHCVR1" ,year=year,month= month,rm.na=T,col1=col1_def)
+catMeasure(x=df_data,meas="DELAYMED" ,year=year,month= month,order=T,rm.na=T,col1=67)
+catMeasureEach(x=df_data,meas="DLYOTHER" ,year=year,month= month,rm.na=T,col1=col1_def)
+catMeasure(x=df_data,meas="NOCOV121" ,year=year,month= month,rm.na=T,col1=col1_def)
+catMeasure(x=df_data,meas="LSTCOVRG" ,year=year,month= month,rm.na=T,col1=col1_def)
+catMeasure(x=df_data,meas="DRVISITS" ,year=year,month= month,rm.na=T,col1=col1_def)
+catMeasure(x=df_data,meas="MEDSCOST" ,year=year,month= month,rm.na=T,col1=col1_def)
+catMeasure(x=df_data,meas="CARERCVD",year=year,month= month,rm.na=T,col1=col1_def)
+catMeasure(x=df_data,meas="MEDBILL1",year=year,month= month,rm.na=T,col1=col1_def)
+
+
+```
+
+
+\newpage
+
+
+
+\subsection{Module 17: Cancer Survivorship}
+
+```{r, echo=FALSE, comment="",tidy=TRUE,message=FALSE}
+
+catMeasure(x=df_data,meas="CNCRDIFF",year=year,month= month, rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CNCRAGE",year=year,month= month, rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CNCRTYP1",year=year,month= month, rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVTRT1",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVDOC1",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVSUM",year=year,month= month,rm.na=T,col1=col1_def)
+
+cat("\n")
+catMeasure(x=df_data,meas="CSRVRTRN",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVINST",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVINSR",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVDEIN",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVCLIN",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVPAIN",year=year,month= month,rm.na=T,col1=col1_def)
+cat("\n")
+catMeasure(x=df_data,meas="CSRVCTL1",year=year,month= month, rm.na=T,col1=col1_def)
+cat("\n")
+
+
+```
+
+\newpage
+\pagestyle{empty}
+
+\blankifodd
+
+
+\color{blue}
+\pagestyle{empty}
+\centering
+\topskip0pt
+\vspace*{\fill}
+
+\includegraphics[width=1.5in,height=1.5in,keepaspectratio]{`r paste(img_fldr,"doh_seal.jpg",sep="")`}
+
+\Large
+  
+  
+US Virgin Islands Department of Health  
+
+\textit{Chronic Disease Prevention Program  } 
+
+\normalsize
+Charles Harwood Complex  
+3500 Est. Richmond  
+Christiansted, VI 00820  
+Voice: (340) 718-1311x3198  
+
+\vspace*{\fill}
+
+\fontsize{08}{10}
+Report produced using 
+\includegraphics[width=0.35cm,height=0.35cm,keepaspectratio]{`r paste(img_fldr,"Rlogo.png",sep="")`}
+

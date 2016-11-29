@@ -16,7 +16,9 @@
 #' @examples
 #'
 prep_stats<-function(df,coi,subsets,min_num=0,percent=T, df_fields) {
-  if(missing(df_fields)) load(file = "./data/fields.RData",envir = environment())
+  require(orrr)
+
+#  if(missing(df_fields)) load(file = paste(orrr::dir.project(),"/data/fields.RData",sep=""),envir = environment())
 
   if(!missing(subsets)){
     if(is.null(subsets)) {
@@ -36,20 +38,20 @@ prep_stats<-function(df,coi,subsets,min_num=0,percent=T, df_fields) {
     df$CI_upper=round(df$CI_upper*100,1)
   }
 
-  fctr<-df_fields[df_fields$VarName==coi,]
+  fctr<-df_fields[df_fields$col_name==coi,]
 
-  fctr$Desc<-trimws(fctr$Desc)
+  fctr$description<-trimws(fctr$description)
 
   if(nrow(fctr)>0) {
-    df[,coi]<-factor(x=df[,coi],levels=c(-2,-1,fctr$Value),labels = c("No ", "Yes ",fctr$Desc))
+    df[,coi]<-factor(x=df[,coi],levels=c(-2,-1,fctr$value),labels = c("No ", "Yes ",fctr$description))
   }
 
   if(nsubs>0) {
     sapply(subsets,function(sub) {
 
-      fctr<-df_fields[df_fields$VarName==sub,]
+      fctr<-df_fields[df_fields$col_name==sub,]
       if(nrow(fctr)>0) {
-        df[,sub]<<-factor(x=df[,sub],levels=fctr$Value,labels = fctr$Desc)
+        df[,sub]<<-factor(x=df[,sub],levels=fctr$value,labels = fctr$description)
       }
     })
   }
@@ -98,6 +100,7 @@ vert_stats_simple<-function(df,coi,subsets,min_num=0,percent=T, cat=FALSE,invisi
 #' @param percent - logical
 #' @param cat - logical
 #' @param invisible - logical
+#' @param html - logical - output as HTML table
 #' @param header - logical
 #' @param linesep - character
 #' @param headsep - character
@@ -108,7 +111,166 @@ vert_stats_simple<-function(df,coi,subsets,min_num=0,percent=T, cat=FALSE,invisi
 #'
 #' @examples
 #'
-horz_stats_simple<-function(df,coi,subsets,min_num=0,percent=T, header=T,linesep,headsep, cat=F,invisible=F, ...) {   #order, ...) {
+
+horz_stats_simple<-function(df,coi,subsets,min_num=0,percent=T, header=T,
+                            linesep,headsep, cat=F,invisible=F,
+                            html=F, tbltag=T,tbltagx=T, background,...) {
+
+  fmt_grp_sz<-20
+  fmt_total_sz<-5
+  fmt_num_sz<-5
+  fmt_pct_dig<-1
+  fmt_pct_sz<-4+fmt_pct_dig
+  fmt_ci_sz<-10
+  fmt_spc_btw<-2
+
+  fmt_grp<-paste("%",fmt_grp_sz,"s",sep="")
+
+  if(missing(subsets)) subsets<-c()
+
+  df<-prep_stats(df=df,coi=coi,subsets=subsets,min_num,percent, ...)
+
+  # if(!missing(order)) {
+  #     df<-df[order(df$mean,decreasing = (order=="dec")),]
+  # }
+  #
+  if(is.null(subsets)) {
+    subsets<-c("DUMMY")
+    df$DUMMY<-"Total"
+  }
+
+  maxchar<-0
+
+  hdr<-character()
+  ret<-character()
+
+  subs<-unique(df[[subsets[1]]])
+  cols<- unique(as.character(df[[coi]]))
+
+  if(html) {
+    tbl<-ifelse(tbltag,"<table>","")
+    tblx<-ifelse(tbltagx,"</table>","")
+    th<-"<th>"
+    th2<-"<th colspan='2'>"
+    th3<-"<th colspan='3'>"
+    thx<-"</th>"
+    tr<- ifelse(missing("background"), "<tr>", paste("<tr  style=\"background-color:",background,";\">"))
+    trx<-"</tr>"
+    td<-"<td>"
+    tdx<-"</td>"
+  } else {
+    tbl<-""
+    tblx<-""
+    th<-""
+    th2<-""
+    th3<-""
+    thx<-""
+    tr<-""
+    trx<-"\n"
+    td<-""
+    tdx<-""
+  }
+
+  #############################################
+  ##
+  ##  each item of a subset is a new line
+  ##
+  sapply(subs,function(sub) {
+    hdr<<-paste(tr,td,sprintf(fmt_grp,center_string("GROUP",fmt_grp_sz)),tdx,sep="")
+    linex<<-paste(tr,td,sprintf(fmt_grp,center_string(sub,fmt_grp_sz)),tdx,sep="")
+
+    #############################################
+    ##
+    ##  each item of the coi is a set of (3) columns ...
+    ##    numerator, mean, and CI
+    ##
+    col1<-TRUE
+
+    sapply(cols,function(colx) {
+
+      df_line<-df[df[[coi]]==colx & df[[subsets[1]]]==sub,]
+
+      if(col1) {
+        hdr<<-paste(hdr,td,sprintf(" %5s ","TOTAL"),tdx,sep="")
+        linex<<-paste(linex,td,sprintf(" %5d ",df_line$total),tdx,sep="" )
+        col1<<-FALSE
+      }
+      mapply(function(v3,v4,v5) {
+        v5_hdr<-center_string("C.I.",fmt_ci_sz)
+        v5<-center_string(v5,fmt_ci_sz,ctr_char =  "-")
+        hdr_fmt<-paste(td,"%",fmt_num_sz,"s",tdx,td,spaces(fmt_spc_btw),"%",fmt_pct_sz,"s",tdx,td,spaces(fmt_spc_btw),"%",fmt_ci_sz,"s",tdx,sep="")
+        hdr<<-paste(hdr,sprintf(hdr_fmt," N ","  %  ",v5_hdr),sep="" )
+
+        line_fmt<-paste(td,"%",fmt_num_sz,"d",tdx,td,spaces(fmt_spc_btw),"%",fmt_pct_sz,".",fmt_pct_dig,"f",tdx,td,spaces(fmt_spc_btw),"%",fmt_ci_sz,"s",tdx,sep="")
+
+        linex<<-paste(linex,sprintf(line_fmt,v3,v4,v5),sep="" )
+      },df_line$num,df_line$mean,df_line$ci)
+    })
+    maxchar<<-max(maxchar,nchar(linex))
+    ret<<-paste(ret,linex,trx,sep = "")
+  })
+
+  ###############################################################
+  ##
+  ##    if a header is indicated (header=T)
+
+  if(header) {
+
+
+    top_line<-paste(tr,th2,spaces(fmt_grp_sz+fmt_total_sz+fmt_spc_btw),thx,sep="")
+
+    sapply(unique(df[[coi]]),function(c) {
+
+      top_line<<-paste(top_line,th3,center_string(c,fmt_num_sz+fmt_pct_sz+fmt_ci_sz+2*fmt_spc_btw),thx,sep="")
+#      cat(top_line,"\n")
+      })
+
+    #############################################################
+    ##
+    ##  combine the top line and the header with an
+    ##    end of row/new line (trx) after each
+    ##
+    hdr<-paste(top_line,trx,hdr,trx,sep="")
+
+    #############################################################
+    ##
+    ##  include the header separator if indicated
+
+    if(!missing(headsep)) {
+      hdr<-paste(hdr,chars(chr=headsep,n=maxchar),"\n",sep="")
+    }
+  } else {
+    ###############################################################
+    ##
+    ##    no header (header=F)
+
+    hdr<-""
+  }
+
+  ###############################################################
+  ##
+  ##  if a line separator between groups (subsets) was indicated
+  ##    then include the line
+  ##
+  if(missing(linesep)) {
+    x<-paste(hdr,ret,sep="")
+  } else {
+    x<-paste(hdr,ret,chars(chr=linesep,n=maxchar),"\n",sep="")
+  }
+
+  ###################################################
+  ##
+  ##  add the table and end table tags ...
+  ##  these will be blank ("") if html is FALSE
+  ##
+
+  x<-paste(tbl,x,tblx,sep="")
+
+  if(cat) cat(x)
+  if(invisible) return(invisible()) else return(x)
+}
+
+horz_stats_simple_SAVE<-function(df,coi,subsets,min_num=0,percent=T, header=T,linesep,headsep, cat=F,invisible=F, ...) {   #order, ...) {
 
   fmt_grp_sz<-20
   fmt_total_sz<-5
@@ -282,7 +444,7 @@ get_brfss_style_table<-function(df,coi, binary, num_vals,den_vals , exclude, wei
   }
 
 
-  cat(paste(split_sentence(ques,len = 80)," (",coi,")","\n",sep=""))
+  txt<-paste(split_sentence(ques,len = 80)," (",coi,")","\n",sep="")
 
   out<-horz_stats_simple(svy1,coi =coi, min_num = min_num,linesep = ".",headsep="=",cat=T)
 
@@ -298,7 +460,7 @@ get_brfss_style_table<-function(df,coi, binary, num_vals,den_vals , exclude, wei
     out<-horz_stats_simple(svy3,coi =coi,subsets = subset, min_num = min_num,linesep = ".",header = F,cat=T)
   })
 
-  cat(newlines(2))
+  txt<-paste(txt,newlines(2))
 
 
   #######################################
@@ -328,16 +490,16 @@ get_brfss_style_table<-function(df,coi, binary, num_vals,den_vals , exclude, wei
           svy3m<-svy3[svy3[,sub_by]==sub_val,]
           nshow<-length(which(svy3m$total>min_num))
           if(nshow>0) {
-            out<-horz_stats_simple(svy3m,coi =coi,subsets = subset, min_num = min_num,linesep = ".",header = F,cat=T)
+            txt<<-paste(txt,horz_stats_simple(svy3m,coi =coi,subsets = subset, min_num = min_num,linesep = ".",header = F,cat=F))
           }
 
         })
-        cat(newlines(2))
+        txt<<-paste(txt,newlines(2))
       }
     })
 
   }
 
-  invisible()
+  txt
 }
 
