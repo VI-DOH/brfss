@@ -122,6 +122,7 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
   if (nsubs==0) frmla<- reformulate(c("fcoi")) else  frmla<- reformulate(c("fcoi",subset))
 
   if(!is.null(weighting)) weighting<-reformulate(weighting)   #else weights=NULL
+  if(!is.null(strata)) strata<-reformulate(strata)   #else weights=NULL
 
   #  ids<- reformulate(all_vals)
 
