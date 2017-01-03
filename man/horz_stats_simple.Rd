@@ -5,7 +5,8 @@
 \title{Simple horizontal table of summary stats for column}
 \usage{
 horz_stats_simple(df, coi, subsets, min_num = 0, percent = T, header = T,
-  linesep, headsep, cat = F, invisible = F, ...)
+  linesep, headsep, cat = F, invisible = F, html = F, tbltag = T,
+  tbltagx = T, background, ...)
 }
 \arguments{
 \item{df}{- data.frame}
@@ -27,6 +28,8 @@ horz_stats_simple(df, coi, subsets, min_num = 0, percent = T, header = T,
 \item{cat}{- logical}
 
 \item{invisible}{- logical}
+
+\item{html}{- logical - output as HTML table}
 
 \item{...}{- other parameters}
 }

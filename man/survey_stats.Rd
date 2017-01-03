@@ -4,7 +4,8 @@
 \alias{survey_stats}
 \title{Survey Statistics}
 \usage{
-survey_stats(df0, coi, exclude, subset, conf = 0.95, weighting)
+survey_stats(df0, coi, exclude, subset, conf = 0.95, weighting = NULL,
+  strata = NULL)
 }
 \arguments{
 \item{df0}{- data.frame: the survey data}

@@ -8,7 +8,9 @@
 #' @param index integer index of the raw data file
 #' @param type character either cell or landline
 #' @param state character include data for "all" states (default), "my" state, or "other" states
-#' @return character filename based on passed arguments
+#' @param ynpath logical include path as part of returned file name
+#'
+#' @return character file name based on passed arguments
 #'
 
 #'

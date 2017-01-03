@@ -2,7 +2,7 @@
 % Please edit documentation in R/output.R
 \name{vert_stats_simple}
 \alias{vert_stats_simple}
-\title{Title}
+\title{BRFSS summary statistics in a vertical format}
 \usage{
 vert_stats_simple(df, coi, subsets, min_num = 0, percent = T, cat = FALSE,
   invisible = FALSE, ...)
@@ -28,7 +28,7 @@ vert_stats_simple(df, coi, subsets, min_num = 0, percent = T, cat = FALSE,
 - data.frame
 }
 \description{
-Title
+BRFSS summary statistics in a vertical format
 }
 \examples{
 

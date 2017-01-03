@@ -1,3 +1,29 @@
+#' Value Representing Binary No
+#'
+#' Retrieve the value used to represent 'No' in binary (Yes/No) calculations.
+#' When there are more than 2 possible values in the denominator and/or numerator,
+#' then it is convenient to convert all values in a numerator to Yes/No
+#'
+#' @return integer - value representing 'No'
+#' @export
+#'
+#' @examples
+binary_no<-function() {
+  return(-2)
+}
+
+#' Value Representing Binary Yes
+#'
+#' Retrieve the value used to represent 'Yes' in binary (Yes/No) calculations.
+#' When there are more than 2 possible values in the denominator and/or numerator,
+#' then it is convenient to convert all values in a numerator to Yes/No
+#'
+#' @return integer - value representing 'Yes'
+#' @export
+#'
+binary_yes<-function() {
+  return(-1)
+}
 
 #' Survey Statistics
 #'
@@ -36,8 +62,8 @@ survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
   df0<-df0[df0[,coi]%in%den_vals,]
 
 
-  df0$fcoi<-(-2)
-  df0[df0[,coi]%in%num_vals,"fcoi"]<-(-1)
+  df0$fcoi<-binary_no()
+  df0[df0[,coi]%in%num_vals,"fcoi"]<-binary_yes()
   #  df0[yn_not_num,coi]<-2
   df0<-df0[!is.na(df0[coi]),]
   # df0["fcoi"]<- factor(df0[["fcoi"]],levels = c(-1,-2),
