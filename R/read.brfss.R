@@ -79,7 +79,7 @@ read.brfss.ascii<-function(filename,layout,state=c("all","my","other"),completes
   ##  read the file based on the layout
   ##
   df<-read.fwf(filename,widths = df_fields_yy$field_size,
-               col.names = df_fields_yy$var_name,
+               col.names = df_fields_yy$col_name,
                stringsAsFactors=F)
 
   ######################################

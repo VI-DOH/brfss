@@ -98,7 +98,10 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
   df0<-df0[!is.na(df0[coi]),]
   cols<-coi
   if(nsubs>0) cols<-c(cols,subset)
-  if(!is.null(weighting)) cols<-c(cols,weighting)
+  if(!is.null(weighting)) {
+    cols<-c(cols,weighting)
+    df0<-df0[!is.na(df0[,weighting]),]
+  }
   if(!is.null(strata)) cols<-c(cols,strata)
   df0<-as.data.frame(df0[,cols])
   if(ncol(df0)==1) colnames(df0)<-coi
