@@ -28,7 +28,7 @@ library(survey)
 #'
 survey_stats<-function(df0,year,column, num_vals,den_vals,subset,conf=.95, weighting) {
 
-  require(package = "survey")
+  require(package = "survey", quietly = T, warn.conflicts = F)
 
   coi<-column
 
@@ -180,7 +180,7 @@ survey_data_subsets<-function(years,measure="Diabetes",subset=NA,conf=.95,weight
 #'
 survey_stats_non_binary<-function(df0, year,coi, ignore,  subset,conf=.95, weighting) {
 
-  require(package = "survey")
+  require(package = "survey", quietly = T, warn.conflicts = F)
 
 
   if(missing(year)) year<-df0$IYEAR[1]

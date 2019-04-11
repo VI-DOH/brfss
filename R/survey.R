@@ -100,7 +100,7 @@ survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
 #'
 survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, strata=NULL) {
 
-  require(package = "survey")
+  require(package = "survey", quietly = T, warn.conflicts = F)
 
   if(!missing(subset)){
     if(is.null(subset)) {
@@ -219,14 +219,12 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
   df_new$CI_upper[df_new$CI_upper>1]<-1
 
   df_new$total<-tot
-  #  df_new$year<-year
-  ##  df$measure<-measure
   df_new$measure<-coi
+
   #####################################################
   ##
   ##  add nums
   ##
-
 
   if(nsubs==0) {
     num<-sapply(df_new[,coi],  function(c) {
@@ -243,9 +241,7 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
       num[r]<-(length(which(yn)))
     }
   }
+
   df_new$num<-num
-  ##
-  #
-  #  df_new[,c("year","measure",colnames(df_new)[1:(1+nsubs)],"total","num","mean","se","conf","CI_lower","CI_upper")]
   df_new[,c("measure",colnames(df_new)[1:(1+nsubs)],"total","num","mean","se","conf","CI_lower","CI_upper")]
 }

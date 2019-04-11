@@ -56,7 +56,7 @@ brfss.raw.ascii.filename<-function(year,month,index=1,type, state="VI", ynpath=F
 #'
 #' @export
 
-read.brfss.ascii<-function(filename,layout,state=c("all","my","other"),completes=T) {
+read.brfss.ascii<-function(filename,layout,state=c("all","my","other"),otherstate="*", completes=T) {
 
   #  env<-get.brffs.env()
   state <- match.arg(state)
@@ -90,7 +90,9 @@ read.brfss.ascii<-function(filename,layout,state=c("all","my","other"),completes
   ##
   if(grepl("^m|^o",state)) {
     yn<-is.na(df$RSPSTATE)
-    if(grepl("^o",state)) yn<-!yn
+    if(grepl("^o",state)) {
+      yn<-grepl(otherstate,state)
+    }
   } else {
     yn<-rep(T,nrow(df))
   }
