@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 .Rbuildignore
+data
+data_raw
+data-raw
