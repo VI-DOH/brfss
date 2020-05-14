@@ -7,8 +7,7 @@ split.ascii<-function(fname) {
 
   txt<-readLines(fname)
 
-  txt[1]
-  nchar(txt[4567])
+
   state<-sapply(txt,function(ln) {
     substring(text = ln,first = 1,last=2)
   },USE.NAMES = F)
