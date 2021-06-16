@@ -27,4 +27,3 @@ df<-read.brfss.all(2016,2:5) # will read Feb-May data for 2016
 }
 
 }
-

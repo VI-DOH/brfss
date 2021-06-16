@@ -4,8 +4,14 @@
 \alias{brfss.raw.ascii.filename}
 \title{Build BRFSS raw data file (ASCII) filename}
 \usage{
-brfss.raw.ascii.filename(year, month, index = 1, type, state = "VI",
-  ynpath = F)
+brfss.raw.ascii.filename(
+  year,
+  month,
+  index = 1,
+  type,
+  state = "VI",
+  ynpath = F
+)
 }
 \arguments{
 \item{year}{integer year of the data included in the file}
@@ -17,11 +23,12 @@ brfss.raw.ascii.filename(year, month, index = 1, type, state = "VI",
 \item{type}{character either cell or landline}
 
 \item{state}{character include data for "all" states (default), "my" state, or "other" states}
+
+\item{ynpath}{logical include path as part of returned file name}
 }
 \value{
-character filename based on passed arguments
+character file name based on passed arguments
 }
 \description{
 Build BRFSS raw data file filename based on the year, month, index, type, and state
 }
-

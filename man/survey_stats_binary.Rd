@@ -40,4 +40,3 @@ confidence interval (lower and upper) for either the entire column of interest, 
 
 
 }
-

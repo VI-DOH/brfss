@@ -15,4 +15,3 @@ character cleaned string vector
 \description{
 Clean the description field
 }
-

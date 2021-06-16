@@ -23,4 +23,3 @@ path<-brfss_raw_path(2016,2)
 }
 
 }
-

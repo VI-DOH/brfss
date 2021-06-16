@@ -14,4 +14,3 @@ Retrieve the value used to represent 'No' in binary (Yes/No) calculations.
 When there are more than 2 possible values in the denominator and/or numerator,
 then it is convenient to convert all values in a numerator to Yes/No
 }
-

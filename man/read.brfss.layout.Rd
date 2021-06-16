@@ -15,4 +15,3 @@ character default path/filename
 \description{
 Reads the file containing layout data for a BRFSS raw data file
 }
-

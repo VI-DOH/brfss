@@ -175,3 +175,4 @@ getMeasureReportBreaks<-function(df,meas, breaks,  title="Desc", order=F,useNA="
 
   if (nrow(x = df_other)>0) rbind(df_data,df_other) else df_data
 }
+

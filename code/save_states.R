@@ -6,3 +6,4 @@ devtools::use_data(states,internal = T)
 
 
 rm(states)
+

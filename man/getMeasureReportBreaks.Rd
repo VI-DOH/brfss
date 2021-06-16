@@ -4,13 +4,23 @@
 \alias{getMeasureReportBreaks}
 \title{BRFSS data file processing}
 \usage{
-getMeasureReportBreaks(df, meas, breaks, title = "Desc", order = F,
-  useNA = "ifany", debug = F, replace, replace_vals, ...)
+getMeasureReportBreaks(
+  df,
+  meas,
+  breaks,
+  title = "Desc",
+  order = F,
+  useNA = "ifany",
+  debug = F,
+  replace,
+  replace_vals,
+  ...
+)
 }
 \arguments{
 \item{df}{data.frame containing the measure of interest}
 
-\item{meas}{character column name}
+\item{meas}{character breaks}
 
 \item{title}{character}
 
@@ -26,11 +36,8 @@ getMeasureReportBreaks(df, meas, breaks, title = "Desc", order = F,
 
 \item{...}{parameters to be passed to other functions}
 
-\item{meas}{character breaks}
-
 \item{format}{character}
 }
 \description{
 Reads the file containing layout data for a BRFSS raw data file
 }
-

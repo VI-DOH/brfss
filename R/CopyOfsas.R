@@ -1,5 +1,3 @@
-
-
 ################################
 sub_pattern<-function(strIn, year, version="") {
   ret<-gsub("[YEAR]",year,strIn,fixed = T)
@@ -10,7 +8,6 @@ sub_pattern<-function(strIn, year, version="") {
 brfss.url.pattern.files<-function() {
   "https://www.cdc.gov/brfss/annual_data/[YEAR]/files/"
 }
-# https://www.cdc.gov/brfss/annual_data/2018/files/LLCP2018XPT.zip
 
 brfss.url.pattern.documentation<-function() {
   "https://www.cdc.gov/brfss/annual_data/[YEAR]/pdf/"
@@ -22,7 +19,6 @@ sas.url.pattern.download.doc<-function() {
     "codebook[YR]_llcp.pdf"
   )
 }
-
 
 sas.url.pattern.downloads.data<-function() {
   c(
@@ -59,14 +55,11 @@ sas.file.pattern.format<-function(){
   "FORMAT[YR].sas"
 }
 
-sas.file.pattern.sasout<-function(version=0){
-#  https://www.cdc.gov/brfss/annual_data/2017/files/SASOUT17_LLCP_V3.SAS
-  ptrn<-"SASOUT[YR]_LLCP.SAS"
-  if(version>0) ptrn<-gsub("P.SAS",paste0("P_V",version,".SAS"),ptrn,fixed = T)
-  ptrn
+sas.file.pattern.sasout<-function(){
+  "SASOUT[YR]_LLCP.sas"
 }
 
-unzip.all<-function(year,rmzip=TRUE) {
+unzip.all<-function(year) {
   folder<-sub_pattern(strIn =sas.folder.pattern.raw_data(),year)
   files<-list.files(folder,full.names = T)
 
@@ -77,7 +70,6 @@ unzip.all<-function(year,rmzip=TRUE) {
     sapply(files, function(file) {
       #browser()
       unzip(zipfile = file, exdir = folder,overwrite = T)
-      if(rmzip) file.remove(file)
     })
   )
 
@@ -103,7 +95,6 @@ has.columns<-function(year,cols,nolabel=F) {
 
 }
 
-
 fix.missing.columns<-function(year,year2=year-1) {
   e<-new.env()
   fname<-paste0("./data/",year,"/columns_",year,".RData")
@@ -126,27 +117,24 @@ fix.missing.columns<-function(year,year2=year-1) {
 
 }
 
-sas.process.year<-function(year,download=TRUE,xpt=TRUE,...) {
-
+sas.process.year<-function(year,download=TRUE) {
 
   if(download) {
     sas.download.data(year=year)
     sas.download.data.versions(year=year)
     unzip.all(year=year)
   }
+  read.xpt(year=year)
 
-  if(xpt) {
-    read.xpt(year=year)
-
-    ivers<-1
-    while (read.xpt(year=year,version=ivers,verbose=TRUE)) {
-      #browser()
-      cat("Read ivers=",ivers,"\n")
-      ivers<-ivers+1
-    }
+  ivers<-1
+  while (read.xpt(year=year,version=ivers,verbose=TRUE)) {
+    #browser()
+    cat("Read ivers=",ivers,"\n")
+    ivers<-ivers+1
   }
+
   sas.save.sasout(year = year)
-  split.states(year=year,...)
+  split.states(year=year)
 }
 
 sas.save.sasout<-function(year) {
@@ -156,7 +144,6 @@ sas.save.sasout<-function(year) {
 
   save(list=fname,file = paste0("./data/",year,"/columns_",year,".RData"))
 }
-
 
 sas.download.data<-function(year) {
 
@@ -187,16 +174,10 @@ sas.download.data.versions<-function(year) {
     sapply(1:4,function(version) {
       file<-sub_pattern(strIn = file,year = year,version = version )
       url<-paste0(urlfiles,file)
-      if(RCurl::url.exists(url)){
+      if( TRUE) {   #RCurl::url.exists(url)){
         fileout<-paste0(folderout,file)
-
-        oldw <- getOption("warn")
-        options(warn = -1)
-        for (file in files) {
-          tryCatch(download.file(url = url,destfile = fileout),
-                   error = function(e) print(paste(url, 'does not exist')))
-        }
-        options(warn = oldw)      }
+        download.file(url = url,destfile = fileout)
+      }
     })
   })
 
@@ -207,7 +188,7 @@ read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
                    savefolder_pat=sas.folder.pattern.data(),
                    save_pat=sas.file.pattern.rdata(),
                    sasout_folder_pat=sas.folder.pattern.raw_data(),
-                   sasout_file_pat=sas.file.pattern.sasout(version),
+                   sasout_file_pat=sas.file.pattern.sasout(),
                    version=0,verbose=F) {
 
   folder<-sub_pattern(readfolder_pat,year)
@@ -231,7 +212,7 @@ read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
 
     df_sasout<-read.sasout(year,sasout_folder_pat,sasout_file_pat)
     #sink(file = "./errtest.txt")
-    mapply(function(lbl,v,typ,n,i,nm) {
+    mapply(function(v,typ,n,i,nm) {
       #cat(v,"|",typ,"|",n,"|",i,"|",nm)
       if(!is.null(df_xpt[[v]])) {
         if(is.na(typ) || is.null(typ)) typ<=""
@@ -241,16 +222,15 @@ read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
         attr(df_xpt[[v]],"section_type")<<-typ
         attr(df_xpt[[v]],"section_num")<<-n
         attr(df_xpt[[v]],"section_index")<<-i
-        attr(df_xpt[[v]],"section_name")<<-stringr::str_trim(nm)
-        attr(df_xpt[[v]],"label")<<-lbl
+        attr(df_xpt[[v]],"section_name")<<-nm
       } else {
         #cat(" ... NULL!")
       }
       #cat("\n")
-    }, df_sasout$label,df_sasout$varname,df_sasout$section_type,df_sasout$section_number,df_sasout$index,df_sasout$section_name)
+    }, df_sasout$varname,df_sasout$section_type,df_sasout$section_number,df_sasout$index,df_sasout$section_name)
 
     #cat("Saving\n")
-    #sink(file = NULL)
+    sink(file = NULL)
 
     savefolder<-sub_pattern(savefolder_pat,year)
     if(!dir.exists(savefolder)) dir.create(savefolder,recursive = T)
@@ -265,14 +245,8 @@ read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
   }
 }
 
-
 split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
-                       load_pat=sas.file.pattern.rdata(),main=TRUE,versions=TRUE,states=NULL) {
-
-
-  ##  get data.frame of states
-
-  df_states<- orrr::get.rdata(paste0(orrr::dir.project("data"),"states.RData"))
+                       load_pat=sas.file.pattern.rdata(),main=TRUE,versions=TRUE) {
 
   ver<-integer(0)
   if(main) ver<-0
@@ -289,16 +263,8 @@ split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
     #if(!exists(fname))
     df_xpt<-load.sas(year,loadfolder_pat,load_pat,version)
 
-    if(is.null(states)) {
-      states<-unique(df_xpt$`_STATE`)
-
-    } else {
-      if(is.character(states)) {
-        states<-sapply(states,function(state) {
-          df_states[df_states$Abbrev==state,"Id"]
-        })
-      }
-    }
+    states<-unique(df_xpt$`_STATE`)
+    load("./data/states.RData")
 
     add_cols<-character(0)
 
@@ -309,7 +275,10 @@ split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
         df_state<-df_xpt[df_xpt$`_STATE`==id,]
         sapply(1:ncol(df_xpt),function(i) {
           attrs<-attributes(df_xpt[[i]])
-
+          # cat("============================================================\n")
+          # cat(colnames(df_state)[i],"\n")
+          # cat(paste(names(attrs),collapse = "|"),"\n")
+          # cat(paste(attrs,collapse = "|"),"\n")
           if(!is.null(attrs)){
             sapply(1:length(attrs),function(j) {
               #browser()
@@ -416,7 +385,6 @@ get.sas.labels<-function(df_xpt) {
   ))
 }
 
-
 read.sasout<-function(year,folder_pat=sas.folder.pattern.raw_data(),file_pat=sas.file.pattern.sasout()) {
 
   folder<-sub_pattern(folder_pat,year)
@@ -463,67 +431,29 @@ read.sasout<-function(year,folder_pat=sas.folder.pattern.raw_data(),file_pat=sas
 
     df_sections<-data.frame(section=sections,index=indices,varname=varnames,stringsAsFactors = F) #,range=ranges,stringsAsFactors = F)
 
-    df_data<-dplyr::left_join(df_lbl,df_sections,by="varname")
-    df_data$is_calculated<-grepl("Calculated Var",df_data$section)
-    df_data$section_type<-""
-    df_data$section_number<-""
+    df<-dplyr::left_join(df_lbl,df_sections,by="varname")
+    df$is_calculated<-grepl("Calculated Var",df$section)
+    df$section_type<-""
+    df$section_number<-""
 
-    df_data$section_type[grep( "Section" ,df_data$section)]<- "Core"
-    df_data$section_type[grep( "Module" ,df_data$section)]<- "Module"
-    df_data$section_type[!grepl("[0-9]",df_data$section)]<-df_data$section[!grepl("[0-9]",df_data$section)]
+    df$section_type[grep( "Section" ,df$section)]<- "Core"
+    df$section_type[grep( "Module" ,df$section)]<- "Module"
+    df$section_type[!grepl("[0-9]",df$section)]<-df$section[!grepl("[0-9]",df$section)]
 
-    df_data$section_number<-as.integer(gsub("[^0-9]","",df_data$section))
-    df_data$section_number[is.na(df_data$section_number)]<-""
-    df_data$section_name<-gsub(".*:(.*)","\\1",df_data$section)
+    df$section_number<-as.integer(gsub("[^0-9]","",df$section))
+    df$section_number[is.na(df$section_number)]<-""
+    df$section_name<-gsub(".*:(.*)","\\1",df$section)
 
-    df_data<-df_data[order(df_data$section_type,df_data$section_number,df_data$index),]
+    #df<-df[order(df$section_type,df$section_number,df$index),]
   } else {
-    df_data<-data.frame(matrix(ncol = 3, nrow = 0),stringsAsFactors = F)
-    colnames(df_data)<-c("varname","label","section","index",             #"range",
-                         "is_calculated","section_type","section_number","section_name"  )
+    df<-data.frame(matrix(ncol = 3, nrow = 0),stringsAsFactors = F)
+    colnames(df)<-c("varname","label","section","index",             #"range",
+                    "is_calculated","section_type","section_number","section_name"  )
   }
 
-  df_data<-override(df_data)
-  df_data[,c("varname","label","section_type","section_number","section_name","index","is_calculated")]
+  df[,c("varname","label","section_type","section_number","section_name","index","is_calculated")]
 }
 
-override<-function(df){
-  df_overrides<-sasout.overrides()
-  if(nrow(df_overrides)==0) return(df)
 
-  ynfix<-which(df$varname%in%df_overrides$column)
-
-  if(length(ynfix)==0) return(df)
-  #browser()
-  df0<-df[ynfix,]
-  df0<- dplyr::left_join(df0,df_overrides,by=c("varname"="column"))
-  df[ynfix,"label"]<-df0$label.y
-
-  df
-}
-
-sasout.override.file<-function() {
-  paste0(orrr::dir.project("data"),"sasout_overrides.RData")
-}
-
-sasout.overrides<-function() {
-  file<-sasout.override.file()
-  if(file.exists(file)) {
-    df_override<- orrr::get.rdata(file)
-  } else {
-    df_override<- data.frame()
-  }
-  df_override
-}
-
-sasout.add.override<-function(year,column,label) {
-  # browser()
-
-  df_override<- sasout.overrides()
-  df_override<-df_override[df_override$year!=year & df_override$column!=column,]
-
-  df_override<-rbind(df_override,data.frame(year,column,label))
-  save(df_override,file = file)
-}
 
 

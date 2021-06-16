@@ -4,8 +4,13 @@
 \alias{brfss_raw_filename}
 \title{BRFSS data file default name}
 \usage{
-brfss_raw_filename(type = c("landline", "cell"), year, month, index = 1,
-  ynpath = T)
+brfss_raw_filename(
+  type = c("landline", "cell"),
+  year,
+  month,
+  index = 1,
+  ynpath = T
+)
 }
 \arguments{
 \item{type}{character  source of the data in the file ... "landline" or "cell"}
@@ -30,4 +35,3 @@ filename_raw<-brfss_raw_filename("cell",2016,2)
 }
 
 }
-

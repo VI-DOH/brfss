@@ -27,4 +27,3 @@ df<-read.brfss.landline(2016,2)
 }
 
 }
-

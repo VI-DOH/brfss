@@ -22,4 +22,3 @@ CNCRDIFF,3,	Three or more \cr
 CNCRDIFF,7,	Don't know/Not Sure \cr
 CNCRDIFF,9,	Refused \cr
 }
-

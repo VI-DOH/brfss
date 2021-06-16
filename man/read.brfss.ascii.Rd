@@ -4,8 +4,13 @@
 \alias{read.brfss.ascii}
 \title{Read BRFSS raw ASCII data file}
 \usage{
-read.brfss.ascii(filename, layout, state = c("all", "my", "other"),
-  completes = T)
+read.brfss.ascii(
+  filename,
+  layout,
+  state = c("all", "my", "other"),
+  otherstate = "*",
+  completes = T
+)
 }
 \arguments{
 \item{filename}{character name of the raw ascii data file}
@@ -29,4 +34,3 @@ layout="./data_raw/var_layouts/layout_2016")
 }
 
 }
-

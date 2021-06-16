@@ -4,8 +4,19 @@
 \alias{getMeasureReportEach}
 \title{BRFSS data file processing}
 \usage{
-getMeasureReportEach(df, meas, alias, title = "Desc", order = F,
-  useNA = "ifany", debug = F, replace, replace_vals, format = "\%d", ...)
+getMeasureReportEach(
+  df,
+  meas,
+  alias,
+  title = "Desc",
+  order = F,
+  useNA = "ifany",
+  debug = F,
+  replace,
+  replace_vals,
+  format = "\%d",
+  ...
+)
 }
 \arguments{
 \item{df}{data.frame containing the measure of interest}
@@ -35,4 +46,3 @@ data.frame containing measure data
 \description{
 Reads the file containing layout data for a BRFSS raw data file
 }
-

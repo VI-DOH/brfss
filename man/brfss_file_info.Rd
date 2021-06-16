@@ -22,4 +22,3 @@ lst<-brfss_file_info(filename)
 year<-lst$year
 }
 }
-

@@ -53,12 +53,12 @@ binary_yes<-function() {
 
 survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
 
-
+  #browser()
   if(nrow(df0)==0) {
     ret<-data.frame()
     return (ret)
   }
-
+  df0<-as.data.frame(df0)
   df0<-df0[df0[,coi]%in%den_vals,]
 
 
