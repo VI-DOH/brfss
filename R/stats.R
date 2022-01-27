@@ -1,7 +1,7 @@
 
 
 
-brfss.data<-function(year,states) {
+brfss.data<-function(year,states,version=0) {
 
   # year<-2019
   #
@@ -11,7 +11,7 @@ brfss.data<-function(year,states) {
   df<-data.frame()
 
   sapply(states,function(state) {
-    rdata_file<-paste0(orrr::dir.project("data"),year,"/brfss_",state,"_",year,".RData")
+    rdata_file<-brfss_state_data_filename(year,state,version)
     df<<-rbind(df,orrr::get.rdata(file = rdata_file))
   })
 

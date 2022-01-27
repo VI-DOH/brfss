@@ -60,7 +60,7 @@ sas.file.pattern.format<-function(){
 }
 
 sas.file.pattern.sasout<-function(version=0){
-#  https://www.cdc.gov/brfss/annual_data/2017/files/SASOUT17_LLCP_V3.SAS
+  #  https://www.cdc.gov/brfss/annual_data/2017/files/SASOUT17_LLCP_V3.SAS
   ptrn<-"SASOUT[YR]_LLCP.SAS"
   if(version>0) ptrn<-gsub("P.SAS",paste0("P_V",version,".SAS"),ptrn,fixed = T)
   ptrn
@@ -126,27 +126,34 @@ fix.missing.columns<-function(year,year2=year-1) {
 
 }
 
-sas.process.year<-function(year,download=TRUE,xpt=TRUE,...) {
-
+sas.process.year<-function(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...) {
 
   if(download) {
+    if(verbose) cat(" ... downloading ... main file ... ")
     sas.download.data(year=year)
+    if(verbose) cat(" versions ")
     sas.download.data.versions(year=year)
+    if(verbose) cat(" \n ... unzipping files\n ")
     unzip.all(year=year)
   }
 
   if(xpt) {
+    if(verbose) cat(" ... reading main xpt file\n ")
     read.xpt(year=year)
 
     ivers<-1
+    if(verbose) cat(" ... trying versions\n ")
     while (read.xpt(year=year,version=ivers,verbose=TRUE)) {
       #browser()
-      cat("Read ivers=",ivers,"\n")
+      if(verbose) cat("Read version=",ivers,"\n")
       ivers<-ivers+1
     }
   }
   sas.save.sasout(year = year)
   split.states(year=year,...)
+
+  save_response_stats(year = year)
+  save_module_stats(year=year)
 }
 
 sas.save.sasout<-function(year) {
@@ -267,12 +274,7 @@ read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
 
 
 split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
-                       load_pat=sas.file.pattern.rdata(),main=TRUE,versions=TRUE,states=NULL) {
-
-
-  ##  get data.frame of states
-
-  df_states<- orrr::get.rdata(paste0(orrr::dir.project("data"),"states.RData"))
+                       load_pat=sas.file.pattern.rdata(),main=TRUE,versions=TRUE,states=NULL,verbose=TRUE) {
 
   ver<-integer(0)
   if(main) ver<-0
@@ -305,7 +307,7 @@ split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
     mapply(function(id,nm) {
       if(id%in%states) {
         #browser()
-        cat("Saving ",nm,"V",version,"\n")
+        if(verbose) cat("Saving ",nm,"V",version,"\n")
         df_state<-df_xpt[df_xpt$`_STATE`==id,]
         sapply(1:ncol(df_xpt),function(i) {
           attrs<-attributes(df_xpt[[i]])
@@ -334,7 +336,7 @@ split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
       }
     },df_states$Id,df_states$Abbrev)
   })
-  invisible()
+
 }
 
 columns.add<-function(year,cols2add){

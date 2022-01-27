@@ -140,7 +140,7 @@ read.brfss.landline<-function(year,month,index=1, ...) {
 
 #' Read BRFSS raw cell phone data file
 #'
-#' Read a BRFSS raw data file containing cell phione data only
+#' Read a BRFSS raw data file containing cell phone data only
 #'
 #' @param year integer year of the data included in the file
 #' @param month integer month of the data included in the file
