@@ -7,7 +7,6 @@
 #' @return integer - value representing 'No'
 #' @export
 #'
-#' @examples
 binary_no<-function() {
   return(-2)
 }
@@ -50,7 +49,6 @@ binary_yes<-function() {
 #' @examples
 #'
 #'
-
 survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
 
   #browser()
@@ -100,7 +98,8 @@ survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
 #'
 survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, strata=NULL) {
 
-  require(package = "survey", quietly = T, warn.conflicts = F)
+  require(survey, quietly = T, warn.conflicts = F)
+  require(dplyr, quietly = T, warn.conflicts = F)
 
   if(!missing(subset)){
     if(is.null(subset)) {
@@ -121,7 +120,11 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
     return (ret)
   }
 
-  df0<-df0[!is.na(df0[coi]),]
+  #df0<-df0[!is.na(df0[coi]),]
+
+  df0 <- df0 %>% filter(!is.na( {{coi}} ))
+
+
   cols<-coi
   if(nsubs>0) cols<-c(cols,subset)
   if(!is.null(weighting)) {

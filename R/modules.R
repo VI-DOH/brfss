@@ -112,9 +112,12 @@ save_module_stats<-function(year) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' state_modules(2018,"WI")
 #' state_modules(2018,c(1,2))
 #' state_modules(2018,"MI",versions=T)
+#'}
+#'
 
 state_modules<-function(year,states,versions=FALSE,reduce=TRUE) {
 
@@ -149,8 +152,10 @@ state_modules<-function(year,states,versions=FALSE,reduce=TRUE) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' module_states(2018,"Pre-Diabetes")
 #' module_states(2018,c(1,2))
+#'}
 #'
 module_states<-function(year,modules,versions=FALSE,reduce=TRUE) {
 

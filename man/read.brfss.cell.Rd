@@ -19,7 +19,7 @@ read.brfss.cell(year, month, index = 1, ...)
 data frame containing landline data
 }
 \description{
-Read a BRFSS raw data file containing cell phione data only
+Read a BRFSS raw data file containing cell phone data only
 }
 \examples{
 \dontrun{
