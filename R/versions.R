@@ -12,8 +12,9 @@
 #' @export
 #'
 #' @examples
+#'\dontrun{
 #' maxvers<-highest_version(2018)
-#'
+#'}
 #'
 highest_version<-function(year) {
   fldr<-apply.pattern("sas_folder_data",year = year)

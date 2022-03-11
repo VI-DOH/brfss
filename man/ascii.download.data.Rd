@@ -4,7 +4,7 @@
 \alias{ascii.download.data}
 \title{Download ASCII BREFSS data}
 \usage{
-ascii.download.data(year, destpath = "./data_raw/", unzip = TRUE, rmzip = TRUE)
+ascii.download.data(year, destpath = NULL, unzip = TRUE, rmzip = TRUE)
 }
 \arguments{
 \item{year}{integer - year of data file}
@@ -22,6 +22,8 @@ ascii.download.data(year, destpath = "./data_raw/", unzip = TRUE, rmzip = TRUE)
 Download the annual ASCII BRFSS data file
 }
 \examples{
+\dontrun{
 ascii.download.data(2016)
+}
 
 }

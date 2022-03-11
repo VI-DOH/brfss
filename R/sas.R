@@ -611,7 +611,7 @@ sas.build.states <- function(year) {
     mutate(Abbrev = ifelse(Id == 72, "PR",Abbrev))
 
 
-  save(df_states, file = "./data/states.Rdata")
+  save(df_states, file = "./data/brfss_states.Rdata")
   df_states
 }
 

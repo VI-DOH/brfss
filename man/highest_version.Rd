@@ -16,7 +16,8 @@ integer - the highest version number found in the filenames
 Looks through the filenames in the BRFSS data folder for files with the pattern  *_Vn.* where n is the version number.
 }
 \examples{
+\dontrun{
 maxvers<-highest_version(2018)
-
+}
 
 }

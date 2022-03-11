@@ -27,7 +27,9 @@ ascii_data_url<-function(year) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ascii.download.data(2016)
+#' }
 #'
 ascii.download.data<-function(year,destpath = NULL, unzip=TRUE, rmzip=TRUE) {
 
