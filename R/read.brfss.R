@@ -89,7 +89,7 @@ read.brfss.ascii<-function(filename,layout,state=c("all","my","other"),otherstat
   ##  use the value of state to determine which rows to keep
   ##
   if(grepl("^m|^o",state)) {
-    yn<-is.na(df$RSPSTATE)
+    yn<-is.na(df$RSState)
     if(grepl("^o",state)) {
       yn<-grepl(otherstate,state)
     }
@@ -159,9 +159,9 @@ read.brfss.landline<-function(year,month,index=1, ...) {
 
 read.brfss.cell<-function(year,month,index=1, ...) {
 
-    ll_filename<-brfss.raw.ascii.filename(year=year,month=month,index=index,type = "cell")
+    cell_filename<-brfss.raw.ascii.filename(year=year,month=month,index=index,type = "cell")
 
-    read.brfss.ascii(filename = ll_filename , ...)
+    read.brfss.ascii(filename = cell_filename , ...)
 
   }
 

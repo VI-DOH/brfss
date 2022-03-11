@@ -78,8 +78,8 @@ save_module_stats<-function(year) {
 
   df_mods<-modules_used(year = year)
 
-  df_modules<-dplyr::left_join(df_mods,df_responses,by = c("year", "state", "version"))
 
+  df_modules<-dplyr::left_join(df_mods,df_responses,by = c("year", "state", "version"))
 
   df_mods_tots<-aggregate(responses ~ year + state + section_num, data=df_modules,FUN=sum)
 
@@ -91,11 +91,11 @@ save_module_stats<-function(year) {
   df_modules$ratio<-df_modules$responses/df_modules$responses_total
   nm<-paste0("df_responses_",year)
   assign(nm,df_responses)
-  save(list = c(nm),file = paste0(brfss_data_folder(year = year),"responses_",year,".RData"))
+  save(list = c(nm),file = paste0(apply.pattern("sas_folder_data",year = year),"responses_",year,".RData"))
 
   nm<-paste0("df_modules_",year)
   assign(nm,df_modules)
-  save(list = c(nm),file =  paste0(brfss_data_folder(year = year),"modules_",year,".RData"))
+  save(list = c(nm),file =  paste0(apply.pattern("sas_folder_data",year = year),"modules_",year,".RData"))
 }
 
 

@@ -154,7 +154,8 @@ brfss_field_values_filename<-function(year) {
 
 brfss_state_data_filename<-function(year,state,version=0) {
   if(is.numeric(state)) state<-state_abbs(state)
-  fname<-paste0(brfss_data_folder(year),"brfss_",state,"_",year,".RData")
+  fname<-paste0(apply.pattern("brfss_state_folder",year),
+                apply.pattern("brfss_state_file", year = year, abb = state))
   if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
   fname
 }

@@ -2,7 +2,6 @@
 
 fname<-"./data_raw/2017/ascii/LLCP2017ASC/LLCP2017.ASC"
 
-
 split.ascii<-function(fname) {
 
   txt<-readLines(fname)

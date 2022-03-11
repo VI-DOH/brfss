@@ -1,16 +1,9 @@
 
 
-################################
-sub_pattern<-function(strIn, year, version="") {
-  ret<-gsub("[YEAR]",year,strIn,fixed = T)
-  ret<-gsub("[YR]",year%%100,ret,fixed = T)
-  gsub("\\[VERS\\]",version,ret)
-}
-
-brfss.url.pattern.files<-function() {
-  "https://www.cdc.gov/brfss/annual_data/[YEAR]/files/"
-}
-# https://www.cdc.gov/brfss/annual_data/2018/files/LLCP2018XPT.zip
+# brfss.url.pattern.files<-function() {
+#   "https://www.cdc.gov/brfss/annual_data/[YEAR]/files/"
+# }
+# # https://www.cdc.gov/brfss/annual_data/2018/files/LLCP2018XPT.zip
 
 brfss.url.pattern.documentation<-function() {
   "https://www.cdc.gov/brfss/annual_data/[YEAR]/pdf/"
@@ -24,53 +17,55 @@ sas.url.pattern.download.doc<-function() {
 }
 
 
-sas.url.pattern.downloads.data<-function() {
-  c(
-    "LLCP[YEAR]XPT.zip",
-    "SASOUT[YR]_LLCP.SAS",
-    "Format[YR].sas"
-  )
-}
+# sas.url.pattern.downloads.data<-function() {
+#   c(
+#     "LLCP[YEAR]XPT.zip",
+#     "SASOUT[YR]_LLCP.SAS",
+#     "Format[YR].sas",
+#     "Formas[YR].sas"
+#   )
+# }
 
-sas.url.pattern.downloads.versions<-function() {
-
-  c(
-    "LLCP[YR]V[VERS]_XPT.zip",
-    "SASOUT[YR]_LLCP_V[VERS].SAS"
-  )
-}
-sas.folder.pattern.raw_data<-function(){
-  "./data_raw/[YEAR]/sas/"
-}
-
-sas.folder.pattern.data<-function(){
-  "./data/[YEAR]/"
-}
-
-sas.file.pattern.rdata<-function(){
-  "xpt_[YEAR].RData"
-}
-
-sas.file.pattern.xpt<-function(){
-  "LLCP[YEAR].XPT"
-}
-
-sas.file.pattern.format<-function(){
-  "FORMAT[YR].sas"
-}
-
-sas.file.pattern.sasout<-function(version=0){
-  #  https://www.cdc.gov/brfss/annual_data/2017/files/SASOUT17_LLCP_V3.SAS
-  ptrn<-"SASOUT[YR]_LLCP.SAS"
-  if(version>0) ptrn<-gsub("P.SAS",paste0("P_V",version,".SAS"),ptrn,fixed = T)
-  ptrn
-}
+# sas.url.pattern.downloads.versions<-function() {
+#
+#   c(
+#     "LLCP[YR]V[VERS]_XPT.zip",
+#     "SASOUT[YR]_LLCP_V[VERS].SAS"
+#   )
+# }
+#
+# sas.folder.pattern.raw_data<-function(){
+#   "./data_raw/[YEAR]/sas/"
+# }
+#
+# sas.folder.pattern.data<-function(){
+#   "./data/[YEAR]/"
+# }
+#
+# sas.file.pattern.rdata<-function(){
+#   "xpt_[YEAR].RData"
+# }
+#
+# sas.file.pattern.xpt<-function(){
+#   "LLCP[YEAR].XPT"
+# }
+#
+# sas.file.pattern.format<-function(){
+#   "FORMAT[YR].sas"
+# }
+# #
+#  sas.file.pattern.sasout<-function(version=0){
+#   #  https://www.cdc.gov/brfss/annual_data/2017/files/SASOUT17_LLCP_V3.SAS
+#   ptrn<-"SASOUT[YR]_LLCP.SAS"
+#   if(version>0) ptrn<-gsub("P.SAS",paste0("P_V",version,".SAS"),ptrn,fixed = T)
+#   ptrn
+# }
 
 unzip.all<-function(year,rmzip=TRUE) {
-  folder<-sub_pattern(strIn =sas.folder.pattern.raw_data(),year)
+  folder<-apply.pattern("sas_folder_raw",year)
   files<-list.files(folder,full.names = T)
 
-  files<-files[grep("[.]zip",files)]
+  files<-files[grep("[.]zip$",files)]
   folder<-normalizePath(folder,winslash = "/")
   folder<-gsub("[/]$","",folder)
   invisible(
@@ -126,6 +121,19 @@ fix.missing.columns<-function(year,year2=year-1) {
 
 }
 
+#' Process BRFSS Annual Data Files
+#' Use this function to process a single year of BRFSS data. This function sill download, unzip, and create a data frame with all data from the XPT file, as well as any other versions of the survey.
+#'
+#' @param year - int - year of interest
+#' @param download - boolean - download the data? Useful (set = FALSE) if you already have the downloaded files
+#' @param xpt - boolean - read/parse teh xpt file? Useful (set = FALSE) if you already have the xpt files processed
+#' @param verbose - output some information during processing
+#' @param ... other params
+#'
+#' @return invisible()
+#' @export
+#'
+#' @examples
 sas.process.year<-function(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...) {
 
   if(download) {
@@ -146,7 +154,7 @@ sas.process.year<-function(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...) {
     while (read.xpt(year=year,version=ivers,verbose=TRUE)) {
       #browser()
       if(verbose) cat("Read version=",ivers,"\n")
-      ivers<-ivers+1
+      ivers<-ivers + 1
     }
   }
   sas.save.sasout(year = year)
@@ -154,6 +162,8 @@ sas.process.year<-function(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...) {
 
   save_response_stats(year = year)
   save_module_stats(year=year)
+
+  invisible()
 }
 
 sas.save.sasout<-function(year) {
@@ -167,16 +177,21 @@ sas.save.sasout<-function(year) {
 
 sas.download.data<-function(year) {
 
-  files<-sas.url.pattern.downloads.data()
-  urlfiles<-sub_pattern(strIn =brfss.url.pattern.files(),year=year)
-  folderout<-sub_pattern(strIn =sas.folder.pattern.raw_data(),year=year)
+  #  files<-sas.url.pattern.downloads.data()
+  files<-get.pattern("sas_downloads")
+  urlfiles<- apply.pattern("brfss_url_files",year=year)
+  folderout<-apply.pattern("sas_folder_raw",year=year)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   sapply(files,function(file) {
-    file<-sub_pattern(strIn = file,year = year)
+    file<-patternize(strIn = file,year = year)
     url<-paste0(urlfiles,file)
     fileout<-paste0(folderout,file)
     download.file(url = url,destfile = fileout)
+    if(grepl("[.]zip$",fileout)) {
+      unzip(fileout,exdir = normalizePath(folderout))
+      file.remove(fileout)
+    }
   })
 
 }
@@ -184,40 +199,65 @@ sas.download.data<-function(year) {
 
 sas.download.data.versions<-function(year) {
 
-  files<-sas.url.pattern.downloads.versions()
-  folderout<-sub_pattern(strIn =sas.folder.pattern.raw_data(),year=year)
+  #files<-sas.url.pattern.downloads.versions()
+  files<-get.pattern("sas_version_downloads")
+
+  folderout<-apply.pattern("sas_folder_raw",year=year)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
-  urlfiles<-sub_pattern(strIn =brfss.url.pattern.files(),year=year)
+  urlfiles<-apply.pattern("brfss_url_files",year=year)
 
   sapply(files,function(file) {
-    sapply(1:4,function(version) {
-      file<-sub_pattern(strIn = file,year = year,version = version )
+    done <- FALSE
+    sapply(1:6,function(version) {
+
+      file<-patternize(strIn = file,year = year,version = version )
       url<-paste0(urlfiles,file)
-      if(RCurl::url.exists(url)){
+      if(!done) { #RCurl::url.exists(url)){
         fileout<-paste0(folderout,file)
 
         oldw <- getOption("warn")
         options(warn = -1)
-        for (file in files) {
-          tryCatch(download.file(url = url,destfile = fileout),
-                   error = function(e) print(paste(url, 'does not exist')))
-        }
-        options(warn = oldw)      }
-    })
-  })
+        #      for (file in files) {
 
+        tryCatch(expr = {
+          download.file(url = url,destfile = fileout)
+          if(grepl("[.]zip$",fileout)) {
+            unzip(fileout,exdir = normalizePath(folderout))
+            file.remove(fileout)
+          } # end if(grepl()
+
+        }, # end expr =
+
+        error = function(e) {
+          print('Done downloading this pattern')
+          done <<-TRUE
+        }) # end tryCatch
+
+        #}  # end for(file
+
+        options(warn = oldw)      }
+    })  # end sapply(1:
+  })  # end sapply(files
+
+  invisible()
 }
 
-read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
-                   file_pat=sas.file.pattern.xpt(),
-                   savefolder_pat=sas.folder.pattern.data(),
-                   save_pat=sas.file.pattern.rdata(),
-                   sasout_folder_pat=sas.folder.pattern.raw_data(),
-                   sasout_file_pat=sas.file.pattern.sasout(version),
+read.xpt<-function(year,
+                   readfolder_pat=get.pattern("sas_folder_raw"),
+                   file_pat=get.pattern("xpt_file"),
+                   savefolder_pat=get.pattern("sas_folder_data"),
+                   save_pat=get.pattern("sas_rdata"),
+                   sasout_folder_pat=get.pattern("sas_folder_raw"),
+                   sasout_file_pat=NULL,
                    version=0,verbose=F) {
 
-  folder<-sub_pattern(readfolder_pat,year)
+  if(is.null(sasout_file_pat)) {
+    if(version>0) sasout_file_pat<-apply.pattern("sas_sasout_version",year = year, version = version) else
+      sasout_file_pat<-apply.pattern("sas_sasout",year = year)
+  }
+
+  folder<-patternize(readfolder_pat,year)
   if(version>0) {
     if(verbose) cat("Trying version ",version,"\n")
     file_pat<-"LLCP[YR]V[VERS].XPT"
@@ -227,7 +267,7 @@ read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
     if(verbose) cat("Trying main file \n")
   }
 
-  file<-sub_pattern(file_pat,year = year,version = version)
+  file<-patternize(file_pat,year = year,version = version)
   xptname<-paste0(folder,file)
 
   if(file.exists(xptname)) {
@@ -259,9 +299,9 @@ read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
     #cat("Saving\n")
     #sink(file = NULL)
 
-    savefolder<-sub_pattern(savefolder_pat,year)
+    savefolder<-patternize(savefolder_pat,year)
     if(!dir.exists(savefolder)) dir.create(savefolder,recursive = T)
-    savename<- sub_pattern(save_pat,year,version=version)
+    savename<- patternize(save_pat,year,version=version)
     fname<-paste0("df_xpt_",year,ifelse(version>0,paste0("_V",version),""))
     assign(fname,df_xpt)
     save(list=c(fname),file = paste0(savefolder,savename))
@@ -273,14 +313,17 @@ read.xpt<-function(year,readfolder_pat=sas.folder.pattern.raw_data(),
 }
 
 
-split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
-                       load_pat=sas.file.pattern.rdata(),main=TRUE,versions=TRUE,states=NULL,verbose=TRUE) {
+split.states<-function(year, loadfolder_pat=get.pattern("sas_folder_data"),
+                       load_pat=get.pattern("sas_rdata"),main=TRUE,versions=TRUE,states=NULL,verbose=TRUE) {
 
   ver<-integer(0)
   if(main) ver<-0
   if(versions) ver<-c(ver,1:3)
 
+  df_states <- orrr::get.rdata("./data/states.RData")
+
   sapply(ver,function(version) {
+
     fname<-paste0("df_xpt_",year)
 
     if (version>0) {
@@ -304,9 +347,16 @@ split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
 
     add_cols<-character(0)
 
+    fldr_geog <- paste0("./data/",year,"/geog/")
+
+    if(!dir.exists(fldr_geog)) dir.create(fldr_geog)
+
     mapply(function(id,nm) {
+      cat("X\n")
+
+
       if(id%in%states) {
-        #browser()
+
         if(verbose) cat("Saving ",nm,"V",version,"\n")
         df_state<-df_xpt[df_xpt$`_STATE`==id,]
         sapply(1:ncol(df_xpt),function(i) {
@@ -322,12 +372,12 @@ split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
           }
 
         })
-        dfname<-paste0("df_",nm)
+        dfname<-paste0("df_",nm,"_",year)
         if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
 
         assign(dfname,df_state)
 
-        fname<-paste0("./data/",year,"/brfss_",nm,"_",year,".RData")
+        fname<-paste0("./data/",year,"/geog/",nm,"_",year,".RData")
         if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
 
         save(list = c(dfname),file = fname)
@@ -341,7 +391,7 @@ split.states<-function(year, loadfolder_pat=sas.folder.pattern.data(),
 
 columns.add<-function(year,cols2add){
   e<-new.env()
-  fname<-paste0("./data/",year,"/columns_",year,".RData")
+  fname<-apply.pattern("brfss_columns_file",year)
   load(file = fname,envir = e)
 
   df<-get(ls(e),envir = e)
@@ -363,8 +413,8 @@ load.sas<-function(year, loadfolder_pat=sas.folder.pattern.data(),
                    load_pat=sas.file.pattern.rdata(),version=0) {
 
   e<-new.env()
-  loadfolder<-sub_pattern(loadfolder_pat,year)
-  loadname<- sub_pattern(load_pat,year)
+  loadfolder<-patternize(loadfolder_pat,year)
+  loadname<- patternize(load_pat,year)
   if(version>0) loadname<-gsub("[.]RData",paste0("_V",version,".RData"),loadname)
   #browser()
   load(file = paste0(loadfolder,loadname),envir = e)
@@ -372,10 +422,13 @@ load.sas<-function(year, loadfolder_pat=sas.folder.pattern.data(),
 }
 
 
-read.sas.format<-function(year,folder_pat=sas.folder.pattern.raw_data(),file_pat=sas.file.pattern.format()) {
+read.sas.format<-function(year,folder_pat= NULL, file_pat = NULL) {
 
-  folder<-sub_pattern(folder_pat,year)
-  file<-sub_pattern(file_pat,year)
+  if(is.null(folder_pat)) folder_pat <- get.pattern("sas_folder_raw")
+  if(is.null(file_pat)) file_pat <- get.pattern("sas_file_format")
+
+  folder<-patternize(folder_pat,year)
+  file<-patternize(file_pat,year)
   paste0(folder,file)
 
   lines<-readLines(paste0(folder,file))
@@ -419,26 +472,36 @@ get.sas.labels<-function(df_xpt) {
 }
 
 
-read.sasout<-function(year,folder_pat=sas.folder.pattern.raw_data(),file_pat=sas.file.pattern.sasout()) {
+read.sasout<-function(year,folder_pat=NULL,file_pat=NULL,version=0) {
+  if(is.null(folder_pat)) folder_pat <- get.pattern("sas_folder_raw")
+  folder<-patternize(folder_pat,year)
 
-  folder<-sub_pattern(folder_pat,year)
-  file<-sub_pattern(file_pat,year)
+  if(is.null(file_pat)) {
+    if(version>0) file_pat<-get.pattern("sas_sasout_version") else
+      file_pat<-get.pattern("sas_sasout")
+  }
+
+  file<-patternize(file_pat,year,version = version)
   path<-paste0(folder,file)
   if(file.exists(path)){
     lines<-readLines(path)
     lines<-gsub("\f","",lines)
 
     lbl_line<-grep("^Label$" ,lines)
-    lbl_lines<-(lbl_line+1):(max(grep("^;$" ,lines))-1)
+    end_line <- max(grep("^;$" ,lines))
+
+    if (end_line<lbl_line) end_line <- grep("^RUN;$" ,lines)
+    lbl_lines<-(lbl_line+1):(end_line-1)
     label_lines<-lines[lbl_lines]
 
     df_lbl<-data.frame(varname=gsub("(.*) {,}=(.*)","\\1",label_lines),
                        label=gsub("(.*) {,}= {,}'(.*)'","\\2",label_lines),
                        stringsAsFactors = F)
 
-    lines<-lines[-lbl_lines]
 
+    lines<-lines[-lbl_lines]
     inp_line<-grep("^INPUT$" ,lines)
+
     inp_lines<-(inp_line+1):(min(grep("^;$" ,lines))-1)
     input_lines<-lines[inp_lines]
 
@@ -528,4 +591,263 @@ sasout.add.override<-function(year,column,label) {
   save(df_override,file = file)
 }
 
+sas.build.states <- function(year) {
+  require(dplyr)
 
+  df <- data.frame(State = state.name, Abbrev = state.abb) %>%
+    mutate(name = rownames(.))
+
+
+
+  df_states <- read.sas.format(year) %>%
+    filter(varname == "_STATE") %>%
+    rename(State = text, Id = value ) %>%
+    select(State,Id) %>%
+    mutate(State = stringr::str_trim(State)) %>%
+    left_join(df %>% select(State, Abbrev), by = "State") %>%
+    mutate(Abbrev = ifelse(Id == 11, "DC",Abbrev))%>%
+    mutate(Abbrev = ifelse(Id == 66, "GU",Abbrev))%>%
+    mutate(Abbrev = ifelse(Id == 78, "VI",Abbrev))%>%
+    mutate(Abbrev = ifelse(Id == 72, "PR",Abbrev))
+
+
+  save(df_states, file = "./data/states.Rdata")
+  df_states
+}
+
+
+read.sas.layout<-function(year, save = TRUE) {
+  require(stringr)
+
+  # get the filename for the data
+  #  name format based on year
+  if(year>2010) {
+    file<-apply.pattern("sas_sasout_path",year=year)
+
+  } else {
+    return(NULL)
+    #file<-paste("sasout",sprintf("%02d",year%%100),".sas",sep="")
+  }
+
+
+  #  file <- paste0(orrr::dir.project(),"/data/layout/sas/",file)
+  lines<-readLines(file, warn = F, encoding = "latin1")
+
+  lines <- gsub("—", "-",lines)
+
+  # get the start point of interest and remove everything before
+
+  start<-grep("^Label$",lines) + 1
+  if (length(start)==0) start<-grep("\\* ASSIGN ",lines)
+  lines<-lines[start:length(lines)]
+
+  # get the end point of interest (; by itself on a line) and remove everything after
+  #   including that end line
+
+  lines<-lines[1:(grep("^;$",lines)-1) ]
+
+
+  #####################################
+  ##
+  ##  put together broken lines
+
+  varlines<-grep(" = '", lines)
+  vline2<-c(varlines[2:length(varlines)]-1,length(lines))
+
+  ulines<-as.character(mapply(function(l0,l1) {
+    paste(lines[l0:l1],collapse="")
+
+  },varlines,vline2))
+
+
+  vars<-gsub("(.*) =.*","\\1",ulines)
+  vars<-str_trim(vars)
+  vars<-gsub("^_","X_",vars)
+
+
+  question<-gsub("(.*) = '(.*)'$","\\2",ulines)
+
+  df_ranges<-read.sas.field.ranges(year)
+
+  df<- dplyr::left_join(df_ranges,data.frame(var=vars,description=question,stringsAsFactors = F),by="var")
+
+  colnames(df)[colnames(df)=="var"]<-"col_name"
+  df$field_size<-as.integer(df$end)-as.integer(df$start)+1
+
+  df_layout <- df %>% select(field_size,start,end,col_name,  group_type, group_number,
+                             group_text, description) %>%
+    group_by(group_text) %>%
+    mutate(group_index = row_number()) %>%
+    relocate(group_index,.before = description) %>%
+    as.data.frame() %>%
+    fill_dummies()
+
+  if(save) save(df_layout, file = apply.pattern("brfss_layout_path",year = year))
+  df_layout
+}
+#####################################################################################################
+##
+##    get the sas field ranges for fwf
+
+
+read.sas.field.ranges<-function(year) {
+  require(stringr)
+
+  # get the filename for the data
+  #  name format based on year
+
+  if(year>2010) {
+    file<-apply.pattern("sas_sasout_path",year=year)
+
+  } else {
+    return(NULL)
+    #file<-paste("sasout",sprintf("%02d",year%%100),".sas",sep="")
+  }
+
+  lines<-readLines(file, warn=F)
+
+  lines <- gsub("—", "-",lines)
+
+  # get the start point of interest and remove everything before
+
+
+  start<-grep("^(INPUT[[:space:]]|INPUT$)",lines)
+
+  if(nchar(lines[start]) > 10) {
+    lines[start]<-gsub("^INPUT[[:space:]]","",lines[start])
+  } else {
+    start<-start+1
+  }
+  lines<-lines[start:length(lines)]
+
+
+
+  # get the end point of interest (; by itself on a line, the first one) and remove everything after
+  #   including that end line
+
+  end<- min(grep("^;$",lines))-1
+  lines<-lines[1:end ]
+
+
+  ## remove known unwanted line, if they exist
+
+  lines<-lines[grep("STATE ADDED ",lines,invert=T)]
+  lines<-lines[grep("^\\*",lines,invert=T)]
+
+
+
+  ##
+  ##  get the sections/modules
+  ##
+
+  # annotated lines
+  lines_secmod<- grep("[/][*]",lines)
+
+  lines_save<-lines
+
+  # blank unannotated lines
+  lines_save[-lines_secmod]<-""
+
+  # blank unannotated lines
+  lines_save<-str_trim(gsub(".*[/][*] (.*)","\\1",lines_save))
+  lines_save<-str_trim(gsub("[*][/]","",lines_save))
+
+  #####################################################################
+  ##
+  ##    get the group_text
+  type <- ""
+  group_text <- sapply(lines_save, function(typ) {
+    if(typ!="") type<<-typ
+    return(type)
+
+  })
+
+  group_text <- unname(gsub(".*:","",group_text))
+
+  # lines of interest ... beginning of Section or Module
+  lines_secmod2<- grep("^(Sec|Mod).*:",lines_save)
+
+  # put random word ('STOP') at postion where not a question
+  lines_save[lines_secmod[!lines_secmod%in%lines_secmod2]]<-"STOP"
+  lines_save[grep("[Vv]ariable",lines_save)]<-"STOP"
+  lines_save[grep("Questionnaire",lines_save)]<-"STOP"
+
+  lines_stop<-grep("^STOP$",lines_save)
+
+  #beginning (1st question) of Section
+  sect_start<-grep("^Section ",lines_save)
+  sect_end<-sapply(sect_start,function(x) min(c(lines_stop[which(lines_stop>x)],lines_secmod2[which(lines_secmod2>x)]))-1)
+
+  #beginning (1st question) of Module
+  mod_start<-grep("^Module ",lines_save)
+  mod_end<-sapply(mod_start,function(x) min(c(lines_stop[which(lines_stop>x)],lines_secmod2[which(lines_secmod2>x)]))-1)
+
+  section_text<-character(length(lines_save))
+  section_index<-integer(length(lines_save))
+
+  mapply(function(s0,s1) {
+    section_text[s0:s1]<<-str_trim(gsub("Section (.*):(.*)[*][/]","\\2",lines_save[s0]))
+    section_index[s0:s1]<<-(s0:s1)-s0+1
+
+  },sect_start,sect_end)
+
+  module_text<-character(length(lines_save))
+  module_index<-integer(length(lines_save))
+
+  mapply(function(m0,m1) {
+    module_text[m0:m1]<<-str_trim(gsub("Module (.*):(.*)[*][/]","\\2",lines_save[m0]))
+    module_index[m0:m1]<<-(m0:m1)-m0+1
+
+  },mod_start,mod_end)
+
+  df_sectmod<-data.frame(section_text,section_index,module_text,module_index)
+
+  #########
+
+  lines<-str_trim(gsub("[/][*].*","",lines))
+
+  keep<-!grepl("[*][/]",lines)
+  lines<-lines[keep]
+  df_sectmod<-df_sectmod[keep,]
+
+  vars<-gsub("(.*)[[:space:]](.*)","\\1",lines)
+  vars<-str_trim(gsub("^_","X_",vars))
+
+  range<-gsub("(.*)[[:space:]](.*)","\\2",lines)
+  range<-gsub("[$]","",range)
+  start<-gsub("(.*)-.*","\\1",range)
+  end<-gsub("(.*)-(.*)","\\2",range)
+
+  df<-data.frame(var=vars,start=start,end=end,stringsAsFactors = F)
+
+  df<-cbind(df,df_sectmod) %>%
+    mutate(group_type = ifelse(section_index >0,"Core",""))  %>%
+    mutate(group_type = ifelse(module_index >0,"Module",group_type)) %>%
+    mutate(group_type = ifelse(group_type == "" , group_text, group_type)) %>%
+    mutate(group_number = ifelse(section_index>module_index,section_index,module_index)) %>%
+    mutate(group_text = group_text)
+
+  df<-df[!is.na(as.integer(df$start)),]
+
+
+  df
+}
+
+fill_dummies <- function(df) {
+  require(dplyr)
+
+  start <- as.integer(df%>% slice(2:nrow(.)) %>% pull(start))
+  last <-  as.integer(df%>% slice(1:(nrow(.)-1)) %>% pull(end))
+  fillem <- ((start-last)>1)
+  df_fill <- data.frame(start = last+1, end = start -1 ) %>%
+    mutate(field_size = end - start) %>%
+    filter(fillem) %>% relocate(field_size , 1) %>%
+    mutate(start = as.character(start), end = as.character(end)) %>%
+    mutate(col_name = paste0("DUMMY",start)) %>%
+    mutate(group_type = "DUMMY") %>%
+    mutate(group_text = "DUMMY") %>%
+    bind_rows(df) %>%
+    arrange(as.integer(start))
+
+  df_fill
+}

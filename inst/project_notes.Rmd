@@ -1,0 +1,74 @@
+---
+title: "Processing BRFSS data"
+output: html_notebook
+---
+  
+  
+  
+#### File and Folder Patterns
+
+=============================  
+
+##### Folder and file names are stored as patterns in a data frame stored in the data subfolder as patterns.RData. Substitutions for year, vesion, and geography can be made.
+
+***
+  
+#### Process data for a single year using the SAS data files  
+
+============================================================= 
+
+`sas.process.year(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...)`
+
+ For the given year, this will ...
+ 
+ ***
+ 
+ if download = TRUE ...
+ 
+  * download the main data file and all versions from the CDC BRFSS data url  
+    
+    `sas.download.data(year=year)`  
+    `sas.download.data.versions(year=year)`
+
+  * unzip all zip files 
+  
+    `unzip.all(year=year)`
+
+***  
+
+if  xpt = TRUE ... 
+  
+  * read the main XPT files and all versions 
+  
+    `read.xpt(year=year)`  
+    `read.xpt(year=year,version=ivers,verbose=TRUE)` 
+
+    
+***
+
+ * sasout files contain information on each variable
+    
+    `sas.save.sasout(year = year)`  
+    
+  * split data file up by state/territory
+  
+    `split.states(year=year,...)`  
+
+  * save some information on how many responses for each version (including the main file) and which modules were used
+  
+    `save_response_stats(year = year)`  
+    `save_module_stats(year=year)`  
+
+
+
+
+```{r}
+
+```
+
+Layout
+
+To save the layout of the ASCII file, run 
+
+   
+`read.sas.layout(year = year)`

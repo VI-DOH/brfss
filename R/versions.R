@@ -16,7 +16,7 @@
 #'
 #'
 highest_version<-function(year) {
-  fldr<-brfss_data_folder(year)
+  fldr<-apply.pattern("sas_folder_data",year = year)
 
   files<-list.files(fldr)
   files<-files[grep("_V[0-9][.]",files)]
@@ -39,9 +39,11 @@ calc_responses<-function(year,states,versions) {
   invisible(
     sapply(states,function(state){
       sapply(versions,function(version){
-        if(brfss_state_version_exists(year,state,version)) {
+         if(brfss_state_version_exists(year,state,version)) {
 
-          df0<<-rbind(df0,data.frame(year=year,state=state,version=version,responses=nrow(brfss_state_data(year,state,version))))
+          df0<<-rbind(df0,
+                      data.frame(year=year,state=state,
+                                 version=version,responses=nrow(brfss_state_data(year,state,version))))
         }
       })
     } )
@@ -71,16 +73,16 @@ save_response_stats<-function(year) {
 
   nm<-paste0("df_responses_",year)
   assign(nm,df_responses)
-  save(list = c(nm),file = paste0(brfss_data_folder(year = year),"responses_",year,".RData"))
+  save(list = c(nm),file = paste0(apply.pattern("sas_folder_data",year = year),"responses_",year,".RData"))
 
 }
 
 
-responses<-function(year,states,versions, reduce=TRUE) {
+responses<-function(year,states=NULL,versions, reduce=TRUE) {
 
   df<- orrr::get.rdata(orrr::dir.project(c("data",year,paste0("responses_",year,".RData")),slash = F))
 
-  if(!missing(states)) {
+  if(!is.null(states)) {
     if(is.numeric(states)) states<-state_abbs(states)
     df<-df[df$state%in%states,]
   } else {
