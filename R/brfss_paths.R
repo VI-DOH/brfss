@@ -152,17 +152,17 @@ brfss_field_values_filename<-function(year) {
   paste("./data_raw/var_layouts/field_values_",year,".csv",sep="")
 }
 
-brfss_state_data_filename<-function(year,state,version=0) {
-  if(is.numeric(state)) state<-state_abbs(state)
-  fname<-paste0(apply.pattern("brfss_state_folder",year),
-                apply.pattern("brfss_state_file", year = year, abb = state))
+brfss_geog_data_filename<-function(year,geog,version=0) {
+  if(is.numeric(geog)) geog<-geog_abbs(geog)
+  fname<-paste0(apply.pattern("brfss_geog_folder", YEAR= year),
+                apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
   if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
   fname
 }
 
-brfss_state_version_exists<-function(year,state,version=1) {
-  if(is.numeric(state)) state<-state_abbs(state)
-  fname<-brfss_state_data_filename(year,state,version=version)
+brfss_geog_version_exists<-function(year,geog,version=1) {
+  if(is.numeric(geog)) geog<-geog_abbs(geog)
+  fname<-brfss_geog_data_filename(year,geog,version=version)
   file.exists(fname)
 }
 

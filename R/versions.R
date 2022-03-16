@@ -17,7 +17,7 @@
 #'}
 #'
 highest_version<-function(year) {
-  fldr<-apply.pattern("sas_folder_data",year = year)
+  fldr<-apply.pattern("sas_folder_data",YEAR = year)
 
   files<-list.files(fldr)
   files<-files[grep("_V[0-9][.]",files)]
@@ -25,26 +25,29 @@ highest_version<-function(year) {
   max(vers)
 }
 
-calc_responses<-function(year,states,versions) {
+calc_responses<-function(year,geogs,versions) {
 
-  if(missing(versions)) versions=0:highest_version(year)
+  if(missing(versions)) versions <- 0:highest_version(year)
 
-  if(missing(states)) {
-    states<-state_abbs()
+  if(missing(geogs)) {
+    geogs<-geog_abbs()
   } else {
 
-    if(is.numeric(states)) states<-state_abbs(states)
+    if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
   }
 
   df0<-data.frame()
   invisible(
-    sapply(states,function(state){
+    sapply(geogs,function(geog){
       sapply(versions,function(version){
-         if(brfss_state_version_exists(year,state,version)) {
 
-          df0<<-rbind(df0,
-                      data.frame(year=year,state=state,
-                                 version=version,responses=nrow(brfss_state_data(year,state,version))))
+        if(brfss_geog_version_exists(year,geog,version)) {
+
+          df_resp_cnts <- brfss_geog_data(year,geog,version)
+          df_add <- data.frame(year=year,geog=geog, version=version,
+                               responses=nrow(df_resp_cnts))
+          df0<<-rbind(df0, df_add)
+
         }
       })
     } )
@@ -52,13 +55,13 @@ calc_responses<-function(year,states,versions) {
   df0
 }
 
-responses_by_state<-function(year,state,version=0) {
+responses_by_geog<-function(year,geog,version=0) {
 
-  if(is.numeric(state)) state<-state_abbs(state)
+  if(is.numeric(geog)) geog<-geog_abbs(geog)
 
-  if(brfss_state_version_exists(year,state,version)) {
+  if(brfss_geog_version_exists(year,geog,version)) {
 
-    df0<-brfss_state_data(year,state,version)
+    df0<-brfss_geog_data(year,geog,version)
 
     return(nrow(df0))
   } else {
@@ -71,23 +74,22 @@ save_response_stats<-function(year) {
   require(dplyr)
 
   df_responses<-calc_responses(year = year)
-
   nm<-paste0("df_responses_",year)
   assign(nm,df_responses)
-  save(list = c(nm),file = paste0(apply.pattern("sas_folder_data",year = year),"responses_",year,".RData"))
+  save(list = c(nm),file = paste0(apply.pattern("sas_folder_data",YEAR = year),"responses_",year,".RData"))
 
 }
 
 
-responses<-function(year,states=NULL,versions, reduce=TRUE) {
+responses<-function(year,geogs=NULL,versions, reduce=TRUE) {
 
   df<- orrr::get.rdata(orrr::dir.project(c("data",year,paste0("responses_",year,".RData")),slash = F))
 
-  if(!is.null(states)) {
-    if(is.numeric(states)) states<-state_abbs(states)
-    df<-df[df$state%in%states,]
+  if(!is.null(geogs)) {
+    if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
+    df<-df[df$geog%in%geogs,]
   } else {
-    states<-state_abbs()
+    geogs<-geog_abbs()
   }
 
   if(!missing(versions)) {
@@ -96,7 +98,7 @@ responses<-function(year,states=NULL,versions, reduce=TRUE) {
     versions<-integer(2)
   }
 
-  if(reduce && length(states)==1 && length(versions)==1) {
+  if(reduce && length(geogs)==1 && length(versions)==1) {
     return(df$responses)
   } else {
     return(df)

@@ -11,7 +11,7 @@ brfss.data<-function(year,states,version=0) {
   df<-data.frame()
 
   sapply(states,function(state) {
-    rdata_file<-brfss_state_data_filename(year,state,version)
+    rdata_file<-brfss_geog_data_filename(year,state,version)
     df<<-rbind(df,orrr::get.rdata(file = rdata_file))
   })
 

@@ -33,7 +33,7 @@ ascii_data_url<-function(year) {
 #'
 ascii.download.data<-function(year,destpath = NULL, unzip=TRUE, rmzip=TRUE) {
 
-  if(is.null(destpath)) destpath <- apply.pattern("ascii_raw_data_folder",year = year)
+  if(is.null(destpath)) destpath <- apply.pattern("ascii_raw_data_folder", YEAR = year)
   destpath <- normalizePath(destpath,winslash = "/",mustWork = FALSE)
 #
 #   if(!grepl("/$",destpath)) destpath <- paste0(destpath,"/")
@@ -42,7 +42,7 @@ ascii.download.data<-function(year,destpath = NULL, unzip=TRUE, rmzip=TRUE) {
 
   if(!dir.exists(destpath)) dir.create(destpath,recursive = TRUE)
 
-  url<-apply.pattern("ascii_downloads",year)
+  url<-apply.pattern("ascii_downloads",YEAR =year)
   destfile<-paste0(destpath,"LLCP",year,"ASC.zip")
 
   browser()

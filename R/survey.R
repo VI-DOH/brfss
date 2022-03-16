@@ -101,6 +101,7 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
   require(survey, quietly = T, warn.conflicts = F)
   require(dplyr, quietly = T, warn.conflicts = F)
 
+
   if(!missing(subset)){
     if(is.null(subset)) {
       nsubs<-0

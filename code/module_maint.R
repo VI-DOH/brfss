@@ -13,13 +13,13 @@ save_module_stats(2019)
 source("./R/stats.R")
 
 year<-2018
-state<-"MI"
+geog <-"MI"
 
 use_ratio<-FALSE
 
-df0<-brfss.data(year,states = state,0)
-df2<-brfss.data(year,states = state,version = 2)
-df3<-brfss.data(year,states = state,version = 3)
+df0<-brfss.data(year,geogs = geog,0)
+df2<-brfss.data(year,geogs = geog,version = 2)
+df3<-brfss.data(year,geogs = geog,version = 3)
 
 cnames0<-colnames(df0)
 cnames2<-colnames(df2)
@@ -29,7 +29,7 @@ cnames2[!cnames2%in%cnames0]
 cnames3[!cnames3%in%cnames0]
 
 
-df_resp<-responses(year,states=state)
+df_resp<-responses(year,geogs=geog)
 
 if(use_ratio) {
   tot_resp<-sum(df_resp$responses)

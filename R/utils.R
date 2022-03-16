@@ -1,86 +1,93 @@
 
-state_ids<-function(states) {
+geog_ids<-function(geogs) {
 
-  ##  get data.frame of states
+  ##  get data.frame of geogs
 
-  df_states<- orrr::get.rdata(paste0(orrr::dir.project("data"),"states.RData"))
+  df_geogs<- orrr::get.rdata(paste0(orrr::dir.project("data"),"geogs.RData"))
 
-  if(is.character(states)) {
+  if(is.character(geogs)) {
 
-    if(nchar(states[1])==2) {
-      states<-sapply(states,function(state) {
-        df_states[df_states$Abbrev==state,"Id"]
+    if(nchar(geogs[1])==2) {
+      geogs<-sapply(geogs,function(geog) {
+        df_geogs[df_geogs$Abbrev==geog,"Id"]
       })
     } else {
-      states<-sapply(states,function(state) {
-        df_states[df_states$State==state,"Id"]
+      geogs<-sapply(geogs,function(geog) {
+        df_geogs[df_geogs$State==geog,"Id"]
 
       })
     }
   } else {
-    return(states)
+    return(geogs)
   }
-  states
+  geogs
 }
 
 
-state_abbs<-function(states) {
+geog_abbs<-function(geogs) {
 
-  ##  get data.frame of states
+  ##  get data.frame of geogs
 
-  df_states<- orrr::get.rdata(paste0(orrr::dir.project("data"),"states.RData"))
+  df_geogs<- orrr::get.rdata(paste0(orrr::dir.project("data"),"geogs.rda"))
 
-  if(missing(states)) {
-    states<-df_states$Abbrev
+  if(missing(geogs)) {
+    geogs<-df_geogs$Abbrev
   } else {
-    if(is.character(states)) {
+    if(is.character(geogs)) {
 
-      if(nchar(states[1])==2) {
-        return(states)
+      if(nchar(geogs[1])==2) {
+        return(geogs)
       } else {
-        states<-sapply(states,function(state) {
-          df_states[df_states$State==state,"Abbrev"]
+        geogs<-sapply(geogs,function(geog) {
+          df_geogs[df_geogs$Geog==geog,"Abbrev"]
 
         })
       }
     } else {
-      states<-sapply(states,function(state) {
-        df_states[df_states$Id==state,"Abbrev"]
+      geogs<-sapply(geogs,function(geog) {
+        df_geogs[df_geogs$Id==geog,"Abbrev"]
 
       })  }
 
   }
-  states
+  geogs
 }
 
 
-state_names<-function(states) {
+geog_names<-function(geogs) {
 
-  ##  get data.frame of states
+  ##  get data.frame of geogs
 
-  df_states<- orrr::get.rdata(paste0(orrr::dir.project("data"),"states.RData"))
+  df_geogs<- orrr::get.rdata(paste0(orrr::dir.project("data"),"geogs.RData"))
 
-  if(is.character(states)) {
+  if(is.character(geogs)) {
 
-    if(nchar(states[1])!=2) {
-      return(states)
+    if(nchar(geogs[1])!=2) {
+      return(geogs)
     } else {
-      states<-sapply(states,function(state) {
-        df_states[df_states$Abbrev==state,"State"]
+      geogs<-sapply(geogs,function(geog) {
+        df_geogs[df_geogs$Abbrev==geog,"State"]
 
       })
     }
   } else {
-    states<-sapply(states,function(state) {
-      df_states[df_states$Id==state,"State"]
+    geogs<-sapply(geogs,function(geog) {
+      df_geogs[df_geogs$Id==geog,"State"]
 
     })  }
-  states
+  geogs
 }
 
-brfss_state_data<-function(year,state,version=0) {
-  if(is.numeric(state)) state<-state_abbs(state)
-  fname<-brfss_state_data_filename(year,state,version=version)
+brfss_geog_data<-function(year,geog,version=0) {
+
+  if(is.numeric(geog)) geog<-geog_abbs(geog)
+  if(version>0) {
+    fil_name<-apply.pattern("brfss_geog_file_version", YEAR = year, GEOG = geog, VERS=version)
+  } else {
+    fil_name<-apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog, VERS=version)
+  }
+  fldr_name<-apply.pattern("brfss_geog_folder", YEAR = year, GEOG = geog, VERS=version)
+  fname<-paste0(fldr_name,fil_name)
   if(file.exists(fname)) {
     df_brfss<- orrr::get.rdata(fname)
   } else {
@@ -89,3 +96,4 @@ brfss_state_data<-function(year,state,version=0) {
 
   df_brfss
 }
+

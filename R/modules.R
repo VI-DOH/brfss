@@ -1,16 +1,16 @@
 
-modules_used<-function(year,states) {
+modules_used<-function(year,geogs) {
 
   vers_max<-highest_version(year)
 
-  if(missing(states)) states<-state_abbs()
+  if(missing(geogs)) geogs<-geog_abbs()
 
   df<-data.frame()
 
 
-  sapply(states, function(state){
+  sapply(geogs, function(geog){
     sapply(0:vers_max,function(ver){
-      df<<-rbind(df,calc_modules_by_state(year,state,version = ver))
+      df<<-rbind(df,calc_modules_by_geog(year,geog,version = ver))
     })
   })
 
@@ -18,13 +18,13 @@ modules_used<-function(year,states) {
 
 }
 
-calc_modules_by_state<-function(year,state,version=0) {
+calc_modules_by_geog<-function(year,geog,version=0) {
 
-  if(is.numeric(state)) state<-state_abbs(state)
+  if(is.numeric(geog)) geog<-geog_abbs(geog)
 
-  if(brfss_state_version_exists(year,state,version)) {
+  if(brfss_geog_version_exists(year,geog,version)) {
 
-    df0<-brfss_state_data(year,state,version)
+    df0<-brfss_geog_data(year,geog,version)
 
 
     df_columns<-data.frame()
@@ -56,15 +56,15 @@ calc_modules_by_state<-function(year,state,version=0) {
       nrow(table(df0[[col]]))>0
     })
 
-    df_module_chkr$state<-state
+    df_module_chkr$geog<-geog
     df_module_chkr$year<-year
     df_module_chkr$version<-version
 
-    return(df_module_chkr[df_module_chkr$used,c("year","version","state","section_num","section_name")])
+    return(df_module_chkr[df_module_chkr$used,c("year","version","geog","section_num","section_name")])
   } else {
     return(data.frame(year=integer(0),
                       version=integer(0),
-                      state=character(0),
+                      geog=character(0),
                       section_num=character(0),
                       section_name=character(0)))
   }
@@ -79,11 +79,11 @@ save_module_stats<-function(year) {
   df_mods<-modules_used(year = year)
 
 
-  df_modules<-dplyr::left_join(df_mods,df_responses,by = c("year", "state", "version"))
+  df_modules<-dplyr::left_join(df_mods,df_responses,by = c("year", "geog", "version"))
 
-  df_mods_tots<-aggregate(responses ~ year + state + section_num, data=df_modules,FUN=sum)
+  df_mods_tots<-aggregate(responses ~ year + geog + section_num, data=df_modules,FUN=sum)
 
-  df_modules<-dplyr::left_join(df_modules,df_mods_tots,by = c("year", "state", "section_num"))
+  df_modules<-dplyr::left_join(df_modules,df_mods_tots,by = c("year", "geog", "section_num"))
 
   colnames(df_modules)<-gsub("[.]x","",colnames(df_modules))
   colnames(df_modules)<-gsub("[.]y","_total",colnames(df_modules))
@@ -91,21 +91,21 @@ save_module_stats<-function(year) {
   df_modules$ratio<-df_modules$responses/df_modules$responses_total
   nm<-paste0("df_responses_",year)
   assign(nm,df_responses)
-  save(list = c(nm),file = paste0(apply.pattern("sas_folder_data",year = year),"responses_",year,".RData"))
+  save(list = c(nm),file = paste0(apply.pattern("sas_folder_data", YEAR = year),"responses_",year,".RData"))
 
   nm<-paste0("df_modules_",year)
   assign(nm,df_modules)
-  save(list = c(nm),file =  paste0(apply.pattern("sas_folder_data",year = year),"modules_",year,".RData"))
+  save(list = c(nm),file =  paste0(apply.pattern("sas_folder_data", YEAR = year),"modules_",year,".RData"))
 }
 
 
 #' Get BRFSS Modules Used by State(s)
 #'
-#' Returns  a data frame that has the year, the version (if requested), the state (2-char), and the module used or returns a
+#' Returns  a data frame that has the year, the version (if requested), the geog (2-char), and the module used or returns a
 #' vector of modules if appropriate
 #'
 #' @param year - integer - 4-digit year of interest
-#' @param states - character or integer vector - states of interest - can be 2 character state code or FIPS code (integer)
+#' @param geogs - character or integer vector - geogs of interest - can be 2 character geog code or FIPS code (integer)
 #' @param versions - logical - include the version number
 #' @param reduce - logical - reduce to a vector if appropriate
 #' @return
@@ -113,35 +113,35 @@ save_module_stats<-function(year) {
 #'
 #' @examples
 #' \dontrun{
-#' state_modules(2018,"WI")
-#' state_modules(2018,c(1,2))
-#' state_modules(2018,"MI",versions=T)
+#' geog_modules(2018,"WI")
+#' geog_modules(2018,c(1,2))
+#' geog_modules(2018,"MI",versions=T)
 #'}
 #'
 
-state_modules<-function(year,states,versions=FALSE,reduce=TRUE) {
+geog_modules<-function(year,geogs,versions=FALSE,reduce=TRUE) {
 
   df<- module_data(year)
 
-  if(!missing(states)) {
-    if(is.numeric(states)) states<-state_abbs(states)
-    df<-df[df$state%in%states,]
+  if(!missing(geogs)) {
+    if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
+    df<-df[df$geog%in%geogs,]
   } else {
-    states<-state_abbs()
+    geogs<-geog_abbs()
   }
 
-  if(reduce && length(states)==1 && !versions) {
+  if(reduce && length(geogs)==1 && !versions) {
     return(unique(df$section_name))
   } else {
     if(versions) vcol<-"version" else vcol=NULL
-    return(unique(df[,c("year",vcol,"state","section_name")]))
+    return(unique(df[,c("year",vcol,"geog","section_name")]))
 
   }
 }
 
 #' Get States Using BRFSS Module(s)
 #'
-#' Returns  a data frame that has the year, the version (if requested), the state (2-char), and the module used or returns a
+#' Returns  a data frame that has the year, the version (if requested), the geog (2-char), and the module used or returns a
 #' vector of modules if appropriate
 #'
 #' @param year - integer - 4-digit year of interest
@@ -153,11 +153,11 @@ state_modules<-function(year,states,versions=FALSE,reduce=TRUE) {
 #'
 #' @examples
 #' \dontrun{
-#' module_states(2018,"Pre-Diabetes")
-#' module_states(2018,c(1,2))
+#' module_geogs(2018,"Pre-Diabetes")
+#' module_geogs(2018,c(1,2))
 #'}
 #'
-module_states<-function(year,modules,versions=FALSE,reduce=TRUE) {
+module_geogs<-function(year,modules,versions=FALSE,reduce=TRUE) {
 
   df<- module_data(year)
 
@@ -165,10 +165,10 @@ module_states<-function(year,modules,versions=FALSE,reduce=TRUE) {
   df<-df[df[[col]]%in%modules,]
 
   if(reduce && length(modules)==1 && !versions) {
-    return(unique(df$state))
+    return(unique(df$geog))
   } else {
     if(versions) vcol<-"version" else vcol=NULL
-    return(unique(df[,c("year",vcol,"state","section_name")]))
+    return(unique(df[,c("year",vcol,"geog","section_name")]))
   }
 }
 

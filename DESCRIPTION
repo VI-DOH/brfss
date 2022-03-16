@@ -14,3 +14,5 @@ Imports: rmarkdown,
         dplyr,
         orrr,
         stringr
+Depends: 
+    R (>= 2.10)
