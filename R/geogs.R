@@ -1,4 +1,5 @@
 
+
 save.geogs <- function(geogs) {
   file <-paste0(get.pattern("data_folder"),"geogs.rda")
   save(geogs, file = file)
@@ -6,13 +7,7 @@ save.geogs <- function(geogs) {
 
 get.geogs <- function() {
 
-  geogs <- orrr::get.rdata("./data/geogs.rda")
-  if(is.null(geogs)) {
-
-    data("geogs")
-    save.geogs(geogs)
-  }
-
+  data("geogs", package="brfss")
   geogs
 }
 
@@ -38,15 +33,15 @@ geog.name <- function(geog) {
 
 geog.abb <- function(geog) {
 
-  df_states <- orrr::get.rdata("./data/states.RData")
+  geogs <- get.geogs()
 
   if(is.character(geog) && nchar(geog)!=2) {
-    geog <- df_states %>%
-      filter(State == {{geog}}) %>%
+    geog <- geogs %>%
+      filter(Geog == {{geog}}) %>%
       pull(Abbrev)
 
   } else if(is.numeric(geog)) {
-    geog <- df_states %>%
+    geog <- geogs %>%
       filter(Id == {{geog}}) %>%
       pull(Abbrev)
 
@@ -57,15 +52,15 @@ geog.abb <- function(geog) {
 
 geog.id <- function(geog) {
 
-  df_states <- orrr::get.rdata("./data/states.RData")
+  geogs <- get.geogs()
 
   if(is.character(geog) && nchar(geog)!=2) {
-    geog <- df_states %>%
-      filter(State == {{geog}}) %>%
+    geog <- geogs %>%
+      filter(Geog == {{geog}}) %>%
       pull(Id)
 
   } else if(is.character(geog)) {
-    geog <- df_states %>%
+    geog <- geogs %>%
       filter(Abbrev == {{geog}}) %>%
       pull(Id)
 

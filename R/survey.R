@@ -1,3 +1,33 @@
+
+#' Get BRFSS Survey Data
+#'
+#' @param year - int - year of interest
+#' @param geog - character - 2-char geog of interest (ex: "NY")
+#' @param version - survey version; 0 (default) = main survey
+#'
+#' @return data frame
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' df <- brfss_data(2020, geog = "MD", version = 1)
+#'
+#' }
+#'
+brfss_data <- function(year = NULL, geog = NULL, version = 0) {
+
+  if(is.null(year)) {
+    year = my.year()
+  }
+
+  if(is.null(geog)) {
+    geog = my.geog()
+  }
+
+  brfss_geog_data(year = year, geog = geog, version = version)
+
+}
+
 #' Value Representing Binary No
 #'
 #' Retrieve the value used to represent 'No' in binary (Yes/No) calculations.

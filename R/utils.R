@@ -86,8 +86,10 @@ brfss_geog_data<-function(year,geog,version=0) {
   } else {
     fil_name<-apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog, VERS=version)
   }
+
   fldr_name<-apply.pattern("brfss_geog_folder", YEAR = year, GEOG = geog, VERS=version)
   fname<-paste0(fldr_name,fil_name)
+
   if(file.exists(fname)) {
     df_brfss<- orrr::get.rdata(fname)
   } else {

@@ -17,7 +17,7 @@
 #'}
 #'
 highest_version<-function(year) {
-  fldr<-apply.pattern("sas_folder_data",YEAR = year)
+  fldr<-apply.pattern("sas_data_folder",YEAR = year)
 
   files<-list.files(fldr)
   files<-files[grep("_V[0-9][.]",files)]
@@ -76,7 +76,7 @@ save_response_stats<-function(year) {
   df_responses<-calc_responses(year = year)
   nm<-paste0("df_responses_",year)
   assign(nm,df_responses)
-  save(list = c(nm),file = paste0(apply.pattern("sas_folder_data",YEAR = year),"responses_",year,".RData"))
+  save(list = c(nm),file = paste0(apply.pattern("sas_data_folder",YEAR = year),"responses_",year,".RData"))
 
 }
 

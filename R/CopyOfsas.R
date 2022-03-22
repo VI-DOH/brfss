@@ -148,7 +148,7 @@ sas.save.sasout<-function(year) {
 sas.download.data<-function(year) {
 
   files<-sas.url.pattern.downloads.data()
-  urlfiles<-sub_pattern(strIn =brfss.url.pattern.files(),year=year)
+  urlfiles<-use.pattern("brfss_url_files",year=year)
   folderout<-sub_pattern(strIn =sas.folder.pattern.raw_data(),year=year)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
@@ -168,7 +168,7 @@ sas.download.data.versions<-function(year) {
   folderout<-sub_pattern(strIn =sas.folder.pattern.raw_data(),year=year)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
-  urlfiles<-sub_pattern(strIn =brfss.url.pattern.files(),year=year)
+  urlfiles<-use.pattern("brfss_url_files",year=year)
 
   sapply(files,function(file) {
     sapply(1:4,function(version) {
