@@ -1,0 +1,28 @@
+---
+title: "SAQ Layout"
+output: html_notebook
+---
+
+The State-Added-Questions layout is a .csv file. It is used to merge with the layout provided by CDC in variius files.
+
+
+
+
+
+with the following columns ...
+
+Field Name | Description
+Num | THe local numbering used
+description | the question as it was asked
+col_name | the name of the column/field/variable
+start | start position
+end | end position
+field_size | number of characters (size of field)
+
+This would be the beginning of a saq layout file
+
+Num,description,col_name,start,end,field_size
+VI01.1,"In September of 2017, did you live in the United States Virgin Islands during landfall of Hurricanes Irma or Maria?",VIHURR01,901,901,1
+
+
+

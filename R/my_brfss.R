@@ -7,20 +7,21 @@
 #'
 #' Set the default geography and year for working with BRFSS data
 #'
-#' @param geog character vector of geography abbreviations to set as default
 #' @param year int vector of year(s) to set as default
+#' @param geog character vector of geography abbreviations to set as default
+#' @param other_geogs character vector of other geography abbreviations to process
 #'
-#' @return list with geography and year
+#' @return list with year, geography and other geographies (year, geog, other_geogs)
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' my.brfss(geog="MT", year=2021)
-#' my.brfss(geog="MT")
+#' my.brfss(geog="MT", other_geogs)
 #'
 #' }
 #'
-my.brfss <- function(geog= NULL, year= NULL) {
+my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL) {
 
   folder <- apply.pattern("brfss_data_folder")
   path <- paste0(folder, "my_brfss.rda")
@@ -29,12 +30,14 @@ my.brfss <- function(geog= NULL, year= NULL) {
     load(file = path)
     if(is.null(geog)) geog <- my_brfss$geog
     if(is.null(year)) year <- my_brfss$year
+    if(is.null(other_geogs)) other_geogs <- my_brfss$other_geogs
   } else {
+    if(is.null(other_geogs)) geog <- my.brfss.default.other.geogs()
     if(is.null(geog)) geog <- my.brfss.default.geog()
     if(is.null(year)) year <- my.brfss.default.year()
 
   }
-  my_brfss <- list(geog=geog,year=year)
+  my_brfss <- list(year=year, geog = geog, other_geogs = other_geogs)
 
   save(my_brfss,file = path)
   my_brfss
@@ -67,7 +70,37 @@ my.geog <- function() {
   }
 }
 
+#' BRFSS Other Geographies of Interest
+#'
+#' Get the other geographies for working with BRFSS data. A region might be of interest,
+#' rather than a single state. So other geographies might be c("MT","WY", "ID", "ND", "SD")
+#'
+#' @return character vector of default geometry(s)
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' my.geog("MT")
+#'
+#' }
+#'
+my.other.geogs <- function() {
+  folder <- apply.pattern("brfss_data_folder")
+  path <- paste0(folder, "my_brfss.rda")
+
+  if(!file.exists(path)) {
+    return("*")
+
+  } else {
+
+    load(file = path)
+    return(my_brfss$other_geogs)
+  }
+}
+
 my.brfss.default.geog <- function() { "*" }
+
+my.brfss.default.other.geogs <- function() { "" }
 
 my.brfss.default.year <- function() {
   month <- as.integer(substr(as.character(Sys.Date()),6,7))

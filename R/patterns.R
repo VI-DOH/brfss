@@ -19,10 +19,16 @@
 #' set.pattern(name = "raw_data_folder", pattern = "./data_raw/", desc = "Folder for raw BRFSS data")
 #' }
 #'
-set.pattern <- function(name, pattern, group="") {
+set.pattern <- function(name, pattern= NULL, group="") {
   require(dplyr)
 
-  df_patterns <- get.patterns()  %>%
+  df_patterns <- get.patterns()
+
+  if(is.null(pattern)) {
+    return(NULL)
+  }
+
+  df_patterns <- df_patterns %>%
     filter(name != {{name}}) %>%
     bind_rows(data.frame(name , pattern, group )) %>%
     distinct()
@@ -34,7 +40,7 @@ set.pattern <- function(name, pattern, group="") {
 
 
 pattern.file.name <- function() {
-  "file_patterns"
+  "./data/file_patterns.rda"
 }
 
 append.pattern <- function(df, name , pattern , group = "", desc = "") {
@@ -50,7 +56,7 @@ init.patterns <- function() {
   require(tibble)
 
   fname <- "./data/file_patterns.rda"
-  if(file.exists(fname)) file.remove(fname, showWarnings=FALSE)
+  if(file.exists(fname)) file.remove(fname)
 
 
   file_patterns <- data.frame(name = character(0) , pattern = character(0) , group = character(0),
@@ -61,8 +67,11 @@ init.patterns <- function() {
     append.pattern("data_folder","./data/",
                    desc ="Standard location of user created data") %>%
 
-    append.pattern("raw_data_folder","./data/",
+    append.pattern("raw_data_folder","./data_raw/",
                    desc ="Standard location of data from another source") %>%
+
+    append.pattern("output_folder","./output/",
+                   desc ="Standard location of data, files, or reports for sharing") %>%
 
     append.pattern("brfss_url_files","https://www.cdc.gov/brfss/annual_data/[YEAR]/files/",
                    desc ="Base URL of BRFSS data") %>%
@@ -76,10 +85,12 @@ init.patterns <- function() {
                    desc ="URL filename of BRFSS SASOUT data") %>%
 
     append.pattern("sas_format_file", "FORMAT[YR].sas",
-                   group ="sas_downloads") %>%
+                   group ="sas_downloads",
+                   desc = "SAS Format library file") %>%
 
     append.pattern("sas_formas_file", "FORMAS[YR].sas",
-                   group ="sas_downloads") %>%
+                   group ="sas_downloads",
+                   desc = "SAS Format assignment file") %>%
 
     append.pattern("xpt_download_version","LLCP[YR]V[VERS]_XPT.zip",
                    group ="sas_version_downloads") %>%
@@ -89,29 +100,58 @@ init.patterns <- function() {
 
     append.pattern("brfss_url_documentation", "https://www.cdc.gov/brfss/annual_data/[YEAR]/pdf/") %>%
 
-    append.pattern("brfss_raw_data_folder","./data_raw/") %>%
-    append.pattern("brfss_annual_raw_data_folder","./data_raw/[YEAR]/") %>%
-    append.pattern("brfss_data_folder","./data/") %>%
-    append.pattern("brfss_annual_data_folder","{brfss_data_folder}[YEAR]/") %>%
-    append.pattern("brfss_geog_folder","{brfss_data_folder}[YEAR]/geog/") %>%
-    append.pattern("brfss_geog_file","[GEOG]_[YEAR].RData") %>%
-    append.pattern("brfss_geog_file_version","[GEOG]_[YEAR]_V[VERS].RData") %>%
-    append.pattern("brfss_geog_path","{brfss_geog_folder}{brfss_geog_file}") %>%
-    append.pattern("brfss_columns_file","{brfss_data_folder}[YEAR]/columns_[YEAR].RData") %>%
-    append.pattern("brfss_layout_folder","{brfss_annual_data_folder}") %>%
+    append.pattern("brfss_raw_data_folder","{raw_data_folder}",
+                   desc = "Folder to store raw (imported/downloaded from CDC) data") %>%
+
+    append.pattern("brfss_annual_raw_data_folder","{brfss_raw_data_folder}[YEAR]/",
+                   desc = "Folder to store the annual raw (imported/downloaded from CDC) data") %>%
+
+    append.pattern("brfss_data_folder","{data_folder}",
+                   desc = "Folder to store processed BRFSS data") %>%
+
+    append.pattern("brfss_annual_data_folder","{brfss_data_folder}[YEAR]/",
+                   desc = "Folder to store the annual processed BRFSS data") %>%
+
+    append.pattern("brfss_geog_folder","{brfss_data_folder}[YEAR]/geog/",
+                   desc = "Folder to store the annual processed BRFSS data from specific geographies") %>%
+
+    append.pattern("brfss_geog_file","[GEOG]_[YEAR].RData",
+                   desc = "File name for annual processed BRFSS data (main survey) from specific geographies") %>%
+
+    append.pattern("brfss_geog_file_version","[GEOG]_[YEAR]_V[VERS].RData",
+                   desc = "File name for annual processed versioned BRFSS data from specific geographies") %>%
+
+    append.pattern("brfss_geog_path","{brfss_geog_folder}{brfss_geog_file}",
+                   desc = "Full path for annual processed BRFSS data (main survey) from specific geographies") %>%
+
+    append.pattern("codebook_layout_folder","{brfss_annual_raw_data_folder}",
+                   desc = "location of the annual codebook file") %>%
+
+    append.pattern("codebook_layout_file","codebook[YR]_llcp",
+                   desc = "file name of the annual codebook file") %>%
+
+    append.pattern("codebook_layout_ext","pdf",
+                   desc = "ext of the annual codebook file (.txt, .rtf, or .pdf") %>%
+
+    append.pattern("brfss_layout_folder","{brfss_annual_data_folder}layout/") %>%
     append.pattern("brfss_layout_file","layout_[YEAR].RData") %>%
     append.pattern("brfss_layout_path","{brfss_layout_folder}{brfss_layout_file}") %>%
+    append.pattern("brfss_columns_folder","{brfss_annual_data_folder}layout/") %>%
+    append.pattern("brfss_columns_file","columns_[YEAR].RData") %>%
+    append.pattern("brfss_columns_path","{brfss_columns_folder}{brfss_columns_file}") %>%
     append.pattern("ascii_raw_data_folder","{brfss_raw_data_folder}[YEAR]/ascii/") %>%
     append.pattern("ascii_downloads","{brfss_url_files}LLCP[YEAR]ASC.zip") %>%
     append.pattern("sas_raw_folder","{brfss_raw_data_folder}[YEAR]/sas/") %>%
-    append.pattern("sas_data_folder","{brfss_annual_data_folder}") %>%
+    append.pattern("sas_data_folder","{brfss_annual_data_folder}xpt/") %>%
     append.pattern("xpt_file", "LLCP[YEAR].XPT") %>%
     append.pattern("xpt_file_version", "LLCP[YR]V[VERS].XPT") %>%
     append.pattern("sas_rdata","xpt_[YEAR].RData") %>%
     append.pattern("sas_rdata_version","xpt_[YEAR]_V[VERS].RData") %>%
     append.pattern("sas_sasout_version", "SASOUT[YR]_LLCP_V[VERS].SAS") %>%
     append.pattern("sas_sasout", "SASOUT[YR]_LLCP.SAS") %>%
-    append.pattern("sas_sasout_path", "{sas_raw_folder}{sas_sasout}")
+    append.pattern("sas_sasout_path", "{sas_raw_folder}{sas_sasout}") %>%
+    append.pattern("saq_layout_raw","{brfss_annual_raw_data_folder}SAQ[YR].csv") %>%
+    append.pattern("saq_layout","{brfss_annual_data_folder}saq_layout[YEAR].rda")
 
   usethis::use_data(file_patterns, overwrite = TRUE)
 
@@ -151,12 +191,38 @@ pattern.names <- function(filter=".*") {
 }
 
 
+#' Reset File Pattern Data
+#'#'
+#' @export
+#'
+refresh.patterns <- function() {
+
+  file_patterns <- pattern.file.name()
+  if(file.exists(file_patterns)) {
+    file.remove(file_patterns)
+  }
+  env <- new.env()
+  data("file_patterns", package = "brfss", envir = env )
+
+  file_patterns <- get(ls(env),envir = env)
+  save.patterns(file_patterns)
+
+  invisible()
+}
+
+#' Get File Pattern Data
+#'#'
+#' @return data frame with all pattern data
+#' @export
+#'
 get.patterns <- function() {
 
   file_patterns <- orrr::get.rdata(pattern.file.name())
   if(is.null(file_patterns)) {
+    env <- new.env()
+    data("file_patterns", package = getPackageName(), envir = env )
 
-    data("file_patterns")
+    file_patterns <- get(ls(env),envir = env)
     save.patterns(file_patterns)
   }
 
@@ -165,7 +231,9 @@ get.patterns <- function() {
 
 save.patterns <- function(file_patterns) {
 
-  usethis::use_data(file_patterns, overwrite = TRUE)
+  suppressMessages(
+    usethis::use_data(file_patterns, overwrite = TRUE)
+  )
 
 }
 
@@ -179,54 +247,93 @@ expand.pattern <- function(pattern) {
     ctr <- ctr + 1
 
   }
+
+  # get rid of double slashes (usually from substitution of other patterns)
+
+  pattern <- gsub("//","/",pattern)
+
   pattern
 }
 
-get.pattern <- function(name_in) {
+#' Get File Pattern
+#'
+#' Get the file pattern for a given name. If the name does not exist, it will return NULL
+#'
+#'
+#' @param name character - name of pattern
+#'
+#' @return character - the requested pattern
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get.pattern(name = "raw_data_folder")
+#' }
+#'
+get.pattern <- function(name) {
   require(dplyr,quietly = T, warn.conflicts = F)
 
-  file_pattern <- orrr::get.rdata(pattern.file.name())
-  if(is.null(file_patterns)) {
+  file_patterns <- get.patterns()
 
-    data("file_patterns")
-    save.patterns(file_patterns)
-  }
-
-
-  file_pattern %>% filter(name==name_in) %>%
+  file_patterns %>% filter(name=={{name}}) %>%
     pull(pattern)
 
 }
 
-get.pattern.group <- function(name_in) {
+#' Get File Pattern Group
+#'
+#' Get the file patterns for a given group. If the group does not exist, it will return NULL
+#'
+#'
+#' @param group character: name of pattern group
+#'
+#' @return named character - the requested patterns with respective names
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get.pattern.group(group = "sas_downloads")
+#' }
+#'
+get.pattern.group <- function(group) {
   require(dplyr,quietly = T, warn.conflicts = F)
 
-  file_pattern <- orrr::get.rdata(pattern.file.name())
-  if(is.null(file_patterns)) {
+  file_patterns <- get.patterns()
 
-    data("file_patterns")
-    save.patterns(file_patterns)
-  }
+  file_patterns <- file_patterns  %>% filter(group=={{group}})
 
-
-  file_pattern %>% filter(group==name_in) %>%
+  patterns <- file_patterns %>%
     pull(pattern)
+
+  names(patterns) <- file_patterns %>%
+    pull(name)
+
+
+  patterns
 
 }
 
-get.pattern.info <- function(name_in) {
+#' Get File Pattern Info
+#'
+#' Get the file pattern info (all fields) for a given name. If the name does not exist, it will return NULL
+#'
+#'
+#' @param name character - name of pattern
+#'
+#' @return data.frame - the requested pattern info/fields (1 row)
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get.pattern(name = "raw_data_folder")
+#' }
+#'
+get.pattern.info <- function(name) {
   require(dplyr,quietly = T, warn.conflicts = F)
 
-  file_pattern <- orrr::get.rdata(pattern.file.name())
-  if(is.null(file_patterns)) {
+  file_patterns <- get.patterns()
 
-    data("file_patterns", package = "brfss")
-    save.patterns(file_patterns)
-  }
-
-
-  file_pattern %>% filter(group==name_in) %>%
-    pull(pattern)
+  file_patterns %>% filter(name=={{name}})
 
 }
 
@@ -247,7 +354,7 @@ get.pattern.info <- function(name_in) {
 #' @export
 #'
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #' sasout_file<-apply.pattern("sas_sasout_version",YEAR = year, VERS = version)
 #'
 #' }
@@ -261,10 +368,9 @@ apply.pattern <- function(name,  ...) {
   #
   pats <- sapply(pats, function(pat) {
     #pat <- get.pattern(name)
-    pat <- expand.pattern(pat)
-
-    pat
+    expand.pattern(pat)
   })
+
   pats <- unname(pats)
 
   patternize(pats,... )

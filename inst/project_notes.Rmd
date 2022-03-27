@@ -9,7 +9,7 @@ output: html_notebook
 
 =============================  
 
-##### Folder and file names are stored as patterns in a data frame stored in the data subfolder as patterns.RData. Substitutions for year, vesion, and geography can be made.
+##### Folder and file names are stored as patterns in a data frame stored in the data subfolder as patterns.RData. Substitutions for year, version, and geography can be made. There are premade patterns used by functions in this package, but users can add patterns and use them in their own functions. For most functions, filnames can be passed, but may be omitted if passing variables such as YEAR and GEOG to be used by functions in pattern filling
 
 ***
   

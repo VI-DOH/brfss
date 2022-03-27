@@ -115,7 +115,7 @@ sas.process.year<-function(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...) {
       ivers<-ivers + 1
     }
   }
-  browser()
+
   sas.save.sasout(year = year)
   split.geogs(year=year,...)
 
@@ -129,7 +129,7 @@ sas.save.sasout<-function(year) {
 
   fname<-paste0("df_columns_",year)
   assign(fname,read.sasout(year))
-  file <- apply.pattern("brfss_columns_file", YEAR=year)
+  file <- apply.pattern("brfss_columns_path", YEAR=year)
 
   if(!dir.exists(dirname(file))) dir.create(dirname(file))
 
@@ -149,7 +149,10 @@ sas.download.data<-function(year) {
     file<-patternize(strIn = file,YEAR = year)
     url<-paste0(urlfiles,file)
     fileout<-paste0(folderout,file)
-    download.file(url = url,destfile = fileout)
+
+    download.file(url = url,destfile = fileout,
+                  method = "libcurl")
+
     if(grepl("[.]zip$",fileout)) {
       unzip(fileout,exdir = normalizePath(folderout))
       file.remove(fileout)
@@ -183,7 +186,8 @@ sas.download.data.versions<-function(year) {
         #      for (file in files) {
 
         tryCatch(expr = {
-          download.file(url = url,destfile = fileout)
+          download.file(url = url,destfile = fileout,
+                        method = "libcurl")
           if(grepl("[.]zip$",fileout)) {
             unzip(fileout,exdir = normalizePath(folderout))
             file.remove(fileout)
@@ -251,6 +255,7 @@ read.xpt<-function(year,version = 0,
   ##
   ##    get sasout location
   ##
+
 
   if(is.null(sasout_file)) {
     if(version>0) {
@@ -360,29 +365,38 @@ read.xpt<-function(year,version = 0,
 
 
 split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
-                      main=TRUE,versions=TRUE,geogs=NULL,verbose=TRUE) {
+                      main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
 
-  if(is.null(geogs)) geogs <- my.geog()
+  if(!(main || versions)) return(NULL)
 
+
+  if(is.null(my_geog)) my_geog <- my.geog()
+  if(is.null(other_geogs)) other_geogs <- my.other.geogs()
+
+  if(my_geog=="") my_geog <- character(0)
+
+  geogs <- c(my_geog,other_geogs)
   ver<-integer(0)
   if(main) ver<-0
-  if(versions) ver<-c(ver,1:3)
+
+  vermax <- highest_version(year)
+
+  if(versions) ver<-c(ver,1:vermax)
 
   df_geogs <- get.geogs()
 
   sapply(ver,function(version) {
 
-    fname<-paste0("df_xpt_",year)
+    # if(version == 0) {
+    #   fname <- apply.pattern("sas_rdata",YEAR = year)
+    # } else {
+    #   fname<- apply.pattern("sas_rdata_version",YEAR = year, VERS = version)
+    # }
+    #
 
-    if (version>0) {
-      fname<-paste0(fname,"_",version)
-      load_pat<-"xpt_[YEAR].RData"
-    }
-
-    #if(!exists(fname))
     df_xpt<-load.sas(year,rdata_folder = rdata_folder,rdata_file = rdata_file, version)
 
-    if(geogs == '*') {
+    if(geogs[1] == '*') {
       geogs<-unique(df_xpt$`_STATE`)
 
     } else {
@@ -419,16 +433,32 @@ split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
             }
 
           })
+
           dfname<-paste0("df_",nm,"_",year)
           if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
 
           assign(dfname,df_state)
 
-          fname<-paste0("./data/",year,"/geog/",nm,"_",year,".RData")
-          if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
+          if(nm == my_geog) {
+            fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year)
+          } else {
+            fldr <- apply.pattern("brfss_geog_folder",  YEAR = year)
+          }
+
+          if(version == 0) {
+
+            file <- apply.pattern("brfss_geog_file",  YEAR = year, GEOG = nm)
+
+          } else {
+
+            file <- apply.pattern("brfss_geog_file_version",  YEAR = year, GEOG = nm)
+
+          }
+
+          fname <- paste0(fldr,file)
 
           save(list = c(dfname),file = fname)
-          #browser()
+
           columns.add(year,add_cols)
         }
       }
@@ -439,7 +469,8 @@ split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
 
 columns.add<-function(year,cols2add){
   e<-new.env()
-  fname<-apply.pattern("brfss_columns_file",YEAR = year)
+
+  fname<-apply.pattern("brfss_columns_path",YEAR = year)
   load(file = fname,envir = e)
 
   df<-get(ls(e),envir = e)

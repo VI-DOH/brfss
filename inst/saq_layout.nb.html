@@ -11,7 +11,7 @@
 
 
 
-<title>Processing BRFSS data</title>
+<title>SAQ Layout</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1754,70 +1754,26 @@ pre code {
 
 
 
-<h1 class="title toc-ignore">Processing BRFSS data</h1>
+<h1 class="title toc-ignore">SAQ Layout</h1>
 
 </div>
 
 
 <!-- rnb-text-begin -->
-<div id="file-and-folder-patterns" class="section level4">
-<h4>File and Folder Patterns</h4>
-<p>=============================</p>
-<div id="folder-and-file-names-are-stored-as-patterns-in-a-data-frame-stored-in-the-data-subfolder-as-patterns.rdata.-substitutions-for-year-version-and-geography-can-be-made.-there-are-premade-patterns-used-by-functions-in-this-package-but-users-can-add-patterns-and-use-them-in-their-own-functions.-for-most-functions-filnames-can-be-passed-but-may-be-omitted-if-passing-variables-such-as-year-and-geog-to-be-used-by-functions-in-pattern-filling" class="section level5">
-<h5>Folder and file names are stored as patterns in a data frame stored
-in the data subfolder as patterns.RData. Substitutions for year,
-version, and geography can be made. There are premade patterns used by
-functions in this package, but users can add patterns and use them in
-their own functions. For most functions, filnames can be passed, but may
-be omitted if passing variables such as YEAR and GEOG to be used by
-functions in pattern filling</h5>
-<hr />
-</div>
-</div>
-<div id="process-data-for-a-single-year-using-the-sas-data-files" class="section level4">
-<h4>Process data for a single year using the SAS data files</h4>
-<p>=============================================================</p>
-<p><code>sas.process.year(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...)</code></p>
-<p>For the given year, this will …</p>
-<hr />
-<p>if download = TRUE …</p>
-<ul>
-<li><p>download the main data file and all versions from the CDC BRFSS
-data url</p>
-<p><code>sas.download.data(year=year)</code><br />
-<code>sas.download.data.versions(year=year)</code></p></li>
-<li><p>unzip all zip files</p>
-<p><code>unzip.all(year=year)</code></p></li>
-</ul>
-<hr />
-<p>if xpt = TRUE …</p>
-<ul>
-<li><p>read the main XPT files and all versions</p>
-<p><code>read.xpt(year=year)</code><br />
-<code>read.xpt(year=year,version=ivers,verbose=TRUE)</code></p></li>
-</ul>
-<hr />
-<ul>
-<li><p>sasout files contain information on each variable</p>
-<p><code>sas.save.sasout(year = year)</code></p></li>
-<li><p>split data file up by state/territory</p>
-<p><code>split.states(year=year,...)</code></p></li>
-<li><p>save some information on how many responses for each version
-(including the main file) and which modules were used</p>
-<p><code>save_response_stats(year = year)</code><br />
-<code>save_module_stats(year=year)</code></p></li>
-</ul>
+<p>The State-Added-Questions layout is a .csv file. It is used to merge
+with the layout provided by CDC in variius files.</p>
+<p>with the following columns …</p>
+<p>Field Name | Description Num | THe local numbering used description |
+the question as it was asked col_name | the name of the
+column/field/variable start | start position end | end position
+field_size | number of characters (size of field)</p>
+<p>This would be the beginning of a saq layout file</p>
+<p>Num,description,col_name,start,end,field_size VI01.1,“In September of
+2017, did you live in the United States Virgin Islands during landfall
+of Hurricanes Irma or Maria?”,VIHURR01,901,901,1</p>
 <!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Layout</p>
-<p>To save the layout of the ASCII file, run</p>
-<p><code>read.sas.layout(year = year)</code></p>
-<!-- rnb-text-end -->
-</div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlByb2Nlc3NpbmcgQlJGU1MgZGF0YSINCm91dHB1dDogaHRtbF9ub3RlYm9vaw0KLS0tDQogIA0KICANCiAgDQojIyMjIEZpbGUgYW5kIEZvbGRlciBQYXR0ZXJucw0KDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgDQoNCiMjIyMjIEZvbGRlciBhbmQgZmlsZSBuYW1lcyBhcmUgc3RvcmVkIGFzIHBhdHRlcm5zIGluIGEgZGF0YSBmcmFtZSBzdG9yZWQgaW4gdGhlIGRhdGEgc3ViZm9sZGVyIGFzIHBhdHRlcm5zLlJEYXRhLiBTdWJzdGl0dXRpb25zIGZvciB5ZWFyLCB2ZXJzaW9uLCBhbmQgZ2VvZ3JhcGh5IGNhbiBiZSBtYWRlLiBUaGVyZSBhcmUgcHJlbWFkZSBwYXR0ZXJucyB1c2VkIGJ5IGZ1bmN0aW9ucyBpbiB0aGlzIHBhY2thZ2UsIGJ1dCB1c2VycyBjYW4gYWRkIHBhdHRlcm5zIGFuZCB1c2UgdGhlbSBpbiB0aGVpciBvd24gZnVuY3Rpb25zLiBGb3IgbW9zdCBmdW5jdGlvbnMsIGZpbG5hbWVzIGNhbiBiZSBwYXNzZWQsIGJ1dCBtYXkgYmUgb21pdHRlZCBpZiBwYXNzaW5nIHZhcmlhYmxlcyBzdWNoIGFzIFlFQVIgYW5kIEdFT0cgdG8gYmUgdXNlZCBieSBmdW5jdGlvbnMgaW4gcGF0dGVybiBmaWxsaW5nDQoNCioqKg0KICANCiMjIyMgUHJvY2VzcyBkYXRhIGZvciBhIHNpbmdsZSB5ZWFyIHVzaW5nIHRoZSBTQVMgZGF0YSBmaWxlcyAgDQoNCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gDQoNCmBzYXMucHJvY2Vzcy55ZWFyKHllYXIsZG93bmxvYWQ9VFJVRSx4cHQ9VFJVRSwgdmVyYm9zZT1GQUxTRSwgLi4uKWANCg0KIEZvciB0aGUgZ2l2ZW4geWVhciwgdGhpcyB3aWxsIC4uLg0KIA0KICoqKg0KIA0KIGlmIGRvd25sb2FkID0gVFJVRSAuLi4NCiANCiAgKiBkb3dubG9hZCB0aGUgbWFpbiBkYXRhIGZpbGUgYW5kIGFsbCB2ZXJzaW9ucyBmcm9tIHRoZSBDREMgQlJGU1MgZGF0YSB1cmwgIA0KICAgIA0KICAgIGBzYXMuZG93bmxvYWQuZGF0YSh5ZWFyPXllYXIpYCAgDQogICAgYHNhcy5kb3dubG9hZC5kYXRhLnZlcnNpb25zKHllYXI9eWVhcilgDQoNCiAgKiB1bnppcCBhbGwgemlwIGZpbGVzIA0KICANCiAgICBgdW56aXAuYWxsKHllYXI9eWVhcilgDQoNCioqKiAgDQoNCmlmICB4cHQgPSBUUlVFIC4uLiANCiAgDQogICogcmVhZCB0aGUgbWFpbiBYUFQgZmlsZXMgYW5kIGFsbCB2ZXJzaW9ucyANCiAgDQogICAgYHJlYWQueHB0KHllYXI9eWVhcilgICANCiAgICBgcmVhZC54cHQoeWVhcj15ZWFyLHZlcnNpb249aXZlcnMsdmVyYm9zZT1UUlVFKWAgDQoNCiAgICANCioqKg0KDQogKiBzYXNvdXQgZmlsZXMgY29udGFpbiBpbmZvcm1hdGlvbiBvbiBlYWNoIHZhcmlhYmxlDQogICAgDQogICAgYHNhcy5zYXZlLnNhc291dCh5ZWFyID0geWVhcilgICANCiAgICANCiAgKiBzcGxpdCBkYXRhIGZpbGUgdXAgYnkgc3RhdGUvdGVycml0b3J5DQogIA0KICAgIGBzcGxpdC5zdGF0ZXMoeWVhcj15ZWFyLC4uLilgICANCg0KICAqIHNhdmUgc29tZSBpbmZvcm1hdGlvbiBvbiBob3cgbWFueSByZXNwb25zZXMgZm9yIGVhY2ggdmVyc2lvbiAoaW5jbHVkaW5nIHRoZSBtYWluIGZpbGUpIGFuZCB3aGljaCBtb2R1bGVzIHdlcmUgdXNlZA0KICANCiAgICBgc2F2ZV9yZXNwb25zZV9zdGF0cyh5ZWFyID0geWVhcilgICANCiAgICBgc2F2ZV9tb2R1bGVfc3RhdHMoeWVhcj15ZWFyKWAgIA0KDQoNCg0KDQpgYGB7cn0NCg0KYGBgDQoNCkxheW91dA0KDQpUbyBzYXZlIHRoZSBsYXlvdXQgb2YgdGhlIEFTQ0lJIGZpbGUsIHJ1biANCg0KICAgDQpgcmVhZC5zYXMubGF5b3V0KHllYXIgPSB5ZWFyKWANCg==</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlNBUSBMYXlvdXQiDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpUaGUgU3RhdGUtQWRkZWQtUXVlc3Rpb25zIGxheW91dCBpcyBhIC5jc3YgZmlsZS4gSXQgaXMgdXNlZCB0byBtZXJnZSB3aXRoIHRoZSBsYXlvdXQgcHJvdmlkZWQgYnkgQ0RDIGluIHZhcmlpdXMgZmlsZXMuDQoNCg0KDQoNCg0Kd2l0aCB0aGUgZm9sbG93aW5nIGNvbHVtbnMgLi4uDQoNCkZpZWxkIE5hbWUgfCBEZXNjcmlwdGlvbg0KTnVtIHwgVEhlIGxvY2FsIG51bWJlcmluZyB1c2VkDQpkZXNjcmlwdGlvbiB8IHRoZSBxdWVzdGlvbiBhcyBpdCB3YXMgYXNrZWQNCmNvbF9uYW1lIHwgdGhlIG5hbWUgb2YgdGhlIGNvbHVtbi9maWVsZC92YXJpYWJsZQ0Kc3RhcnQgfCBzdGFydCBwb3NpdGlvbg0KZW5kIHwgZW5kIHBvc2l0aW9uDQpmaWVsZF9zaXplIHwgbnVtYmVyIG9mIGNoYXJhY3RlcnMgKHNpemUgb2YgZmllbGQpDQoNClRoaXMgd291bGQgYmUgdGhlIGJlZ2lubmluZyBvZiBhIHNhcSBsYXlvdXQgZmlsZQ0KDQpOdW0sZGVzY3JpcHRpb24sY29sX25hbWUsc3RhcnQsZW5kLGZpZWxkX3NpemUNClZJMDEuMSwiSW4gU2VwdGVtYmVyIG9mIDIwMTcsIGRpZCB5b3UgbGl2ZSBpbiB0aGUgVW5pdGVkIFN0YXRlcyBWaXJnaW4gSXNsYW5kcyBkdXJpbmcgbGFuZGZhbGwgb2YgSHVycmljYW5lcyBJcm1hIG9yIE1hcmlhPyIsVklIVVJSMDEsOTAxLDkwMSwxDQoNCg0KDQo=</div>
 
 
 
@@ -1864,7 +1820,7 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeSourceEmbed("project_notes.Rmd");
+  window.initializeSourceEmbed("saq_layout.Rmd");
   window.initializeCodeFolding("show" === "show");
 });
 </script>

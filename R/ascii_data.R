@@ -46,7 +46,8 @@ ascii.download.data<-function(year,destpath = NULL, unzip=TRUE, rmzip=TRUE) {
   destfile<-paste0(destpath,"LLCP",year,"ASC.zip")
 
   browser()
-  download.file(url = url ,destfile = destfile)
+  download.file(url = url ,destfile = destfile,
+                method = "libcurl")
 
   if(unzip) {
     exdir<-gsub("/$","",destpath)

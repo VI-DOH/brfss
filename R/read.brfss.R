@@ -75,13 +75,20 @@ read.brfss.ascii<-function(filename,layout,state=c("all","my","other"),otherstat
     df_fields_yy<-layout
   }
 
+  ############################################################
+  ##
+  ##  remove col_names of negative width columns
+  ##
+  widths = as.integer(df_fields_yy$field_size)
+
+  col.names = df_fields_yy$col_name[widths>0]
 
   ################################
   ##
   ##  read the file based on the layout
   ##
-  df<-read.fwf(filename,widths = df_fields_yy$field_size,
-               col.names = df_fields_yy$col_name,
+  df<-read.fwf(filename,widths = widths,
+               col.names = col.names,
                stringsAsFactors=F)
 
   ######################################
