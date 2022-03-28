@@ -31,23 +31,29 @@ ascii_data_url<-function(year) {
 #' ascii.download.data(2016)
 #' }
 #'
-ascii.download.data<-function(year,destpath = NULL, unzip=TRUE, rmzip=TRUE) {
+ascii.download.data<-function(year = NULL, destpath = NULL, unzip=TRUE, rmzip=TRUE) {
+
+  year <- get.year(year)
 
   if(is.null(destpath)) destpath <- apply.pattern("ascii_raw_data_folder", YEAR = year)
   destpath <- normalizePath(destpath,winslash = "/",mustWork = FALSE)
 #
-#   if(!grepl("/$",destpath)) destpath <- paste0(destpath,"/")
-#
-#   destpath<-paste0(destpath,year,"/ascii/")
 
   if(!dir.exists(destpath)) dir.create(destpath,recursive = TRUE)
 
   url<-apply.pattern("ascii_downloads",YEAR =year)
   destfile<-paste0(destpath,"LLCP",year,"ASC.zip")
 
-  browser()
+  ## the larger BRFSS files began to take more than 60 seconds to download
+  ##  so a larger timeout option is necessary
+
+  to <- getOption("timeout")
+  options(timeout = 180)
+
   download.file(url = url ,destfile = destfile,
                 method = "libcurl")
+
+  options(timeout=to)
 
   if(unzip) {
     exdir<-gsub("/$","",destpath)

@@ -26,7 +26,7 @@ cleanDesc<-function(desc) {
 #' @param df data.frame containing the measure of interest
 #' @param meas character column name
 #' @param title character
-#' @param order boolean
+#' @param order logical
 #' @param useNA character
 #' @param ... parameters to be passed to other functions
 #'
@@ -62,9 +62,9 @@ getMeasureReport<-function(df,meas, title="Var1", order=F ,useNA="ifany", ...) {
 #' @param df data.frame containing the measure of interest
 #' @param meas character column name
 #' @param title character
-#' @param order boolean
+#' @param order logical
 #' @param useNA character
-#' @param debug boolean
+#' @param debug logical
 #' @param replace character vector
 #' @param replace_vals character vector
 #' @param format character
@@ -126,9 +126,9 @@ getMeasureReportEach<-function(df,meas, alias, title="Desc", order=F,useNA="ifan
 #' @param meas character column name
 #' @param meas character breaks
 #' @param title character
-#' @param order boolean
+#' @param order logical
 #' @param useNA character
-#' @param debug boolean
+#' @param debug logical
 #' @param replace character vector
 #' @param replace_vals character vector
 #' @param format character

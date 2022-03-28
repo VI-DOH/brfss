@@ -5,21 +5,24 @@
 \title{Read BRFSS raw ASCII data file}
 \usage{
 read.brfss.ascii(
-  filename,
-  layout,
+  year = NULL,
+  filename = NULL,
+  layout = NULL,
   state = c("all", "my", "other"),
   otherstate = "*",
   completes = T
 )
 }
 \arguments{
+\item{year}{integer year of interest}
+
 \item{filename}{character name of the raw ascii data file}
 
 \item{layout}{character name of the file containing the layout or data.frame containing the layout}
 
 \item{state}{character include data for "all" states (default), "my" state, or "other" states}
 
-\item{completes}{boolean whether or not to inlcude only complete interviews (default=TRUE)}
+\item{completes}{logical whether or not to include only complete interviews (default=TRUE)}
 }
 \value{
 data frame containing survey data
@@ -29,7 +32,8 @@ Read BRFSS raw ASCII data file
 }
 \examples{
 \dontrun{
-df<-read.brfss(filename="./data_raw/2016/05_MAY/VIMAY161.dat",
+my.brfss(year = 2020, geog = "MT")
+df<-read.brfss.ascii(year = ,
 layout="./data_raw/var_layouts/layout_2016")
 }
 

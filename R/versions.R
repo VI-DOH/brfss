@@ -85,7 +85,6 @@ save_response_stats<-function(year) {
 
 }
 
-
 responses<-function(year = NULL,geogs=NULL,versions, reduce=TRUE) {
 
   year <- get.year(year)

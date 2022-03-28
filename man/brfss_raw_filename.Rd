@@ -21,7 +21,7 @@ brfss_raw_filename(
 
 \item{index}{integer index of the raw data file}
 
-\item{ynpath}{boolean (default=TRUE) include the default path?}
+\item{ynpath}{logical (default=TRUE) include the default path?}
 }
 \value{
 character default path

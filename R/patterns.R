@@ -112,7 +112,7 @@ init.patterns <- function() {
     append.pattern("brfss_annual_data_folder","{brfss_data_folder}[YEAR]/",
                    desc = "Folder to store the annual processed BRFSS data") %>%
 
-    append.pattern("brfss_geog_folder","{brfss_data_folder}[YEAR]/geog/",
+    append.pattern("brfss_geog_folder","{brfss_data_folder}[YEAR]/geog/[GEOG]/",
                    desc = "Folder to store the annual processed BRFSS data from specific geographies") %>%
 
     append.pattern("brfss_geog_file","[GEOG]_[YEAR].RData",
@@ -152,13 +152,17 @@ init.patterns <- function() {
 
     ##  ascii data
 
+    append.pattern("ascii_filename","LLCP[YEAR]ASC.zip") %>%
+    append.pattern("ascii_downloads","{brfss_url_files}{ascii_filename") %>%
+
     append.pattern("ascii_raw_data_folder","{brfss_raw_data_folder}[YEAR]/ascii/") %>%
-    append.pattern("ascii_downloads","{brfss_url_files}LLCP[YEAR]ASC.zip") %>%
+    append.pattern("ascii_path","{ascii_raw_data_folder}{ascii_filename}") %>%
 
     append.pattern("sas_raw_folder","{brfss_raw_data_folder}[YEAR]/sas/") %>%
     append.pattern("sas_data_folder","{brfss_annual_data_folder}xpt/") %>%
     append.pattern("xpt_file", "LLCP[YEAR].XPT") %>%
     append.pattern("xpt_file_version", "LLCP[YR]V[VERS].XPT") %>%
+
     append.pattern("sas_rdata","xpt_[YEAR].RData") %>%
     append.pattern("sas_rdata_version","xpt_[YEAR]_V[VERS].RData") %>%
     append.pattern("sas_sasout_version", "SASOUT[YR]_LLCP_V[VERS].SAS") %>%

@@ -5,7 +5,7 @@ save.geogs <- function(geogs) {
   save(geogs, file = file)
 }
 
-get.geogs <- function() {
+get.geogs.all <- function() {
 
   data("geogs", package="brfss")
   geogs
@@ -14,7 +14,7 @@ get.geogs <- function() {
 
 geog.name <- function(geog) {
 
-  geogs <- get.geogs()
+  geogs <- get.geogs.all()
 
   if(is.character(geog) && nchar(geog)==2) {
     geog <- geogs %>%
@@ -33,7 +33,7 @@ geog.name <- function(geog) {
 
 geog.abb <- function(geog) {
 
-  geogs <- get.geogs()
+  geogs <- get.geogs.all()
 
   if(is.character(geog) && nchar(geog)!=2) {
     geog <- geogs %>%
@@ -52,7 +52,7 @@ geog.abb <- function(geog) {
 
 geog.id <- function(geog) {
 
-  geogs <- get.geogs()
+  geogs <- get.geogs.all()
 
   if(is.character(geog) && nchar(geog)!=2) {
     geog <- geogs %>%

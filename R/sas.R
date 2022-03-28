@@ -80,8 +80,8 @@ fix.missing.columns<-function(year,year2=year-1) {
 #' Use this function to process a single year of BRFSS data. This function sill download, unzip, and create a data frame with all data from the XPT file, as well as any other versions of the survey.
 #'
 #' @param year - int - year of interest
-#' @param download - boolean - download the data? Useful (set = FALSE) if you already have the downloaded files
-#' @param xpt - boolean - read/parse teh xpt file? Useful (set = FALSE) if you already have the xpt files processed
+#' @param download - logical - download the data? Useful (set = FALSE) if you already have the downloaded files
+#' @param xpt - logical - read/parse teh xpt file? Useful (set = FALSE) if you already have the xpt files processed
 #' @param verbose - output some information during processing
 #' @param ... other params
 #'
@@ -117,7 +117,7 @@ sas.process.year<-function(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...) {
   }
 
   sas.save.sasout(year = year)
-  split.geogs(year=year,...)
+  cleave.geogs(year=year,...)
 
   save_response_stats(year = year)
   save_module_stats(year = year)
@@ -239,7 +239,7 @@ sas.download.data.versions<-function(year) {
 #' @param save_file character: name of .rda file
 #' @param sasout_folder character: location (folder) of sasout file
 #' @param sasout_file character: filename of sasout file
-#' @param verbose boolean: provide extra information during processing
+#' @param verbose logical: provide extra information during processing
 #'
 #' @return
 #' @export
@@ -380,18 +380,42 @@ read.xpt<-function(year,version = 0,
 }
 
 
-split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
+#' Split BRFSS XPT by Geography
+#'
+#' The main BRFSS XPT data file created when the XPT file is downloaded and read has data
+#' for all geographies.This function splits out the geographies of interest.
+#'
+#' @param year integer - year of interest
+#' @param rdata_folder character - location of .RData file with full BRFSS XPT data
+#' @param rdata_file character - filename of .RData file with full BRFSS XPT data
+#' @param main logical - process main XPT file
+#' @param versions logical - process versioned XPT file
+#' @param my_geog character - abbreviation for primary state/geography of interest (e. "MT")
+#' @param other_geogs character - abbreviations for other states/geographies of interest (e. c("ID","WY"))
+#' @param verbose logical - provide details during processing
+#'
+#' @export
+#' @examples
+#'
+#'\dontrun{
+#' cleave.geogs(year = 2020,rdata_folder="./data/2020/", rdata_file="xpt_2020.RData",
+#'    main=TRUE,versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
+#'}
+#'
+cleave.geogs<-function(year = NULL, rdata_folder=NULL, rdata_file=NULL,
                       main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
 
   if(!(main || versions)) return(NULL)
 
+  year <- get.year(year)
 
   if(is.null(my_geog)) my_geog <- my.geog()
   if(is.null(other_geogs)) other_geogs <- my.other.geogs()
 
   if(my_geog=="") my_geog <- character(0)
 
-  geogs <- c(my_geog,other_geogs)
+  geogs <- get.geogs()
+
   ver<-integer(0)
   if(main) ver<-0
 
@@ -399,16 +423,9 @@ split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
 
   if(versions) ver<-c(ver,1:vermax)
 
-  df_geogs <- get.geogs()
+  df_geogs <- get.geogs.all()
 
   sapply(ver,function(version) {
-
-    # if(version == 0) {
-    #   fname <- apply.pattern("sas_rdata",YEAR = year)
-    # } else {
-    #   fname<- apply.pattern("sas_rdata_version",YEAR = year, VERS = version)
-    # }
-    #
 
     df_xpt<-load.sas(year,rdata_folder = rdata_folder,rdata_file = rdata_file, version)
 
@@ -416,20 +433,24 @@ split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
       geogs<-unique(df_xpt$`_STATE`)
 
     } else {
+
       if(is.character(geogs)) {
         geogs<-sapply(geogs,function(state) {
           df_geogs[df_geogs$Abbrev==state,"Id"]
         })
+
+        geogs <- unlist(unname(geogs))
       }
     }
 
     add_cols<-character(0)
 
-    fldr_geog <- normalizePath(apply.pattern("brfss_geog_folder", YEAR = year),winslash = "/", mustWork = FALSE)
+    # fldr_geog <- normalizePath(apply.pattern("brfss_geog_folder", YEAR = year, GEOG= geog),
+    #                            winslash = "/", mustWork = FALSE)
 
-    if(!dir.exists(fldr_geog)) dir.create(fldr_geog)
 
     mapply(function(id,nm) {
+
       if(id%in%geogs) {
 
         df_state<-df_xpt[df_xpt$`_STATE`==id,]
@@ -455,11 +476,13 @@ split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
 
           assign(dfname,df_state)
 
-          if(nm == my_geog) {
+          if(str_something(my_geog) &&  (nm == my_geog)) {
             fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year)
           } else {
-            fldr <- apply.pattern("brfss_geog_folder",  YEAR = year)
+            fldr <- apply.pattern("brfss_geog_folder",  YEAR = year, GEOG = nm)
           }
+
+          if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
 
           if(version == 0) {
 
@@ -467,12 +490,12 @@ split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
 
           } else {
 
-            file <- apply.pattern("brfss_geog_file_version",  YEAR = year, GEOG = nm)
+            file <- apply.pattern("brfss_geog_file_version",  YEAR = year, GEOG = nm, VERS = version)
 
           }
 
           fname <- paste0(fldr,file)
-
+          if(verbose) cat("Going to save :", fname, "\n")
           save(list = c(dfname),file = fname)
 
           columns.add(year,add_cols)
@@ -480,7 +503,7 @@ split.geogs<-function(year, rdata_folder=NULL, rdata_file=NULL,
       }
     },df_geogs$Id,df_geogs$Abbrev)
   })
-
+  invisible()
 }
 
 columns.add<-function(year,cols2add){

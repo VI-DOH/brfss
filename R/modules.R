@@ -18,7 +18,7 @@ modules_used<-function(year = NULL, geogs = NULL) {
 
   vers_max<-highest_version(year)
 
-  if(is.null(geogs)) geogs<-get.geogs()
+  if(is.null(geogs)) geogs<-get.geogs.all()
 
   df<-data.frame()
 

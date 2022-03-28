@@ -33,7 +33,7 @@ read.xpt(
 
 \item{sasout_file}{character: filename of sasout file}
 
-\item{verbose}{boolean: provide extra information during processing}
+\item{verbose}{logical: provide extra information during processing}
 }
 \value{
 

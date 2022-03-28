@@ -13,7 +13,7 @@ getMeasureReport(df, meas, title = "Var1", order = F, useNA = "ifany", ...)
 
 \item{title}{character}
 
-\item{order}{boolean}
+\item{order}{logical}
 
 \item{useNA}{character}
 

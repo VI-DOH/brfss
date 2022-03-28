@@ -4,7 +4,7 @@
 \alias{ascii.download.data}
 \title{Download ASCII BREFSS data}
 \usage{
-ascii.download.data(year, destpath = NULL, unzip = TRUE, rmzip = TRUE)
+ascii.download.data(year = NULL, destpath = NULL, unzip = TRUE, rmzip = TRUE)
 }
 \arguments{
 \item{year}{integer - year of data file}

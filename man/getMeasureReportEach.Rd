@@ -25,11 +25,11 @@ getMeasureReportEach(
 
 \item{title}{character}
 
-\item{order}{boolean}
+\item{order}{logical}
 
 \item{useNA}{character}
 
-\item{debug}{boolean}
+\item{debug}{logical}
 
 \item{replace}{character vector}
 

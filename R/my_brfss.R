@@ -45,14 +45,14 @@ my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL) {
 
 #' BRFSS Geography of Interest
 #'
-#' Get the default geographyfor working with BRFSS data
+#' Get the default geography for working with BRFSS data
 #'
-#' @return character vector of default geometry(s)
+#' @return character vector of default geography(s)
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' my.geog("MT")
+#' my.geog()
 #'
 #' }
 #'
@@ -80,7 +80,7 @@ my.geog <- function() {
 #'
 #' @examples
 #' \dontrun{
-#' my.geog("MT")
+#' my.other.geogs()
 #'
 #' }
 #'
@@ -132,8 +132,7 @@ my.year <- function() {
 
 get.year <- function(year = NULL) {
 
-  if(is.null(year)) year <- my_brfss$year
-  if(is.null(year)) year <- my.brfss.default.year()
+  if(is.null(year)) year <- my.year()
   year
 
 }
@@ -141,8 +140,7 @@ get.year <- function(year = NULL) {
 get.geog <- function(geog = NULL) {
 
 
-  if(is.null(geog)) geog <- my_brfss$geog
-  if(is.null(geog)) geog <- my.brfss.default.geog()
+  if(is.null(geog)) geog <- my.geog()
 
   geog
 
@@ -151,8 +149,7 @@ get.geog <- function(geog = NULL) {
 get.other.geogs <- function(other_geogs = NULL) {
 
 
-  if(is.null(other_geogs)) other_geogs <- my_brfss$other_geogs
-  if(is.null(other_geogs)) other_geogs <- my.brfss.default.other.geogs()
+  if(is.null(other_geogs)) other_geogs <- my.other.geogs()
 
   other_geogs
 
@@ -163,7 +160,10 @@ get.geogs <- function(geogs = NULL) {
 
 
   if(is.null(geogs)) {
-    geogs <- c(get.geog(NULL), get.other.geogs(NULL))
+
+    geogs <- unlist(unname(c(get.geog(NULL), get.other.geogs(NULL))))
+    geogs <- geogs[length(geogs)>0]
+    geogs <- geogs[nchar(geogs)>0]
   }
 
   geogs

@@ -85,7 +85,7 @@ brfss_raw_path<-function(year,month) {
 #' @param year integer year of the data included in the file
 #' @param month integer month of the data included in the file
 #' @param index integer index of the raw data file
-#' @param ynpath boolean (default=TRUE) include the default path?
+#' @param ynpath logical (default=TRUE) include the default path?
 #'
 #' @return character default path
 #'

@@ -59,16 +59,4 @@
 #' }
 "geogs"
 
-#' Collection of BRFSS States/Territories
-#'
-#' A data frame containing  information for
-#'
-#' @format A list with 3 members
-#' \describe{
-#'
-#'   \item{year}{BRFSS year of interest}
-#'   \item{geog}{primary geography (state/territory) of interest}
-#'   \item{other_geogs}{other geographies (states/territories) of interest}
-#'   ...
-#' }
-"my_brfss"
+

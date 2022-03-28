@@ -41,27 +41,38 @@ brfss.raw.ascii.filename<-function(year,month,index=1,type, state="VI", ynpath=F
 #'
 #'  Read BRFSS raw ASCII data file
 #'
+#' @param year integer year of interest
 #' @param filename character name of the raw ascii data file
 #' @param layout character name of the file containing the layout or data.frame containing the layout
 #' @param state character include data for "all" states (default), "my" state, or "other" states
-#' @param completes boolean whether or not to inlcude only complete interviews (default=TRUE)
+#' @param completes logical whether or not to include only complete interviews (default=TRUE)
 #'
 #' @return data frame containing survey data
 #'
 #' @examples
 #' \dontrun{
-#' df<-read.brfss(filename="./data_raw/2016/05_MAY/VIMAY161.dat",
+#' my.brfss(year = 2020, geog = "MT")
+#' df<-read.brfss.ascii(year = ,
 #' layout="./data_raw/var_layouts/layout_2016")
 #'}
 #'
 #' @export
 
-read.brfss.ascii<-function(filename,layout,state=c("all","my","other"),otherstate="*", completes=T) {
+read.brfss.ascii<-function(year = NULL, filename=NULL,layout = NULL,state=c("all","my","other"),otherstate="*", completes=T) {
 
   #  env<-get.brffs.env()
   state <- match.arg(state)
 
-  if(missing(filename) || missing(layout)) {
+  if(is.null(filename)) {
+    year<-get.year(year)
+
+    if(!is.null(year)) {
+      filename <- apply.pattern("ascii_path", YEAR = year)
+    }
+
+  }
+
+  if(is.null(filename) || is.null(layout)) {
     return (NA)
 
   }

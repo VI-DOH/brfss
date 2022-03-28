@@ -10,9 +10,9 @@ sas.process.year(year, download = TRUE, xpt = TRUE, verbose = FALSE, ...)
 \arguments{
 \item{year}{- int - year of interest}
 
-\item{download}{- boolean - download the data? Useful (set = FALSE) if you already have the downloaded files}
+\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
 
-\item{xpt}{- boolean - read/parse teh xpt file? Useful (set = FALSE) if you already have the xpt files processed}
+\item{xpt}{- logical - read/parse teh xpt file? Useful (set = FALSE) if you already have the xpt files processed}
 
 \item{verbose}{- output some information during processing}
 
