@@ -150,8 +150,17 @@ sas.download.data<-function(year) {
     url<-paste0(urlfiles,file)
     fileout<-paste0(folderout,file)
 
+    #
+    # download will fail on lager files if time to download is > 60 secs
+    #   set time to 3 minutes and then restore when done
+
+    to <- getOption("timeout")
+    options(timeout = 180)
+
     download.file(url = url,destfile = fileout,
                   method = "libcurl")
+
+    options(timeout = to)
 
     if(grepl("[.]zip$",fileout)) {
       unzip(fileout,exdir = normalizePath(folderout))
@@ -186,8 +195,15 @@ sas.download.data.versions<-function(year) {
         #      for (file in files) {
 
         tryCatch(expr = {
+
+          to <- getOption("timeout")
+          options(timeout = 180)
+
           download.file(url = url,destfile = fileout,
                         method = "libcurl")
+
+          options(timeout = to)
+
           if(grepl("[.]zip$",fileout)) {
             unzip(fileout,exdir = normalizePath(folderout))
             file.remove(fileout)

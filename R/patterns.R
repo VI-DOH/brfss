@@ -139,8 +139,22 @@ init.patterns <- function() {
     append.pattern("brfss_columns_folder","{brfss_annual_data_folder}layout/") %>%
     append.pattern("brfss_columns_file","columns_[YEAR].RData") %>%
     append.pattern("brfss_columns_path","{brfss_columns_folder}{brfss_columns_file}") %>%
+
+    ##    data file of responses
+
+    append.pattern("brfss_responses_folder","{brfss_annual_data_folder}") %>%
+    append.pattern("brfss_responses_file","responses_[YEAR].RData") %>%
+    append.pattern("brfss_responses_path","{brfss_responses_folder}{brfss_responses_file}") %>%
+
+    append.pattern("brfss_modules_folder","{brfss_annual_data_folder}") %>%
+    append.pattern("brfss_modules_file","modules_[YEAR].RData") %>%
+    append.pattern("brfss_modules_path","{brfss_modules_folder}{brfss_modules_file}") %>%
+
+    ##  ascii data
+
     append.pattern("ascii_raw_data_folder","{brfss_raw_data_folder}[YEAR]/ascii/") %>%
     append.pattern("ascii_downloads","{brfss_url_files}LLCP[YEAR]ASC.zip") %>%
+
     append.pattern("sas_raw_folder","{brfss_raw_data_folder}[YEAR]/sas/") %>%
     append.pattern("sas_data_folder","{brfss_annual_data_folder}xpt/") %>%
     append.pattern("xpt_file", "LLCP[YEAR].XPT") %>%

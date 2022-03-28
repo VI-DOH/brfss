@@ -16,7 +16,10 @@
 #' maxvers<-highest_version(2018)
 #'}
 #'
-highest_version<-function(year) {
+highest_version<-function(year=NULL) {
+
+  year <- get.year(year)
+
   fldr<-apply.pattern("sas_data_folder",YEAR = year)
 
   files<-list.files(fldr)
@@ -76,14 +79,18 @@ save_response_stats<-function(year) {
   df_responses<-calc_responses(year = year)
   nm<-paste0("df_responses_",year)
   assign(nm,df_responses)
-  save(list = c(nm),file = paste0(apply.pattern("sas_data_folder",YEAR = year),"responses_",year,".RData"))
+
+
+  save(list = c(nm),file = apply.pattern("brfss_responses_path",YEAR = year))
 
 }
 
 
-responses<-function(year,geogs=NULL,versions, reduce=TRUE) {
+responses<-function(year = NULL,geogs=NULL,versions, reduce=TRUE) {
 
-  df<- orrr::get.rdata(orrr::dir.project(c("data",year,paste0("responses_",year,".RData")),slash = F))
+  year <- get.year(year)
+
+  df<- orrr::get.rdata(apply.pattern("brfss_responses_path",YEAR = year))
 
   if(!is.null(geogs)) {
     if(is.numeric(geogs)) geogs<-geog_abbs(geogs)

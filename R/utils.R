@@ -81,20 +81,27 @@ geog_names<-function(geogs) {
 brfss_geog_data<-function(year,geog,version=0) {
 
   if(is.numeric(geog)) geog<-geog_abbs(geog)
-  if(version>0) {
-    fil_name<-apply.pattern("brfss_geog_file_version", YEAR = year, GEOG = geog, VERS=version)
-  } else {
-    fil_name<-apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog, VERS=version)
+  # if(version>0) {
+  #   fil_name<-apply.pattern("brfss_geog_file_version", YEAR = year, GEOG = geog, VERS=version)
+  # } else {
+  #   fil_name<-apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog, VERS=version)
+  # }
+  #
+  #
+  # fldr_name<-apply.pattern("brfss_geog_folder", YEAR = year, GEOG = geog, VERS=version)
+  # fname<-paste0(fldr_name,fil_name)
+
+  fname <- brfss_geog_data_filename(year,geog,version)
+  if(!file.exists(fname)) {
+    fname <- brfss_data_filename(year,geog,version)
+
+    if(!file.exists(fname)) {
+      return(NULL)
+    }
+
   }
 
-  fldr_name<-apply.pattern("brfss_geog_folder", YEAR = year, GEOG = geog, VERS=version)
-  fname<-paste0(fldr_name,fil_name)
-
-  if(file.exists(fname)) {
-    df_brfss<- orrr::get.rdata(fname)
-  } else {
-    df_brfss<-NULL
-  }
+  df_brfss<- orrr::get.rdata(fname)
 
   df_brfss
 }

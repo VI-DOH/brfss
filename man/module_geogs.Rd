@@ -4,7 +4,7 @@
 \alias{module_geogs}
 \title{Get States Using BRFSS Module(s)}
 \usage{
-module_geogs(year, modules, versions = FALSE, reduce = TRUE)
+module_geogs(year = NULL, modules, versions = FALSE, reduce = TRUE)
 }
 \arguments{
 \item{year}{- integer - 4-digit year of interest}

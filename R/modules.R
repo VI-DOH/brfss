@@ -1,9 +1,24 @@
 
-modules_used<-function(year,geogs) {
+#' Modules Used by Geography
+#'
+#' @param year integer - year of interest
+#' @param geogs character - geography(s) of interest
+#'
+#' @return data frame of module information
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' modules_used(2020, "MT")
+#' }
+#'
+modules_used<-function(year = NULL, geogs = NULL) {
+
+  year <- get.year(year)
 
   vers_max<-highest_version(year)
 
-  if(missing(geogs)) geogs<-geog_abbs()
+  if(is.null(geogs)) geogs<-get.geogs()
 
   df<-data.frame()
 
@@ -95,7 +110,9 @@ save_module_stats<-function(year) {
 
   nm<-paste0("df_modules_",year)
   assign(nm,df_modules)
-  save(list = c(nm),file =  paste0(apply.pattern("sas_data_folder", YEAR = year),"modules_",year,".RData"))
+
+  save(list = c(nm),file = apply.pattern("brfss_modules_path",YEAR = year))
+
 }
 
 
@@ -119,11 +136,17 @@ save_module_stats<-function(year) {
 #'}
 #'
 
-geog_modules<-function(year,geogs,versions=FALSE,reduce=TRUE) {
+geog_modules<-function(year = NULL,geogs = NULL, versions=FALSE,reduce=TRUE) {
+
+  year <- get.year(year = year)
+
+  if(is.null(geogs)) {
+    geogs <- c(my.geog(), my.other.geogs())
+  }
 
   df<- module_data(year)
 
-  if(!missing(geogs)) {
+  if(!is.null(geogs)) {
     if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
     df<-df[df$geog%in%geogs,]
   } else {
@@ -157,7 +180,9 @@ geog_modules<-function(year,geogs,versions=FALSE,reduce=TRUE) {
 #' module_geogs(2018,c(1,2))
 #'}
 #'
-module_geogs<-function(year,modules,versions=FALSE,reduce=TRUE) {
+module_geogs<-function(year = NULL,modules,versions=FALSE,reduce=TRUE) {
+
+  year <- get.year(year)
 
   df<- module_data(year)
 

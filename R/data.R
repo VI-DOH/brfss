@@ -43,3 +43,32 @@
 #'   ...
 #' }
 "file_patterns"
+
+
+#' Storage for Default Year and State/Geography
+#'
+#' A list containing  information for current BRFSS processing
+#'
+#' @format A data frame with 3 variables and 54 rows
+#' \describe{
+#'
+#'   \item{Geog}{text name of geography (e.g. "Montana")}
+#'   \item{Id}{BRFSS integer ID for the Geography - equivalent to the FIPS code (e.g. 30)}
+#'   \item{Abbrev}{2-digit abbreviation for the geography (state/territory) (e.g. "MT")}
+#'   ...
+#' }
+"geogs"
+
+#' Collection of BRFSS States/Territories
+#'
+#' A data frame containing  information for
+#'
+#' @format A list with 3 members
+#' \describe{
+#'
+#'   \item{year}{BRFSS year of interest}
+#'   \item{geog}{primary geography (state/territory) of interest}
+#'   \item{other_geogs}{other geographies (states/territories) of interest}
+#'   ...
+#' }
+"my_brfss"

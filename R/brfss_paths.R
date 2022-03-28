@@ -160,10 +160,26 @@ brfss_geog_data_filename<-function(year,geog,version=0) {
   fname
 }
 
+
+brfss_data_filename<-function(year,geog,version=0) {
+  if(is.numeric(geog)) geog<-geog_abbs(geog)
+  fname<-paste0(apply.pattern("brfss_annual_data_folder", YEAR= year),
+                apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
+  if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
+  fname
+}
+
 brfss_geog_version_exists<-function(year,geog,version=1) {
   if(is.numeric(geog)) geog<-geog_abbs(geog)
   fname<-brfss_geog_data_filename(year,geog,version=version)
-  file.exists(fname)
+  ok <- file.exists(fname)
+
+  if(!ok) {
+    fname<-brfss_data_filename(year,geog,version=version)
+    ok <- file.exists(fname)
+  }
+
+  ok
 }
 
 brfss_data_folder<-function(year) {

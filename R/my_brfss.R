@@ -130,4 +130,43 @@ my.year <- function() {
   }
 }
 
+get.year <- function(year = NULL) {
+
+  if(is.null(year)) year <- my_brfss$year
+  if(is.null(year)) year <- my.brfss.default.year()
+  year
+
+}
+
+get.geog <- function(geog = NULL) {
+
+
+  if(is.null(geog)) geog <- my_brfss$geog
+  if(is.null(geog)) geog <- my.brfss.default.geog()
+
+  geog
+
+}
+
+get.other.geogs <- function(other_geogs = NULL) {
+
+
+  if(is.null(other_geogs)) other_geogs <- my_brfss$other_geogs
+  if(is.null(other_geogs)) other_geogs <- my.brfss.default.other.geogs()
+
+  other_geogs
+
+}
+
+
+get.geogs <- function(geogs = NULL) {
+
+
+  if(is.null(geogs)) {
+    geogs <- c(get.geog(NULL), get.other.geogs(NULL))
+  }
+
+  geogs
+
+}
 
