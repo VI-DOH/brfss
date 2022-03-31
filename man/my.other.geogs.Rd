@@ -15,7 +15,7 @@ rather than a single state. So other geographies might be c("MT","WY", "ID", "ND
 }
 \examples{
 \dontrun{
-my.geog("MT")
+my.other.geogs()
 
 }
 

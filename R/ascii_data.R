@@ -38,7 +38,7 @@ ascii.download.data<-function(year = NULL, destpath = NULL, unzip=TRUE, rmzip=TR
   if(is.null(destpath)) destpath <- apply.pattern("ascii_raw_data_folder", YEAR = year)
   destpath <- normalizePath(destpath,winslash = "/",mustWork = FALSE)
 #
-
+  browser()
   if(!dir.exists(destpath)) dir.create(destpath,recursive = TRUE)
 
   url<-apply.pattern("ascii_downloads",YEAR =year)

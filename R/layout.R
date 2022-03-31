@@ -1,177 +1,5 @@
 
 
-#############################################################
-##
-##    layout from codebook
-##
-#' Build the Layout from CDC Provided Codebook
-#'
-#' If a filename is not provided, it uses the file_pattern data.frame
-#'to figure out the name of the file. The layout data.frame is used to
-#'parse the BRFSS ascii fixed width file
-#'
-#' @param file character name of layout file - if missing (NULL) then my.brfss() is called to
-#' determine the year and geographical place of interest. The geographical place of interest
-#' may not be used, but will be passed for pattern matching of file name in case it is needed
-#'
-#' @return data.frame containing the layout to be passed to read.fwf
-#' @export
-#'
-#' @examples
-#############################################################
-##
-##    layout from codebook
-##
-codebook_layout <- function(file=NULL) {
-  require(dplyr)
-
-  if(is.null(file)) {
-    x <- my.brfss()
-    fldr <- apply.pattern("codebook_layout_folder", YEAR = x$year, GEOG = x$geog)
-    fil <- apply.pattern("codebook_layout_file", YEAR = x$year, GEOG = x$geog)
-    ext <- apply.pattern("codebook_layout_foldext", YEAR = x$year, GEOG = x$geog)
-    file <- paste0(fldr,fil,ext)
-  }
-
-  if(grepl("[.]txt$", file, ignore.case = TRUE)) {
-
-    lines <- readLines(file)
-
-  } else if(grepl("[.]rtf$", file,ignore.case = TRUE)) {
-
-    lines <- striprtf::read_rtf(file)
-
-    lines <- gsub("^[*]| {0,1}","",lines)
-    lines <- lines %>%
-      strsplit(split = "\n") %>%
-      unlist(recursive = TRUE)
-
-  } else if(grepl("[.]pdf$", file,ignore.case = TRUE)) {
-
-    lines <- pdftools::pdf_text(file) %>%
-      strsplit(split = "\n") %>%
-      unlist(recursive = TRUE)
-
-  } else {
-    return(NULL)
-  }
-
-  ##############################################################
-  ##
-  ##  get variable values from "VARIABLE: value" lines
-
-  ##    the "Label: xxxx..."  line is the start of the information for each eventual column of
-  ##      BRFSS data
-  ##    variables below ending in '_lines' are integer vectors with line numbers
-
-  label_lines <- grep("^Label:", lines)
-  mod_lines <- grep("^Module.*Number", lines)
-  core_lines <- grep("^Core.*Number", lines)
-  value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
-
-  ##
-  columns <- grep("^Column:", lines, value = TRUE)
-  col_names <- grep("^SAS.", lines, value = TRUE)
-
-
-  labels <- lines[label_lines]
-  questions <- grep("^Question:", lines, value = TRUE)
-  sections <- grep("^Section Name:", lines, value = TRUE)
-  qnums <- grep("^Question Number", lines, value = TRUE)
-
-  label <- stringr::str_trim(gsub(".*:(.*)","\\1",labels))
-  question <- stringr::str_trim(gsub(".*:(.*)","\\1",questions))
-  section <- stringr::str_trim(gsub(".*:(.*)","\\1",sections))
-  question_num <- stringr::str_trim(gsub(".*:(.*)","\\1",qnums))
-
-  sect_type <- rep("",length(label_lines))
-  sect_num <- rep("",length(label_lines))
-
-  ##    get Core Section numbers
-
-  cors<-sapply(core_lines, function(core_ln) {
-
-    max(which(label_lines<core_ln))
-  })
-
-  sect_type[cors] <- "Core"
-  sect_num[cors] <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[core_lines]))
-
-  ##    get Module Section numbers
-
-  mods<-sapply(mod_lines, function(mod_ln) {
-
-    max(which(label_lines<mod_ln))
-  })
-
-  sect_type[mods] <- "Module"
-  sect_num[mods] <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[mod_lines]))
-
-  ## parse column name and column range from text
-
-  col_name <- stringr::str_trim(gsub(".*:(.*)","\\1",col_names))
-  column <- stringr::str_trim(gsub(".*:(.*)","\\1",columns))
-
-  ## build data frame for storage and later conversion to column name-column width pairs
-  ##  for ASCII file reading
-
-  df <- data.frame(column,col_name, label, question, section, sect_type, sect_num) %>%
-    mutate(start = as.integer(gsub("(.*)-(.*)","\\1",column))) %>%
-    mutate(end = as.integer(gsub("(.*)-(.*)","\\2",column))) %>%
-    mutate(field_size = end - start + 1)
-
-  ##
-  ## remove duplicates (overlaps of columns)
-  ##
-  ## e.g. IDATE (8 chars) always overlaps IYEAR, IMONTH and IDAY
-  ##  and _PSU is always co-located with SEQNO
-  ##  not sure of the history on the latter one
-  ##
-  ## read.fwf (read fixed width file) does not allow for overlapping columns
-  ##  as it requires only a vector of columns widths, not start/stop
-
-  dups <- which(duplicated(df$start))
-
-  rms <- integer(0)
-
-  invisible(
-    sapply(dups, function(dup) {
-      end1 <- df[dup,"end"]
-      end0 <- df[dup-1,"end"]
-      if(end0>=end1) rm <- dup-1 else rm <- dup
-      rms <<- c(rms,rm)
-    })
-  )
-
-  ## remove duplicate rows
-
-  df <- df %>%
-    slice(-rms)
-
-  ## add DUMMY variables for missing columns (non-contiguous end of one and start of the next)
-  ##    if Var1 starts at column 50 and ends at column 52 and the next variable starts at 60 then
-  ##    we have to have a DUUMMY variable from 53-59
-
-  df <- df  %>%
-    bind_rows(df  %>%
-                mutate(exp = c(0,end[1:(nrow(.)-1)])+1) %>%
-                filter(exp != start) %>%
-                mutate(field_size = start - exp ) %>%
-                mutate(start = exp) %>%
-                mutate(end = start + field_size - 1) %>%
-                mutate(col_name = paste0("DUMMY_" , start)) %>%
-                #        mutate(field_size = -field_size) %>%
-                select(col_name, start, end, field_size, label, question, section, sect_type, sect_num)
-    ) %>%
-    arrange(start)
-
-  if(dir.exists("./output"))   write.csv(x = df  ,file = "./output/codebook_layout.csv")
-
-  df %>%
-    select(field_size, col_name)
-
-}
-
 # codebook_layout_SAVE <- function(file=NULL) {
 #   require(dplyr)
 #
@@ -258,10 +86,33 @@ codebook_layout <- function(file=NULL) {
 # }
 #
 
+#' Get BRFSS Fixed Width Layout
+#'
+#'Gets a data frame with information about the column names and the column widths for parsing a
+#'BRFSS fixed width ASCII file.
+#'
+#' @param year integer - year of interest
+#'
+#' @return data frame- 2 variables
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get_fw_layout(2020)
+#' }
+get_fw_layout <- function(year = NULL) {
+
+  year <- get.year(year)
+
+  layout_fldr <- apply.pattern("brfss_layout_folder", YEAR = year)
+
+  list.files(layout_fldr)
+}
+
 sas_layout<-function(year){
 
-  file= paste0(orrr::dir.project("data_raw"),year,"/SASOUT",year%%100,"_STATES.SAS")
-  read.sas.layout(year = year,file = file)
+  #file= paste0(orrr::dir.project("data_raw"),year,"/SASOUT",year%%100,"_STATES.SAS")
+  read.sas.layout(year = year)
 }
 
 

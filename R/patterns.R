@@ -19,7 +19,7 @@
 #' set.pattern(name = "raw_data_folder", pattern = "./data_raw/", desc = "Folder for raw BRFSS data")
 #' }
 #'
-set.pattern <- function(name, pattern= NULL, group="") {
+set.pattern <- function(name, pattern= NULL, group="", desc = "") {
   require(dplyr)
 
   df_patterns <- get.patterns()
@@ -30,7 +30,7 @@ set.pattern <- function(name, pattern= NULL, group="") {
 
   df_patterns <- df_patterns %>%
     filter(name != {{name}}) %>%
-    bind_rows(data.frame(name , pattern, group )) %>%
+    bind_rows(data.frame(name , pattern, group, desc )) %>%
     distinct()
 
   save.patterns(df_patterns)
@@ -124,14 +124,45 @@ init.patterns <- function() {
     append.pattern("brfss_geog_path","{brfss_geog_folder}{brfss_geog_file}",
                    desc = "Full path for annual processed BRFSS data (main survey) from specific geographies") %>%
 
-    append.pattern("codebook_layout_folder","{brfss_annual_raw_data_folder}",
+  #############################################################################
+  ##
+  ##  codebook patterns
+
+  append.pattern("brfss_url_codebook",
+                 "https://www.cdc.gov/brfss/annual_data/[YEAR]/pdf/",
+                 desc ="Base URL of BRFSS codebook") %>%
+
+    append.pattern("brfss_codebook_file1",
+                   "{brfss_url_codebook}codebook[YR]_llcp.pdf",
+                   group ="codebook_downloads",
+                   desc ="Pre-2017 codebook name") %>%
+
+    append.pattern("brfss_codebook_file2",
+                   "{brfss_url_codebook}codebook[YR]_llcp-v2-508.pdf",
+                   group ="codebook_downloads",
+                   desc ="Post-2016 codebook name") %>%
+
+    append.pattern("brfss_codebook_file3",
+                   "{brfss_url_codebook}codebook[YR]_llcp-v2-508.HTML",
+                   group ="codebook_downloads",
+                   desc ="Post-2016 codebook name in html") %>%
+
+    append.pattern("codebook_folder","{brfss_annual_raw_data_folder}",
                    desc = "location of the annual codebook file") %>%
 
-    append.pattern("codebook_layout_file","codebook[YR]_llcp",
+    append.pattern("codebook_file","codebook[YR]_llcp",
                    desc = "file name of the annual codebook file") %>%
 
-    append.pattern("codebook_layout_ext","pdf",
+    append.pattern("codebook_ext","pdf",
                    desc = "ext of the annual codebook file (.txt, .rtf, or .pdf") %>%
+
+    append.pattern("codebook_layout_folder","{brfss_layout_folder}",
+                   desc = "location of the annual codebook layout file") %>%
+
+    append.pattern("codebook_layout_file","layout[YR]_CB.RData",
+                   desc = "file name of the annual codebook layout file") %>%
+
+    #########################################################################################
 
     append.pattern("brfss_layout_folder","{brfss_annual_data_folder}layout/") %>%
     append.pattern("brfss_layout_file","layout_[YEAR].RData") %>%
@@ -153,7 +184,7 @@ init.patterns <- function() {
     ##  ascii data
 
     append.pattern("ascii_filename","LLCP[YEAR]ASC.zip") %>%
-    append.pattern("ascii_downloads","{brfss_url_files}{ascii_filename") %>%
+    append.pattern("ascii_downloads","{brfss_url_files}{ascii_filename}") %>%
 
     append.pattern("ascii_raw_data_folder","{brfss_raw_data_folder}[YEAR]/ascii/") %>%
     append.pattern("ascii_path","{ascii_raw_data_folder}{ascii_filename}") %>%
@@ -268,7 +299,7 @@ expand.pattern <- function(pattern) {
 
   # get rid of double slashes (usually from substitution of other patterns)
 
-  pattern <- gsub("//","/",pattern)
+  pattern <- gsub("([^:])//","\\1/",pattern)
 
   pattern
 }
@@ -395,8 +426,21 @@ apply.pattern <- function(name,  ...) {
 
 }
 
-################################
+#############################################
 
+#' Substitute Variables in Pattern
+#'
+#' @param strIn character - patterns to apply the variables to
+#' @param ... list - variables to insert in form of c(YEAR = xxxx, VERS = 1), etc
+#'
+#' @return character vector of modified strings
+#' @export
+#'
+#' @examples
+#' year <- 2020
+#' geog <- "MT"
+#' patternize("XPT_[GEOG]_[YEAR]", YEAR = year, GEOG = geog)
+#'
 patternize<-function(strIn, ...) {
 
   args <- list(...)

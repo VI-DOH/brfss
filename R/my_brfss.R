@@ -130,12 +130,16 @@ my.year <- function() {
   }
 }
 
+##  gets the my_brfss year if year is missing or NULL
+
 get.year <- function(year = NULL) {
 
   if(is.null(year)) year <- my.year()
   year
 
 }
+
+##  gets the my_brfss geog if geog is missing or NULL
 
 get.geog <- function(geog = NULL) {
 
@@ -146,6 +150,8 @@ get.geog <- function(geog = NULL) {
 
 }
 
+##  gets the my_brfss other_geogs if other_geogs is missing or NULL
+
 get.other.geogs <- function(other_geogs = NULL) {
 
 
@@ -155,11 +161,15 @@ get.other.geogs <- function(other_geogs = NULL) {
 
 }
 
+##  gets all geogs if geogs is missing or NULL
+##  concatenates the geog and other_geogs members of my_brfss
 
 get.geogs <- function(geogs = NULL) {
 
 
   if(is.null(geogs)) {
+
+    ## passing NULL to the follwing functions autmatically gets the my_brfss members
 
     geogs <- unlist(unname(c(get.geog(NULL), get.other.geogs(NULL))))
     geogs <- geogs[length(geogs)>0]

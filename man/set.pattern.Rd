@@ -4,7 +4,7 @@
 \alias{set.pattern}
 \title{Set File Pattern}
 \usage{
-set.pattern(name, pattern = NULL, group = "")
+set.pattern(name, pattern = NULL, group = "", desc = "")
 }
 \arguments{
 \item{name}{character: name of pattern}

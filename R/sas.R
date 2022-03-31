@@ -77,19 +77,21 @@ fix.missing.columns<-function(year,year2=year-1) {
 }
 
 #' Process BRFSS Annual Data Files
-#' Use this function to process a single year of BRFSS data. This function sill download, unzip, and create a data frame with all data from the XPT file, as well as any other versions of the survey.
+#' Use this function to process a single year of BRFSS data. This function sill download, unzip,
+#' and create a data frame with all data from the XPT file, as well as any other versions of the survey.
 #'
 #' @param year - int - year of interest
 #' @param download - logical - download the data? Useful (set = FALSE) if you already have the downloaded files
-#' @param xpt - logical - read/parse teh xpt file? Useful (set = FALSE) if you already have the xpt files processed
-#' @param verbose - output some information during processing
+#' @param xpt - logical - read/parse the xpt file? Useful (set = FALSE) if you already have the xpt files processed
+#' @param codebook - logical - download the annual codebook
+#' @param split - logical - split the xpt file by state/geography
 #' @param ... other params
 #'
 #' @return invisible()
 #' @export
 #'
 #' @examples
-sas.process.year<-function(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...) {
+sas.process.year<-function(year,download=TRUE,xpt=TRUE, codebook = TRUE, split = TRUE, verbose=FALSE, ...) {
 
   if(missing(year)) year <- my.year()
 
@@ -115,9 +117,16 @@ sas.process.year<-function(year,download=TRUE,xpt=TRUE, verbose=FALSE, ...) {
       ivers<-ivers + 1
     }
   }
+  browser()
+  save.sas.layout(year = year)
+  #sas.save.sasout(year = year)
 
-  sas.save.sasout(year = year)
-  cleave.geogs(year=year,...)
+  if(codebook) {
+    download.codebook(year = year)
+    save_codebook_layout(year = year)
+  }
+
+  if(split) cleave.geogs(year=year,...)
 
   save_response_stats(year = year)
   save_module_stats(year = year)
@@ -496,9 +505,10 @@ cleave.geogs<-function(year = NULL, rdata_folder=NULL, rdata_file=NULL,
 
           fname <- paste0(fldr,file)
           if(verbose) cat("Going to save :", fname, "\n")
+
           save(list = c(dfname),file = fname)
 
-          columns.add(year,add_cols)
+          #columns.add(year,add_cols)
         }
       }
     },df_geogs$Id,df_geogs$Abbrev)
@@ -608,7 +618,7 @@ get.sas.labels<-function(df_xpt) {
 #'
 #' @param year integer: year of interest
 #' @param folder character: folder location
-#' @param file  character: filke name
+#' @param file  character: file name
 #' @param version integer: version number (defaults = 0)
 #'
 #' @return data frame
@@ -766,17 +776,18 @@ sas.build.geogs <- function(year) {
 }
 
 
-#' Get BRFSS layout from
+#' Get BRFSS layout from SASout
 #'
 #' @param year
-#' @param save
 #'
 #' @return
 #' @export
 #'
 #' @examples
-read.sas.layout<-function(year, save = TRUE) {
+save.sas.layout<-function(year = NULL) {
   require(stringr)
+
+  year <- get.year(year)
 
   # get the filename for the data
   #  name format based on year
@@ -818,7 +829,6 @@ read.sas.layout<-function(year, save = TRUE) {
 
   },varlines,vline2))
 
-
   vars<-gsub("(.*) =.*","\\1",ulines)
   vars<-str_trim(vars)
   vars<-gsub("^_","X_",vars)
@@ -841,8 +851,11 @@ read.sas.layout<-function(year, save = TRUE) {
     as.data.frame() %>%
     fill_dummies()
 
-  if(save) save(df_layout, file = apply.pattern("brfss_layout_path",YEAR = year))
-  df_layout
+  fldr <- apply.pattern("brfss_layout_folder",YEAR = year)
+  if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
+
+  save(df_layout, file = apply.pattern("brfss_layout_path",YEAR = year))
+  invisible()
 }
 #####################################################################################################
 ##

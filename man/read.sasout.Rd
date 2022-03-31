@@ -11,7 +11,7 @@ read.sasout(year, folder = NULL, file = NULL, version = 0)
 
 \item{folder}{character: folder location}
 
-\item{file}{character: filke name}
+\item{file}{character: file name}
 
 \item{version}{integer: version number (defaults = 0)}
 }

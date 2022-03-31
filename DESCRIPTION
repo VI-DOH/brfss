@@ -13,6 +13,9 @@ Imports: rmarkdown,
         survey,
         dplyr,
         orrr,
-        stringr
+        stringr,
+        htm2txt,
+        pdftools,
+        striprtf
 Depends: 
     R (>= 2.10)

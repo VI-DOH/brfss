@@ -58,7 +58,8 @@ brfss.raw.ascii.filename<-function(year,month,index=1,type, state="VI", ynpath=F
 #'
 #' @export
 
-read.brfss.ascii<-function(year = NULL, filename=NULL,layout = NULL,state=c("all","my","other"),otherstate="*", completes=T) {
+read.brfss.ascii<-function(year = NULL, filename=NULL,layout = NULL,
+                           state=c("all","my","other"),otherstate="*", completes=T) {
 
   #  env<-get.brffs.env()
   state <- match.arg(state)
@@ -69,6 +70,11 @@ read.brfss.ascii<-function(year = NULL, filename=NULL,layout = NULL,state=c("all
     if(!is.null(year)) {
       filename <- apply.pattern("ascii_path", YEAR = year)
     }
+
+  }
+
+  if(is.null(layout)) {
+    layout_fldr <- apply.pattern("ascii_path", YEAR = year)
 
   }
 

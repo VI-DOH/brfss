@@ -154,7 +154,7 @@ brfss_field_values_filename<-function(year) {
 
 brfss_geog_data_filename<-function(year,geog,version=0) {
   if(is.numeric(geog)) geog<-geog_abbs(geog)
-  fname<-paste0(apply.pattern("brfss_geog_folder", YEAR= year),
+  fname<-paste0(apply.pattern("brfss_geog_folder", YEAR= year, GEOG = geog),
                 apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
   if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
   fname

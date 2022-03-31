@@ -3,18 +3,29 @@
 \name{sas.process.year}
 \alias{sas.process.year}
 \title{Process BRFSS Annual Data Files
-Use this function to process a single year of BRFSS data. This function sill download, unzip, and create a data frame with all data from the XPT file, as well as any other versions of the survey.}
+Use this function to process a single year of BRFSS data. This function sill download, unzip,
+and create a data frame with all data from the XPT file, as well as any other versions of the survey.}
 \usage{
-sas.process.year(year, download = TRUE, xpt = TRUE, verbose = FALSE, ...)
+sas.process.year(
+  year,
+  download = TRUE,
+  xpt = TRUE,
+  codebook = TRUE,
+  split = TRUE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{year}{- int - year of interest}
 
 \item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
 
-\item{xpt}{- logical - read/parse teh xpt file? Useful (set = FALSE) if you already have the xpt files processed}
+\item{xpt}{- logical - read/parse the xpt file? Useful (set = FALSE) if you already have the xpt files processed}
 
-\item{verbose}{- output some information during processing}
+\item{codebook}{- logical - download the annual codebook}
+
+\item{split}{- logical - split the xpt file by state/geography}
 
 \item{...}{other params}
 }
@@ -23,5 +34,6 @@ invisible()
 }
 \description{
 Process BRFSS Annual Data Files
-Use this function to process a single year of BRFSS data. This function sill download, unzip, and create a data frame with all data from the XPT file, as well as any other versions of the survey.
+Use this function to process a single year of BRFSS data. This function sill download, unzip,
+and create a data frame with all data from the XPT file, as well as any other versions of the survey.
 }

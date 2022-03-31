@@ -7,14 +7,14 @@
 my.geog()
 }
 \value{
-character vector of default geometry(s)
+character vector of default geography(s)
 }
 \description{
-Get the default geographyfor working with BRFSS data
+Get the default geography for working with BRFSS data
 }
 \examples{
 \dontrun{
-my.geog("MT")
+my.geog()
 
 }
 
