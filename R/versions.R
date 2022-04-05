@@ -46,7 +46,7 @@ calc_responses<-function(year,geogs,versions) {
 
         if(brfss_geog_version_exists(year,geog,version)) {
 
-          df_resp_cnts <- brfss_geog_data(year,geog,version)
+          df_resp_cnts <- brfss_data(year,geog,version)
           df_add <- data.frame(year=year,geog=geog, version=version,
                                responses=nrow(df_resp_cnts))
           df0<<-rbind(df0, df_add)
@@ -64,7 +64,7 @@ responses_by_geog<-function(year,geog,version=0) {
 
   if(brfss_geog_version_exists(year,geog,version)) {
 
-    df0<-brfss_geog_data(year,geog,version)
+    df0<-brfss_data(year,geog,version)
 
     return(nrow(df0))
   } else {

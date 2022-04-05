@@ -16,17 +16,19 @@
 #'
 brfss_data <- function(year = NULL, geog = NULL, version = 0) {
 
-  if(is.null(year)) {
-    year = my.year()
-  }
 
-  if(is.null(geog)) {
-    geog = my.geog()
-  }
+  if(is.numeric(geog)) geog<-geog_abbs(geog)
 
-  brfss_geog_data(year = year, geog = geog, version = version)
 
+  fname <- brfss_data_path(year,geog,version,rw = 'r')
+
+  if(is.null(fname))  return(NULL)
+
+  df_brfss<- orrr::get.rdata(fname)
+
+  df_brfss
 }
+
 
 #' Value Representing Binary No
 #'

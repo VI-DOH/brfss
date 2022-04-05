@@ -9,10 +9,10 @@ output: html_notebook
 
 =============================  
 
-##### Folder and file names are stored as patterns in a data frame stored in the data subfolder as patterns.RData. Substitutions for year, version, and geography can be made. There are premade patterns used by functions in this package, but users can add patterns and use them in their own functions. For most functions, filnames can be passed, but may be omitted if passing variables such as YEAR and GEOG to be used by functions in pattern filling
+##### Folder and file names are stored as patterns in a data frame stored in the data subfolder as patterns.RData. Substitutions for year, version, and geography can be made. There are premade patterns used by functions in this package, but users can add patterns and use them in their own functions. For most functions, filnames can be passed, but may be omitted if passing variables such as YEAR and GEOG to be used by functions to create filenames using pattern filling 
 
 ***
-  
+
 #### Process data for a single year using the SAS data files  
 
 ============================================================= 
@@ -28,7 +28,6 @@ output: html_notebook
   * download the main data file and all versions from the CDC BRFSS data url  
     
     `sas.download.data(year=year)`  
-    `sas.download.data.versions(year=year)`
 
   * unzip all zip files 
   

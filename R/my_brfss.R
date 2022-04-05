@@ -66,7 +66,9 @@ my.geog <- function() {
   } else {
 
     load(file = path)
-    return(my_brfss$geog)
+    x <- my_brfss$geog
+    names(x) <- "geog"
+    return(x)
   }
 }
 
@@ -94,7 +96,11 @@ my.other.geogs <- function() {
   } else {
 
     load(file = path)
-    return(my_brfss$other_geogs)
+
+    x <- my_brfss$other_geogs
+    names(x) <- rep("other_geogs", length(x))
+
+    return(x)
   }
 }
 
@@ -164,14 +170,17 @@ get.other.geogs <- function(other_geogs = NULL) {
 ##  gets all geogs if geogs is missing or NULL
 ##  concatenates the geog and other_geogs members of my_brfss
 
-get.geogs <- function(geogs = NULL) {
+get.geogs <- function(geogs = NULL, named = FALSE) {
 
 
   if(is.null(geogs)) {
 
-    ## passing NULL to the follwing functions autmatically gets the my_brfss members
+    ## passing NULL to the following functions automatically gets the my_brfss members
 
-    geogs <- unlist(unname(c(get.geog(NULL), get.other.geogs(NULL))))
+    geogs <- unlist(c(get.geog(NULL), get.other.geogs(NULL)))
+
+    if(!named) geogs <- unname(geogs)
+
     geogs <- geogs[length(geogs)>0]
     geogs <- geogs[nchar(geogs)>0]
   }

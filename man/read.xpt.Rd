@@ -5,13 +5,10 @@
 \title{Read BRFSS Data from SAS XPT File}
 \usage{
 read.xpt(
-  year,
+  year = NULL,
   version = 0,
-  xpt_folder = NULL,
   xpt_file = NULL,
-  save_folder = NULL,
   save_file = NULL,
-  sasout_folder = NULL,
   sasout_file = NULL,
   verbose = F
 )
@@ -21,17 +18,11 @@ read.xpt(
 
 \item{version}{interger: version of interest (default is 0 ... main survey)}
 
-\item{xpt_folder}{character: location (folder) of xpt file}
+\item{xpt_file}{character:  name of xpt file (full path)}
 
-\item{xpt_file}{character:  name of xpt file}
+\item{save_file}{character: name of .rda file (full_path)}
 
-\item{save_folder}{character:location (folder) to save .rda file to}
-
-\item{save_file}{character: name of .rda file}
-
-\item{sasout_folder}{character: location (folder) of sasout file}
-
-\item{sasout_file}{character: filename of sasout file}
+\item{sasout_file}{character: filename of sasout file (full path)}
 
 \item{verbose}{logical: provide extra information during processing}
 }

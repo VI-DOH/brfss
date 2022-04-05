@@ -2,7 +2,7 @@
 % Please edit documentation in R/ascii_data.R
 \name{ascii.download.data}
 \alias{ascii.download.data}
-\title{Download ASCII BREFSS data}
+\title{Download ASCII BRFSS data}
 \usage{
 ascii.download.data(year = NULL, destpath = NULL, unzip = TRUE, rmzip = TRUE)
 }
@@ -19,11 +19,12 @@ ascii.download.data(year = NULL, destpath = NULL, unzip = TRUE, rmzip = TRUE)
 
 }
 \description{
-Download the annual ASCII BRFSS data file
+Download the annual ASCII BRFSS data files, all versions
 }
 \examples{
 \dontrun{
 ascii.download.data(2016)
 }
+
 
 }

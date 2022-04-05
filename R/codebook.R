@@ -49,7 +49,7 @@ download.codebook <- function(year = NULL, geog = NULL) {
       fileout <- paste0(fileout,ext)
       destfile <- paste0(fldrout,fileout)
 
-            status <- httr::HEAD(url)$status
+      status <- httr::HEAD(url)$status
       if(status==200) {
 
         download.file(url = url,destfile = destfile,
@@ -102,7 +102,6 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
     return(NULL)
   }
 
-
   if(grepl("[.]txt$", file, ignore.case = TRUE)) {
 
     lines <- readLines(file)
@@ -115,6 +114,8 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
     lines <- lines %>%
       strsplit(split = "\n") %>%
       unlist(recursive = TRUE)
+
+    lines <- gsub("^[|]","",lines)
 
   } else if(grepl("[.]pdf$", file,ignore.case = TRUE)) {
 
@@ -153,7 +154,7 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
 
   labels <- lines[label_lines]
   questions <- grep("^Question:", lines, value = TRUE)
-  sections <- grep("^Section Name:", lines, value = TRUE)
+  sections <- grep("^Section.Nam.*:", lines, value = TRUE)
   qnums <- grep("^Question Number", lines, value = TRUE)
 
   label <- stringr::str_trim(gsub(".*:(.*)","\\1",labels))
@@ -195,7 +196,9 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
   df <- data.frame(column,col_name, label, question, section, sect_type, sect_num) %>%
     mutate(start = as.integer(gsub("(.*)-(.*)","\\1",column))) %>%
     mutate(end = as.integer(gsub("(.*)-(.*)","\\2",column))) %>%
-    mutate(field_size = end - start + 1)
+    mutate(field_size = end - start + 1) %>%
+    dplyr::relocate(sect_num, .after = sect_type) %>%
+    select(-column)
 
   ##
   ## remove duplicates (overlaps of columns)
@@ -203,10 +206,47 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
   ## e.g. IDATE (8 chars) always overlaps IYEAR, IMONTH and IDAY
   ##  and _PSU is always co-located with SEQNO
   ##  not sure of the history on the latter one
-  ##
-  ## read.fwf (read fixed width file) does not allow for overlapping columns
-  ##  as it requires only a vector of columns widths, not start/stop
 
+  df <- df %>% deduped_layout()
+
+  ## add DUMMY variables for missing columns (non-contiguous end of one and start of the next)
+  ##    if Var1 starts at column 50 and ends at column 52 and the next variable starts at 60 then
+  ##    we have to have a DUUMMY variable from 53-59
+
+  df_layout_cb <- df  %>% fill_dummies() %>%
+    dplyr::relocate(field_size, start, end, col_name, sect_type, sect_num, section, label, question)
+
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, GEOG = geog)
+  fil <- apply.pattern("codebook_layout_file", YEAR = year, GEOG = geog)
+
+  file <- paste0(fldr,fil)
+
+  if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
+
+
+  save(df_layout_cb, file = file)
+
+  invisible()
+
+}
+
+##
+## remove duplicates (overlaps of columns)
+##
+## e.g. IDATE (8 chars) always overlaps IYEAR, IMONTH and IDAY
+##  and _PSU is always co-located with SEQNO
+##  not sure of the history on the latter one
+##
+## remove duplicates (overlaps of columns)
+##
+## e.g. IDATE (8 chars) always overlaps IYEAR, IMONTH and IDAY
+##  and _PSU is always co-located with SEQNO
+##  not sure of the history on the latter one
+##
+## read.fwf (read fixed width file) does not allow for overlapping columns
+##  as it requires only a vector of columns widths, not start/stop
+
+deduped_layout <- function(df) {
   dups <- which(duplicated(df$start))
 
   rms <- integer(0)
@@ -225,35 +265,30 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
   df <- df %>%
     slice(-rms)
 
-  ## add DUMMY variables for missing columns (non-contiguous end of one and start of the next)
-  ##    if Var1 starts at column 50 and ends at column 52 and the next variable starts at 60 then
-  ##    we have to have a DUUMMY variable from 53-59
+  df
 
-  df_layout_cb <- df  %>%
-    bind_rows(df  %>%
-                mutate(exp = c(0,end[1:(nrow(.)-1)])+1) %>%
-                filter(exp != start) %>%
-                mutate(field_size = start - exp ) %>%
-                mutate(start = exp) %>%
-                mutate(end = start + field_size - 1) %>%
-                mutate(col_name = paste0("DUMMY_" , start)) %>%
-                #        mutate(field_size = -field_size) %>%
-                select(col_name, start, end, field_size, label, question, section, sect_type, sect_num)
-    ) %>%
-    select(-column) %>%
-    select(field_size, start, end, col_name, label, sect_num, sect_type, section, question) %>%
-    arrange(start)
+}
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, GEOG = geog)
-  fil <- apply.pattern("codebook_layout_file", YEAR = year, GEOG = geog)
+#' Get layout created from the codebook
+#'
+#' @param year integer - year of interest
+#'
+#' @return data frame with layout data
+#' @export
+#'
+
+get.codebook.layout <- function(year = NULL) {
+
+  year <- get.year(year)
+
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year)
+  fil <- apply.pattern("codebook_layout_file", YEAR = year)
 
   file <- paste0(fldr,fil)
 
-  if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
+  if(!file.exists(file)) return(NULL)
 
 
-  save(df_layout_cb, file = file)
-
-  invisible()
+  orrr::get.rdata(file = file)
 
 }

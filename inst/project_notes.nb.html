@@ -1514,7 +1514,9 @@ window.initializeCodeFolding = function(show) {
     showCodeButton.append(showCodeText);
     showCodeButton
         .attr('data-toggle', 'collapse')
+        .attr('data-bs-toggle', 'collapse') // BS5
         .attr('data-target', '#' + id)
+        .attr('data-bs-target', '#' + id)   // BS5
         .attr('aria-expanded', showThis)
         .attr('aria-controls', id);
 
@@ -1604,6 +1606,7 @@ if (window.hljs) {
 
 
 
+
 <style type="text/css">
 #rmd-source-code {
   display: none;
@@ -1634,6 +1637,9 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
 }
 pre code {
   padding: 0;
@@ -1743,7 +1749,7 @@ pre code {
 <div id="header">
 
 <div class="btn-group pull-right float-right">
-<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
 <ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
 <li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
 <li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
@@ -1763,14 +1769,14 @@ pre code {
 <div id="file-and-folder-patterns" class="section level4">
 <h4>File and Folder Patterns</h4>
 <p>=============================</p>
-<div id="folder-and-file-names-are-stored-as-patterns-in-a-data-frame-stored-in-the-data-subfolder-as-patterns.rdata.-substitutions-for-year-version-and-geography-can-be-made.-there-are-premade-patterns-used-by-functions-in-this-package-but-users-can-add-patterns-and-use-them-in-their-own-functions.-for-most-functions-filnames-can-be-passed-but-may-be-omitted-if-passing-variables-such-as-year-and-geog-to-be-used-by-functions-in-pattern-filling" class="section level5">
+<div id="folder-and-file-names-are-stored-as-patterns-in-a-data-frame-stored-in-the-data-subfolder-as-patterns.rdata.-substitutions-for-year-version-and-geography-can-be-made.-there-are-premade-patterns-used-by-functions-in-this-package-but-users-can-add-patterns-and-use-them-in-their-own-functions.-for-most-functions-filnames-can-be-passed-but-may-be-omitted-if-passing-variables-such-as-year-and-geog-to-be-used-by-functions-to-create-filenames-using-pattern-filling" class="section level5">
 <h5>Folder and file names are stored as patterns in a data frame stored
 in the data subfolder as patterns.RData. Substitutions for year,
 version, and geography can be made. There are premade patterns used by
 functions in this package, but users can add patterns and use them in
 their own functions. For most functions, filnames can be passed, but may
 be omitted if passing variables such as YEAR and GEOG to be used by
-functions in pattern filling</h5>
+functions to create filenames using pattern filling</h5>
 <hr />
 </div>
 </div>
@@ -1784,8 +1790,7 @@ functions in pattern filling</h5>
 <ul>
 <li><p>download the main data file and all versions from the CDC BRFSS
 data url</p>
-<p><code>sas.download.data(year=year)</code><br />
-<code>sas.download.data.versions(year=year)</code></p></li>
+<p><code>sas.download.data(year=year)</code></p></li>
 <li><p>unzip all zip files</p>
 <p><code>unzip.all(year=year)</code></p></li>
 </ul>
@@ -1817,7 +1822,7 @@ data url</p>
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlByb2Nlc3NpbmcgQlJGU1MgZGF0YSINCm91dHB1dDogaHRtbF9ub3RlYm9vaw0KLS0tDQogIA0KICANCiAgDQojIyMjIEZpbGUgYW5kIEZvbGRlciBQYXR0ZXJucw0KDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgDQoNCiMjIyMjIEZvbGRlciBhbmQgZmlsZSBuYW1lcyBhcmUgc3RvcmVkIGFzIHBhdHRlcm5zIGluIGEgZGF0YSBmcmFtZSBzdG9yZWQgaW4gdGhlIGRhdGEgc3ViZm9sZGVyIGFzIHBhdHRlcm5zLlJEYXRhLiBTdWJzdGl0dXRpb25zIGZvciB5ZWFyLCB2ZXJzaW9uLCBhbmQgZ2VvZ3JhcGh5IGNhbiBiZSBtYWRlLiBUaGVyZSBhcmUgcHJlbWFkZSBwYXR0ZXJucyB1c2VkIGJ5IGZ1bmN0aW9ucyBpbiB0aGlzIHBhY2thZ2UsIGJ1dCB1c2VycyBjYW4gYWRkIHBhdHRlcm5zIGFuZCB1c2UgdGhlbSBpbiB0aGVpciBvd24gZnVuY3Rpb25zLiBGb3IgbW9zdCBmdW5jdGlvbnMsIGZpbG5hbWVzIGNhbiBiZSBwYXNzZWQsIGJ1dCBtYXkgYmUgb21pdHRlZCBpZiBwYXNzaW5nIHZhcmlhYmxlcyBzdWNoIGFzIFlFQVIgYW5kIEdFT0cgdG8gYmUgdXNlZCBieSBmdW5jdGlvbnMgaW4gcGF0dGVybiBmaWxsaW5nDQoNCioqKg0KICANCiMjIyMgUHJvY2VzcyBkYXRhIGZvciBhIHNpbmdsZSB5ZWFyIHVzaW5nIHRoZSBTQVMgZGF0YSBmaWxlcyAgDQoNCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gDQoNCmBzYXMucHJvY2Vzcy55ZWFyKHllYXIsZG93bmxvYWQ9VFJVRSx4cHQ9VFJVRSwgdmVyYm9zZT1GQUxTRSwgLi4uKWANCg0KIEZvciB0aGUgZ2l2ZW4geWVhciwgdGhpcyB3aWxsIC4uLg0KIA0KICoqKg0KIA0KIGlmIGRvd25sb2FkID0gVFJVRSAuLi4NCiANCiAgKiBkb3dubG9hZCB0aGUgbWFpbiBkYXRhIGZpbGUgYW5kIGFsbCB2ZXJzaW9ucyBmcm9tIHRoZSBDREMgQlJGU1MgZGF0YSB1cmwgIA0KICAgIA0KICAgIGBzYXMuZG93bmxvYWQuZGF0YSh5ZWFyPXllYXIpYCAgDQogICAgYHNhcy5kb3dubG9hZC5kYXRhLnZlcnNpb25zKHllYXI9eWVhcilgDQoNCiAgKiB1bnppcCBhbGwgemlwIGZpbGVzIA0KICANCiAgICBgdW56aXAuYWxsKHllYXI9eWVhcilgDQoNCioqKiAgDQoNCmlmICB4cHQgPSBUUlVFIC4uLiANCiAgDQogICogcmVhZCB0aGUgbWFpbiBYUFQgZmlsZXMgYW5kIGFsbCB2ZXJzaW9ucyANCiAgDQogICAgYHJlYWQueHB0KHllYXI9eWVhcilgICANCiAgICBgcmVhZC54cHQoeWVhcj15ZWFyLHZlcnNpb249aXZlcnMsdmVyYm9zZT1UUlVFKWAgDQoNCiAgICANCioqKg0KDQogKiBzYXNvdXQgZmlsZXMgY29udGFpbiBpbmZvcm1hdGlvbiBvbiBlYWNoIHZhcmlhYmxlDQogICAgDQogICAgYHNhcy5zYXZlLnNhc291dCh5ZWFyID0geWVhcilgICANCiAgICANCiAgKiBzcGxpdCBkYXRhIGZpbGUgdXAgYnkgc3RhdGUvdGVycml0b3J5DQogIA0KICAgIGBzcGxpdC5zdGF0ZXMoeWVhcj15ZWFyLC4uLilgICANCg0KICAqIHNhdmUgc29tZSBpbmZvcm1hdGlvbiBvbiBob3cgbWFueSByZXNwb25zZXMgZm9yIGVhY2ggdmVyc2lvbiAoaW5jbHVkaW5nIHRoZSBtYWluIGZpbGUpIGFuZCB3aGljaCBtb2R1bGVzIHdlcmUgdXNlZA0KICANCiAgICBgc2F2ZV9yZXNwb25zZV9zdGF0cyh5ZWFyID0geWVhcilgICANCiAgICBgc2F2ZV9tb2R1bGVfc3RhdHMoeWVhcj15ZWFyKWAgIA0KDQoNCg0KDQpgYGB7cn0NCg0KYGBgDQoNCkxheW91dA0KDQpUbyBzYXZlIHRoZSBsYXlvdXQgb2YgdGhlIEFTQ0lJIGZpbGUsIHJ1biANCg0KICAgDQpgcmVhZC5zYXMubGF5b3V0KHllYXIgPSB5ZWFyKWANCg==</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlByb2Nlc3NpbmcgQlJGU1MgZGF0YSINCm91dHB1dDogaHRtbF9ub3RlYm9vaw0KLS0tDQogIA0KICANCiAgDQojIyMjIEZpbGUgYW5kIEZvbGRlciBQYXR0ZXJucw0KDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgDQoNCiMjIyMjIEZvbGRlciBhbmQgZmlsZSBuYW1lcyBhcmUgc3RvcmVkIGFzIHBhdHRlcm5zIGluIGEgZGF0YSBmcmFtZSBzdG9yZWQgaW4gdGhlIGRhdGEgc3ViZm9sZGVyIGFzIHBhdHRlcm5zLlJEYXRhLiBTdWJzdGl0dXRpb25zIGZvciB5ZWFyLCB2ZXJzaW9uLCBhbmQgZ2VvZ3JhcGh5IGNhbiBiZSBtYWRlLiBUaGVyZSBhcmUgcHJlbWFkZSBwYXR0ZXJucyB1c2VkIGJ5IGZ1bmN0aW9ucyBpbiB0aGlzIHBhY2thZ2UsIGJ1dCB1c2VycyBjYW4gYWRkIHBhdHRlcm5zIGFuZCB1c2UgdGhlbSBpbiB0aGVpciBvd24gZnVuY3Rpb25zLiBGb3IgbW9zdCBmdW5jdGlvbnMsIGZpbG5hbWVzIGNhbiBiZSBwYXNzZWQsIGJ1dCBtYXkgYmUgb21pdHRlZCBpZiBwYXNzaW5nIHZhcmlhYmxlcyBzdWNoIGFzIFlFQVIgYW5kIEdFT0cgdG8gYmUgdXNlZCBieSBmdW5jdGlvbnMgdG8gY3JlYXRlIGZpbGVuYW1lcyB1c2luZyBwYXR0ZXJuIGZpbGxpbmcgDQoNCioqKg0KDQojIyMjIFByb2Nlc3MgZGF0YSBmb3IgYSBzaW5nbGUgeWVhciB1c2luZyB0aGUgU0FTIGRhdGEgZmlsZXMgIA0KDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09IA0KDQpgc2FzLnByb2Nlc3MueWVhcih5ZWFyLGRvd25sb2FkPVRSVUUseHB0PVRSVUUsIHZlcmJvc2U9RkFMU0UsIC4uLilgDQoNCiBGb3IgdGhlIGdpdmVuIHllYXIsIHRoaXMgd2lsbCAuLi4NCiANCiAqKioNCiANCiBpZiBkb3dubG9hZCA9IFRSVUUgLi4uDQogDQogICogZG93bmxvYWQgdGhlIG1haW4gZGF0YSBmaWxlIGFuZCBhbGwgdmVyc2lvbnMgZnJvbSB0aGUgQ0RDIEJSRlNTIGRhdGEgdXJsICANCiAgICANCiAgICBgc2FzLmRvd25sb2FkLmRhdGEoeWVhcj15ZWFyKWAgIA0KDQogICogdW56aXAgYWxsIHppcCBmaWxlcyANCiAgDQogICAgYHVuemlwLmFsbCh5ZWFyPXllYXIpYA0KDQoqKiogIA0KDQppZiAgeHB0ID0gVFJVRSAuLi4gDQogIA0KICAqIHJlYWQgdGhlIG1haW4gWFBUIGZpbGVzIGFuZCBhbGwgdmVyc2lvbnMgDQogIA0KICAgIGByZWFkLnhwdCh5ZWFyPXllYXIpYCAgDQogICAgYHJlYWQueHB0KHllYXI9eWVhcix2ZXJzaW9uPWl2ZXJzLHZlcmJvc2U9VFJVRSlgIA0KDQogICAgDQoqKioNCg0KICogc2Fzb3V0IGZpbGVzIGNvbnRhaW4gaW5mb3JtYXRpb24gb24gZWFjaCB2YXJpYWJsZQ0KICAgIA0KICAgIGBzYXMuc2F2ZS5zYXNvdXQoeWVhciA9IHllYXIpYCAgDQogICAgDQogICogc3BsaXQgZGF0YSBmaWxlIHVwIGJ5IHN0YXRlL3RlcnJpdG9yeQ0KICANCiAgICBgc3BsaXQuc3RhdGVzKHllYXI9eWVhciwuLi4pYCAgDQoNCiAgKiBzYXZlIHNvbWUgaW5mb3JtYXRpb24gb24gaG93IG1hbnkgcmVzcG9uc2VzIGZvciBlYWNoIHZlcnNpb24gKGluY2x1ZGluZyB0aGUgbWFpbiBmaWxlKSBhbmQgd2hpY2ggbW9kdWxlcyB3ZXJlIHVzZWQNCiAgDQogICAgYHNhdmVfcmVzcG9uc2Vfc3RhdHMoeWVhciA9IHllYXIpYCAgDQogICAgYHNhdmVfbW9kdWxlX3N0YXRzKHllYXI9eWVhcilgICANCg0KDQoNCg0KYGBge3J9DQoNCmBgYA0KDQpMYXlvdXQNCg0KVG8gc2F2ZSB0aGUgbGF5b3V0IG9mIHRoZSBBU0NJSSBmaWxlLCBydW4gDQoNCiAgIA0KYHJlYWQuc2FzLmxheW91dCh5ZWFyID0geWVhcilgDQo=</div>
 
 
 

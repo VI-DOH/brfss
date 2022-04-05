@@ -1763,17 +1763,18 @@ pre code {
 <p>The State-Added-Questions layout is a .csv file. It is used to merge
 with the layout provided by CDC in variius files.</p>
 <p>with the following columns …</p>
-<p>Field Name | Description Num | THe local numbering used description |
-the question as it was asked col_name | the name of the
-column/field/variable start | start position end | end position
-field_size | number of characters (size of field)</p>
+<p>Field Name | Description Num | The local numbering used label | short
+version of question question | the question as it was asked col_name |
+the name of the column/field/variable start | start position end | end
+position field_size | number of characters (size of field)</p>
 <p>This would be the beginning of a saq layout file</p>
-<p>Num,description,col_name,start,end,field_size VI01.1,“In September of
-2017, did you live in the United States Virgin Islands during landfall
-of Hurricanes Irma or Maria?”,VIHURR01,901,901,1</p>
+<p>Num,label,question,col_name,start,end,field_size VI01.1,“Lived in VI
+during hurricanes”,“In September of 2017, did you live in the United
+States Virgin Islands during landfall of Hurricanes Irma or
+Maria?”,VIHURR01,901,901,1</p>
 <!-- rnb-text-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlNBUSBMYXlvdXQiDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpUaGUgU3RhdGUtQWRkZWQtUXVlc3Rpb25zIGxheW91dCBpcyBhIC5jc3YgZmlsZS4gSXQgaXMgdXNlZCB0byBtZXJnZSB3aXRoIHRoZSBsYXlvdXQgcHJvdmlkZWQgYnkgQ0RDIGluIHZhcmlpdXMgZmlsZXMuDQoNCg0KDQoNCg0Kd2l0aCB0aGUgZm9sbG93aW5nIGNvbHVtbnMgLi4uDQoNCkZpZWxkIE5hbWUgfCBEZXNjcmlwdGlvbg0KTnVtIHwgVEhlIGxvY2FsIG51bWJlcmluZyB1c2VkDQpkZXNjcmlwdGlvbiB8IHRoZSBxdWVzdGlvbiBhcyBpdCB3YXMgYXNrZWQNCmNvbF9uYW1lIHwgdGhlIG5hbWUgb2YgdGhlIGNvbHVtbi9maWVsZC92YXJpYWJsZQ0Kc3RhcnQgfCBzdGFydCBwb3NpdGlvbg0KZW5kIHwgZW5kIHBvc2l0aW9uDQpmaWVsZF9zaXplIHwgbnVtYmVyIG9mIGNoYXJhY3RlcnMgKHNpemUgb2YgZmllbGQpDQoNClRoaXMgd291bGQgYmUgdGhlIGJlZ2lubmluZyBvZiBhIHNhcSBsYXlvdXQgZmlsZQ0KDQpOdW0sZGVzY3JpcHRpb24sY29sX25hbWUsc3RhcnQsZW5kLGZpZWxkX3NpemUNClZJMDEuMSwiSW4gU2VwdGVtYmVyIG9mIDIwMTcsIGRpZCB5b3UgbGl2ZSBpbiB0aGUgVW5pdGVkIFN0YXRlcyBWaXJnaW4gSXNsYW5kcyBkdXJpbmcgbGFuZGZhbGwgb2YgSHVycmljYW5lcyBJcm1hIG9yIE1hcmlhPyIsVklIVVJSMDEsOTAxLDkwMSwxDQoNCg0KDQo=</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlNBUSBMYXlvdXQiDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpUaGUgU3RhdGUtQWRkZWQtUXVlc3Rpb25zIGxheW91dCBpcyBhIC5jc3YgZmlsZS4gSXQgaXMgdXNlZCB0byBtZXJnZSB3aXRoIHRoZSBsYXlvdXQgcHJvdmlkZWQgYnkgQ0RDIGluIHZhcmlpdXMgZmlsZXMuDQoNCg0KDQoNCg0Kd2l0aCB0aGUgZm9sbG93aW5nIGNvbHVtbnMgLi4uDQoNCkZpZWxkIE5hbWUgfCBEZXNjcmlwdGlvbg0KTnVtIHwgVGhlIGxvY2FsIG51bWJlcmluZyB1c2VkDQpsYWJlbCB8IHNob3J0IHZlcnNpb24gb2YgcXVlc3Rpb24NCnF1ZXN0aW9uIHwgdGhlIHF1ZXN0aW9uIGFzIGl0IHdhcyBhc2tlZA0KY29sX25hbWUgfCB0aGUgbmFtZSBvZiB0aGUgY29sdW1uL2ZpZWxkL3ZhcmlhYmxlDQpzdGFydCB8IHN0YXJ0IHBvc2l0aW9uDQplbmQgfCBlbmQgcG9zaXRpb24NCmZpZWxkX3NpemUgfCBudW1iZXIgb2YgY2hhcmFjdGVycyAoc2l6ZSBvZiBmaWVsZCkNCg0KVGhpcyB3b3VsZCBiZSB0aGUgYmVnaW5uaW5nIG9mIGEgc2FxIGxheW91dCBmaWxlDQoNCk51bSxsYWJlbCxxdWVzdGlvbixjb2xfbmFtZSxzdGFydCxlbmQsZmllbGRfc2l6ZQ0KVkkwMS4xLCJMaXZlZCBpbiBWSSBkdXJpbmcgaHVycmljYW5lcyIsIkluIFNlcHRlbWJlciBvZiAyMDE3LCBkaWQgeW91IGxpdmUgaW4gdGhlIFVuaXRlZCBTdGF0ZXMgVmlyZ2luIElzbGFuZHMgZHVyaW5nIGxhbmRmYWxsIG9mIEh1cnJpY2FuZXMgSXJtYSBvciBNYXJpYT8iLFZJSFVSUjAxLDkwMSw5MDEsMQ0KDQoNCg0K</div>
 
 
 

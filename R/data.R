@@ -29,9 +29,9 @@
 #' codebook_layout_folder                           {brfss_annual_raw_data_folder}
 #' codebook_layout_file                             codebook[YR]_llcp
 #' codebook_layout_ext                              pdf
-#' brfss_layout_folder                              {brfss_annual_data_folder}layout/
-#' brfss_layout_file                                layout_[YEAR].RData
-#' brfss_layout_path                                {brfss_layout_folder}{brfss_layout_file}
+#' sas_layout_folder                              {brfss_annual_data_folder}layout/
+#' sas_layout_file                                layout_[YEAR].RData
+#' sas_layout_path                                {sas_layout_folder}{sas_layout_file}
 #'
 #' @format A data frame with 4 variables:
 #' \describe{

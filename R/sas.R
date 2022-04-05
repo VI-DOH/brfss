@@ -98,8 +98,9 @@ sas.process.year<-function(year,download=TRUE,xpt=TRUE, codebook = TRUE, split =
   if(download) {
     if(verbose) cat(" ... downloading ... main file ... ")
     sas.download.data(year=year)
-    if(verbose) cat(" versions ")
-    sas.download.data.versions(year=year)
+    sas.download.xpt(year=year)
+    # if(verbose) cat(" versions ")
+    # sas.download.data.versions(year=year)
     if(verbose) cat(" \n ... unzipping files\n ")
     unzip.all(year=year)
   }
@@ -117,9 +118,10 @@ sas.process.year<-function(year,download=TRUE,xpt=TRUE, codebook = TRUE, split =
       ivers<-ivers + 1
     }
   }
-  browser()
+
   save.sas.layout(year = year)
   #sas.save.sasout(year = year)
+
 
   if(codebook) {
     download.codebook(year = year)
@@ -177,6 +179,60 @@ sas.download.data<-function(year) {
     }
   })
 
+}
+
+#' Download SAS XPT files from CDC website
+#'
+#' @param year integer - year of interest
+#'
+#' @export
+#'
+sas.download.xpt<-function(year = NULL) {
+
+  year <- get.year(year)
+
+  #files<-sas.url.pattern.downloads.versions()
+  file_pttrn<-get.pattern("xpt_download_zip_file")
+
+  folderout<-apply.pattern("sas_raw_folder",YEAR=year)
+  if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
+
+  urlfiles<-apply.pattern("brfss_url_files",YEAR=year)
+
+
+  to <- getOption("timeout")
+  options(timeout = 180)
+
+  ok <- TRUE
+  version = 0
+
+  while(ok) {
+
+    file<-patternize(strIn = file_pttrn,YEAR = year,VERS = version )
+
+    url<-paste0(urlfiles,file)
+
+    status <- httr::HEAD(url)$status
+    if(status==200) {
+
+      fileout<-paste0(folderout,file)
+
+      download.file(url = url,destfile = fileout,
+                    method = "libcurl")
+
+      if(grepl("[.]zip$",fileout)) {
+        unzip(fileout,exdir = normalizePath(folderout))
+        file.remove(fileout)
+      } # end if(grepl()
+
+
+    } else {
+      ok <- FALSE
+    }
+    version <- version + 1
+  }
+  options(timeout = to)
+  invisible()
 }
 
 
@@ -242,12 +298,9 @@ sas.download.data.versions<-function(year) {
 #'
 #' @param year integer: year of interest
 #' @param version interger: version of interest (default is 0 ... main survey)
-#' @param xpt_folder character: location (folder) of xpt file
-#' @param xpt_file character:  name of xpt file
-#' @param save_folder character:location (folder) to save .rda file to
-#' @param save_file character: name of .rda file
-#' @param sasout_folder character: location (folder) of sasout file
-#' @param sasout_file character: filename of sasout file
+#' @param xpt_file character:  name of xpt file (full path)
+#' @param save_file character: name of .rda file (full_path)
+#' @param sasout_file character: filename of sasout file (full path)
 #' @param verbose logical: provide extra information during processing
 #'
 #' @return
@@ -264,14 +317,14 @@ sas.download.data.versions<-function(year) {
 #' sasout_folder = "./data_raw/2020/sas/", sasout_file = "SASOUT20_LLCP.SAS")
 #' }
 
-read.xpt<-function(year,version = 0,
-                   xpt_folder = NULL,
+read.xpt<-function(year = NULL,version = 0,
                    xpt_file = NULL,
-                   save_folder = NULL,
                    save_file = NULL,
-                   sasout_folder = NULL,
                    sasout_file = NULL,
                    verbose = F) {
+
+
+  year <- get.year(year)
 
   ########################################################################%%%%%%%%%
   ##
@@ -281,34 +334,16 @@ read.xpt<-function(year,version = 0,
   ##    get sasout location
   ##
 
-
   if(is.null(sasout_file)) {
-    if(version>0) {
-
-      sasout_file<-apply.pattern("sas_sasout_version",YEAR = year, VERS = version)
-    } else {
-      sasout_file<-apply.pattern("sas_sasout",YEAR = year)
-    }
-  }
-
-  if(is.null(sasout_folder)) {
-    sasout_folder <- apply.pattern("sas_raw_folder",YEAR = year)
+    sasout_file<-apply.pattern("sas_sasout_path",YEAR = year, VERS = version)
   }
 
   ##
   ##    get xpt raw data location
   ##
 
-  if(is.null(xpt_folder)) {
-    xpt_folder <- apply.pattern("sas_raw_folder", YEAR = year)
-  }
-
   if(is.null(xpt_file)) {
-    if(version>0) {
-      xpt_file <- apply.pattern("xpt_file_version",YEAR = year, VERS = version)
-    } else {
-      xpt_file <- apply.pattern("xpt_file",YEAR = year)
-    }
+    xpt_file <- apply.pattern("xpt_path",YEAR = year, VERS = version)
   }
 
   ##
@@ -316,71 +351,33 @@ read.xpt<-function(year,version = 0,
   ##
 
   if(is.null(save_file)) {
-    if(version == 0) {
-      save_file <- apply.pattern("sas_rdata",YEAR = year)
-    } else {
-      save_file<- apply.pattern("sas_rdata_version",YEAR = year, VERS = version)
-    }
-  }
-
-  if(is.null(save_folder)) {
-    save_folder <- apply.pattern("sas_data_folder",YEAR = year)
+    save_file<- apply.pattern("sas_rdata_path",YEAR = year, VERS = version)
   }
 
   ##
   ##    read the xpt files
   ##
 
-
   if(version>0) {
     if(verbose) cat("Trying version ",version,"\n")
-
   } else {
     if(verbose) cat("Trying main file \n")
   }
 
-  xptname<-paste0(xpt_folder,xpt_file)
-
-  if(file.exists(xptname)) {
-    if(verbose) cat("Reading ",xptname,"\n")
-    df_xpt<- haven::read_xpt(xptname)
+  if(file.exists(xpt_file)) {
+    if(verbose) cat("Reading ",xpt_file,"\n")
+    df_xpt<- haven::read_xpt(xpt_file)
 
     cat("Getting sasout\n")
 
-    sasout_path <- paste0(sasout_folder,sasout_file)
-    if(verbose) cat("Trying sasout file: ",sasout_path,"\n")
-    if(file.exists(sasout_path)) {
-      if(verbose) cat("Sasout file [",sasout_path,"] exists ... reading\n")
-      df_sasout<-read.sasout(year,sasout_folder,sasout_file)
-      if(verbose) cat("Sasout file returned [",nrow(df_sasout),"] records \n")
-      #sink(file = "./errtest.txt")
-      mapply(function(lbl,v,typ,n,i,nm) {
-        #cat(v,"|",typ,"|",n,"|",i,"|",nm)
-        if(!is.null(df_xpt[[v]])) {
-          if(is.na(typ) || is.null(typ)) typ<=""
-          if(is.na(n) || is.null(n)) n<=""
-          if(is.na(i) || is.null(i)) i<=""
-          if(is.na(nm) || is.null(nm)) nm<=""
-          attr(df_xpt[[v]],"section_type")<<-typ
-          attr(df_xpt[[v]],"section_num")<<-n
-          attr(df_xpt[[v]],"section_index")<<-i
-          attr(df_xpt[[v]],"section_name")<<-stringr::str_trim(nm)
-          attr(df_xpt[[v]],"label")<<-lbl
-        } else {
-          #cat(" ... NULL!")
-        }
-        #cat("\n")
-      }, df_sasout$label, df_sasout$varname, df_sasout$section_type, df_sasout$section_number,
-      df_sasout$index,df_sasout$section_name)
-    }
-    #cat("Saving\n")
-    #sink(file = NULL)
 
-    if(!dir.exists(save_folder)) dir.create(save_folder,recursive = T)
+    df_xpt <- df_xpt %>% add.col.attributes( year = year, version = version)
+
+    if(!dir.exists(dirname(save_file))) dir.create(dirname(save_file),recursive = T)
 
     fname<-paste0("df_xpt_",year,ifelse(version>0,paste0("_V",version),""))
     assign(fname,df_xpt)
-    save(list=c(fname),file = paste0(save_folder,save_file))
+    save(list=c(fname),file = save_file)
     return(TRUE)
   } else {
     if(verbose) cat(xptname," doesn't exist\n")
@@ -388,6 +385,33 @@ read.xpt<-function(year,version = 0,
   }
 }
 
+add.col.attributes <- function(df_in, year = NULL, version=0) {
+
+  df_sasout<-read.sasout(year)
+
+  mapply(function(lbl,v,typ,n,i,nm) {
+    #cat(v,"|",typ,"|",n,"|",i,"|",nm)
+
+    if(!is.null(df_in[[v]])) {
+      if(is.na(typ) || is.null(typ)) typ<=""
+      if(is.na(n) || is.null(n)) n<=""
+      if(is.na(i) || is.null(i)) i<=""
+      if(is.na(nm) || is.null(nm)) nm<=""
+      attr(df_in[[v]],"section_type")<<-typ
+      attr(df_in[[v]],"section_num")<<-n
+      attr(df_in[[v]],"section_index")<<-i
+      attr(df_in[[v]],"section_name")<<-stringr::str_trim(nm)
+      attr(df_in[[v]],"label")<<-lbl
+    } else {
+
+    }
+
+  }, df_sasout$label, df_sasout$varname, df_sasout$section_type, df_sasout$section_number,
+  df_sasout$index,df_sasout$section_name)
+
+  df_in
+
+}
 
 #' Split BRFSS XPT by Geography
 #'
@@ -412,7 +436,7 @@ read.xpt<-function(year,version = 0,
 #'}
 #'
 cleave.geogs<-function(year = NULL, rdata_folder=NULL, rdata_file=NULL,
-                      main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
+                       main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
 
   if(!(main || versions)) return(NULL)
 
@@ -436,7 +460,7 @@ cleave.geogs<-function(year = NULL, rdata_folder=NULL, rdata_file=NULL,
 
   sapply(ver,function(version) {
 
-    df_xpt<-load.sas(year,rdata_folder = rdata_folder,rdata_file = rdata_file, version)
+    df_xpt<-load.sas(year,rdata_file = rdata_file, version)
 
     if(geogs[1] == '*') {
       geogs<-unique(df_xpt$`_STATE`)
@@ -485,25 +509,8 @@ cleave.geogs<-function(year = NULL, rdata_folder=NULL, rdata_file=NULL,
 
           assign(dfname,df_state)
 
-          if(str_something(my_geog) &&  (nm == my_geog)) {
-            fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year)
-          } else {
-            fldr <- apply.pattern("brfss_geog_folder",  YEAR = year, GEOG = nm)
-          }
+          fname <- brfss_data_path(year = year, geog = nm, version = version, rw = 'w')
 
-          if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
-
-          if(version == 0) {
-
-            file <- apply.pattern("brfss_geog_file",  YEAR = year, GEOG = nm)
-
-          } else {
-
-            file <- apply.pattern("brfss_geog_file_version",  YEAR = year, GEOG = nm, VERS = version)
-
-          }
-
-          fname <- paste0(fldr,file)
           if(verbose) cat("Going to save :", fname, "\n")
 
           save(list = c(dfname),file = fname)
@@ -537,28 +544,23 @@ columns.add<-function(year,cols2add){
   }
 }
 
-load.sas<-function(year, rdata_folder=NULL,
-                   rdata_file=NULL, version=0) {
+load.sas<-function(year, rdata_file=NULL, version=0) {
 
   ##
   ##  get save file (.rdata) location
   ##
 
   if(is.null(rdata_file)) {
-    if(version == 0) {
-      rdata_file <- apply.pattern("sas_rdata",YEAR = year)
-    } else {
-      rdata_file<- apply.pattern("sas_rdata_version",YEAR = year, VERS = version)
-    }
-  }
-
-  if(is.null(rdata_folder)) {
-    rdata_folder <- apply.pattern("sas_data_folder",YEAR = year)
+    # if(version == 0) {
+    rdata_file <- apply.pattern("sas_rdata_path",YEAR = year, VERS = version)
+    # } else {
+    #   rdata_file<- apply.pattern("sas_rdata_version",YEAR = year, VERS = version)
+    # }
   }
 
   e<-new.env()
 
-  load(file = paste0(rdata_folder,rdata_file),envir = e)
+  load(file = rdata_file,envir = e)
   get(ls(e),envir = e)
 }
 
@@ -625,15 +627,17 @@ get.sas.labels<-function(df_xpt) {
 #' @export
 #'
 #'
-read.sasout<-function(year,folder=NULL,file=NULL,version=0) {
+read.sasout<-function(year = NULL,folder=NULL,file=NULL,version=0) {
+
+  year <- get.year(year)
 
   if(is.null(file)) {
-    if(version>0) {
-
-      file<-apply.pattern("sas_sasout_version",YEAR = year, VERS = version)
-    } else {
-      file<-apply.pattern("sas_sasout",YEAR = year)
-    }
+    # if(version>0) {
+    #
+    #   file<-apply.pattern("sas_sasout_version",YEAR = year, VERS = version)
+    # } else {
+    file<-apply.pattern("sas_sasout",YEAR = year, VERS = version)
+    # }
   }
 
   if(is.null(folder)) {
@@ -786,28 +790,29 @@ sas.build.geogs <- function(year) {
 #' @examples
 save.sas.layout<-function(year = NULL) {
   require(stringr)
+  require(dplyr)
 
   year <- get.year(year)
 
   # get the filename for the data
   #  name format based on year
   if(year>2010) {
-    file<-apply.pattern("sas_sasout_path",YEAR=year)
+    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0)
 
   } else {
     return(NULL)
-    #file<-paste("sasout",sprintf("%02d",year%%100),".sas",sep="")
+
   }
 
+  #  read the sasout file
 
-  #  file <- paste0(orrr::dir.project(),"/data/layout/sas/",file)
   lines<-readLines(file, warn = F, encoding = "latin1")
 
   lines <- gsub("—", "-",lines)
 
   # get the start point of interest and remove everything before
 
-  start<-grep("^Label$",lines) + 1
+  start<-as.integer(grep("^Label$",lines)) + 1
   if (length(start)==0) start<-grep("\\* ASSIGN ",lines)
   lines<-lines[start:length(lines)]
 
@@ -815,7 +820,6 @@ save.sas.layout<-function(year = NULL) {
   #   including that end line
 
   lines<-lines[1:(grep("^;$",lines)-1) ]
-
 
   #####################################
   ##
@@ -831,30 +835,32 @@ save.sas.layout<-function(year = NULL) {
 
   vars<-gsub("(.*) =.*","\\1",ulines)
   vars<-str_trim(vars)
-  vars<-gsub("^_","X_",vars)
-
+  #vars<-gsub("^_","X_",vars)
 
   question<-gsub("(.*) = '(.*)'$","\\2",ulines)
 
+
   df_ranges<-read.sas.field.ranges(year)
 
-  df<- dplyr::left_join(df_ranges,data.frame(var=vars,description=question,stringsAsFactors = F),by="var")
+  df<- dplyr::left_join(df_ranges,data.frame(var=vars,label=question,stringsAsFactors = F),by="var")
+
+  df <- df %>% deduped_layout()
 
   colnames(df)[colnames(df)=="var"]<-"col_name"
   df$field_size<-as.integer(df$end)-as.integer(df$start)+1
 
-  df_layout <- df %>% select(field_size,start,end,col_name,  group_type, group_number,
-                             group_text, description) %>%
-    group_by(group_text) %>%
+  df_layout_sas <- df %>% select(field_size,start,end,col_name,  sect_type, sect_num,
+                                 section, label) %>%
+    group_by(section) %>%
     mutate(group_index = row_number()) %>%
-    relocate(group_index,.before = description) %>%
+    dplyr::relocate(group_index,.before = label) %>%
     as.data.frame() %>%
     fill_dummies()
 
-  fldr <- apply.pattern("brfss_layout_folder",YEAR = year)
+  fldr <- apply.pattern("sas_layout_folder",YEAR = year)
   if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
 
-  save(df_layout, file = apply.pattern("brfss_layout_path",YEAR = year))
+  save(df_layout_sas, file = apply.pattern("sas_layout_path",YEAR = year))
   invisible()
 }
 #####################################################################################################
@@ -883,7 +889,7 @@ read.sas.field.ranges<-function(year) {
   #  name format based on year
 
   if(year>2010) {
-    file<-apply.pattern("sas_sasout_path",YEAR=year)
+    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0)
 
   } else {
     return(NULL)
@@ -940,15 +946,15 @@ read.sas.field.ranges<-function(year) {
 
   #####################################################################
   ##
-  ##    get the group_text
+  ##    get the section
   type <- ""
-  group_text <- sapply(lines_save, function(typ) {
+  section <- sapply(lines_save, function(typ) {
     if(typ!="") type<<-typ
     return(type)
 
   })
 
-  group_text <- unname(gsub(".*:","",group_text))
+  section <- stringr::str_trim(unname(gsub(".*:","",section)))
 
   # lines of interest ... beginning of Section or Module
   lines_secmod2<- grep("^(Sec|Mod).*:",lines_save)
@@ -997,23 +1003,24 @@ read.sas.field.ranges<-function(year) {
   df_sectmod<-df_sectmod[keep,]
 
   vars<-gsub("(.*)[[:space:]](.*)","\\1",lines)
-  vars<-str_trim(gsub("^_","X_",vars))
+  #vars<-str_trim(gsub("^_","X_",vars))
+  vars<-str_trim(vars)
 
   range<-gsub("(.*)[[:space:]](.*)","\\2",lines)
   range<-gsub("[$]","",range)
-  start<-gsub("(.*)-.*","\\1",range)
-  end<-gsub("(.*)-(.*)","\\2",range)
+  start<-as.integer(gsub("(.*)-.*","\\1",range))
+  end<-as.integer(gsub("(.*)-(.*)","\\2",range))
 
   df<-data.frame(var=vars,start=start,end=end,stringsAsFactors = F)
 
   df<-cbind(df,df_sectmod) %>%
-    mutate(group_type = ifelse(section_index >0,"Core",""))  %>%
-    mutate(group_type = ifelse(module_index >0,"Module",group_type)) %>%
-    mutate(group_type = ifelse(group_type == "" , group_text, group_type)) %>%
-    mutate(group_number = ifelse(section_index>module_index,section_index,module_index)) %>%
-    mutate(group_text = group_text)
+    mutate(sect_type = ifelse(section_index >0,"Core",""))  %>%
+    mutate(sect_type = ifelse(module_index >0,"Module",sect_type)) %>%
+    mutate(sect_type = ifelse(sect_type == "" , section, sect_type)) %>%
+    mutate(sect_num = ifelse(section_index>module_index,section_index,module_index)) %>%
+    mutate(section = section)
 
-  df<-df[!is.na(as.integer(df$start)),]
+  df<-df[!is.na(df$start),]
 
 
   df
@@ -1026,12 +1033,12 @@ fill_dummies <- function(df) {
   last <-  as.integer(df%>% slice(1:(nrow(.)-1)) %>% pull(end))
   fillem <- ((start-last)>1)
   df_fill <- data.frame(start = last+1, end = start -1 ) %>%
-    mutate(field_size = end - start) %>%
+    mutate(field_size = end - start + 1) %>%
     filter(fillem) %>% relocate(field_size , 1) %>%
-    mutate(start = as.character(start), end = as.character(end)) %>%
-    mutate(col_name = paste0("DUMMY",start)) %>%
-    mutate(group_type = "DUMMY") %>%
-    mutate(group_text = "DUMMY") %>%
+    # mutate(start = as.character(start), end = as.character(end)) %>%
+    mutate(col_name = paste0("DUMMY_",start)) %>%
+    mutate(sect_type = "DUMMY") %>%
+    mutate(section = "DUMMY") %>%
     bind_rows(df) %>%
     arrange(as.integer(start))
 

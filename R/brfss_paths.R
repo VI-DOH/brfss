@@ -123,7 +123,7 @@ brfss_raw_filename<-function(type=c("landline","cell"),year,month,index=1, ynpat
 #' @export
 
 
-brfss_layout_filename<-function(year) {
+sas_layout_filename<-function(year) {
 
   paste("./data_raw/var_layouts/data_fields_",year,".csv",sep="")
 }
@@ -132,12 +132,12 @@ brfss_layout_filename<-function(year) {
 #'
 #' Gets default path and filename for a file containing field values data for a BRFSS raw data file.
 #' For example, the question for, "How many different types of cancer have you had? (CNCRDIFF)", the file contains
-#' a record for each of the following: \cr \cr
-#' CNCRDIFF,1,	Only one \cr
-#' CNCRDIFF,2,	Two \cr
-#' CNCRDIFF,3,	Three or more \cr
-#' CNCRDIFF,7,	Don't know/Not Sure \cr
-#' CNCRDIFF,9,	Refused \cr
+#' a record for each of the following:
+#' CNCRDIFF,1,	Only one
+#' CNCRDIFF,2,	Two  r
+#' CNCRDIFF,3,	Three or more
+#' CNCRDIFF,7,	Don't know/Not Sure
+#' CNCRDIFF,9,	Refused
 
 #'
 #' @param year integer year of the data included in the file
@@ -152,32 +152,79 @@ brfss_field_values_filename<-function(year) {
   paste("./data_raw/var_layouts/field_values_",year,".csv",sep="")
 }
 
-brfss_geog_data_filename<-function(year,geog,version=0) {
-  if(is.numeric(geog)) geog<-geog_abbs(geog)
-  fname<-paste0(apply.pattern("brfss_geog_folder", YEAR= year, GEOG = geog),
-                apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
-  if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
-  fname
-}
+
+#' Get BRFSS data file path
+#'
+#' This is used in two ways based on the `rw` variable.
+#'
+#' 1. rw = 'w': we want to write it ... find the path and create the folder so the file can be saved
+#'
+#' 2. rw = 'r': we want to read it ... find the path of the file to be read and return NULL if it doesn't exist
+#'
+#' @param year integer - year of interest
+#' @param geog character - geography of interest
+#' @param version integer - survey version (0 = main)
+#' @param rw character - read/write
+#'
+#' @return
+#'
+brfss_data_path <- function(year = NULL, geog, version = 0, rw = c("r","w")) {
+
+  read <- rw == 'r'
+  write <- rw == 'w'
+
+  year <- get.year(year)
+  my_geog <- my.geog()
+
+  #geogs <- get.geogs(named = TRUE)
+
+  if(str_something(my_geog) &&  (geog == my_geog)) {
+    fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year)
+  } else {
+    fldr <- apply.pattern("brfss_geog_folder",  YEAR = year, GEOG = geog)
+  }
+
+  if(!dir.exists(fldr) && write) dir.create(fldr, recursive = TRUE)
 
 
-brfss_data_filename<-function(year,geog,version=0) {
-  if(is.numeric(geog)) geog<-geog_abbs(geog)
-  fname<-paste0(apply.pattern("brfss_annual_data_folder", YEAR= year),
-                apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
-  if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
-  fname
+  file <- apply.pattern("brfss_geog_file",  YEAR = year, GEOG = geog, VERS = version)
+
+  path <- paste0(fldr,file)
+
+  if(read && !file.exists(path)) path <- NULL
+
+  path
 }
+#
+# brfss_geog_data_filename<-function(year,geog,version=0) {
+#   if(is.numeric(geog)) geog<-geog_abbs(geog)
+#   fname<-paste0(apply.pattern("brfss_geog_folder", YEAR= year, GEOG = geog),
+#                 apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
+#   if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
+#   fname
+# }
+#
+#
+# brfss_data_filename<-function(year,geog,version=0) {
+#   if(is.numeric(geog)) geog<-geog_abbs(geog)
+#   fname<-paste0(apply.pattern("brfss_annual_data_folder", YEAR= year),
+#                 apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
+#   if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
+#   fname
+# }
 
 brfss_geog_version_exists<-function(year,geog,version=1) {
   if(is.numeric(geog)) geog<-geog_abbs(geog)
-  fname<-brfss_geog_data_filename(year,geog,version=version)
-  ok <- file.exists(fname)
 
-  if(!ok) {
-    fname<-brfss_data_filename(year,geog,version=version)
-    ok <- file.exists(fname)
-  }
+  fname<- brfss_data_path(year = year, geog = geog, version = version, rw = 'r'  )
+  #  brfss_geog_data_filename(year,geog,version=version)
+
+  ok <- !is.null(fname)
+
+  # if(!ok) {
+  #   fname<-brfss_data_filename(year,geog,version=version)
+  #   ok <- file.exists(fname)
+  # }
 
   ok
 }

@@ -18,7 +18,7 @@ modules_used<-function(year = NULL, geogs = NULL) {
 
   vers_max<-highest_version(year)
 
-  if(is.null(geogs)) geogs<-get.geogs.all()
+  if(is.null(geogs)) geogs<-get.geogs.all() %>% pull(Abbrev)
 
   df<-data.frame()
 
@@ -39,7 +39,7 @@ calc_modules_by_geog<-function(year,geog,version=0) {
 
   if(brfss_geog_version_exists(year,geog,version)) {
 
-    df0<-brfss_geog_data(year,geog,version)
+    df0<-brfss_data(year,geog,version)
 
 
     df_columns<-data.frame()
@@ -104,9 +104,9 @@ save_module_stats<-function(year) {
   colnames(df_modules)<-gsub("[.]y","_total",colnames(df_modules))
 
   df_modules$ratio<-df_modules$responses/df_modules$responses_total
-  nm<-paste0("df_responses_",year)
-  assign(nm,df_responses)
-  save(list = c(nm),file = paste0(apply.pattern("sas_data_folder", YEAR = year),"responses_",year,".RData"))
+  # nm<-paste0("df_responses_",year)
+  # assign(nm,df_responses)
+  # save(list = c(nm),file = paste0(apply.pattern("sas_data_folder", YEAR = year),"responses_",year,".RData"))
 
   nm<-paste0("df_modules_",year)
   assign(nm,df_modules)

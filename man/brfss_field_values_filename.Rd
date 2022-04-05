@@ -15,10 +15,10 @@ character default path/filename
 \description{
 Gets default path and filename for a file containing field values data for a BRFSS raw data file.
 For example, the question for, "How many different types of cancer have you had? (CNCRDIFF)", the file contains
-a record for each of the following: \cr \cr
-CNCRDIFF,1,	Only one \cr
-CNCRDIFF,2,	Two \cr
-CNCRDIFF,3,	Three or more \cr
-CNCRDIFF,7,	Don't know/Not Sure \cr
-CNCRDIFF,9,	Refused \cr
+a record for each of the following:
+CNCRDIFF,1,	Only one
+CNCRDIFF,2,	Two  r
+CNCRDIFF,3,	Three or more
+CNCRDIFF,7,	Don't know/Not Sure
+CNCRDIFF,9,	Refused
 }
