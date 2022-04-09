@@ -1,7 +1,7 @@
 
 
 
-#' Set File Pattern
+#' Set Naming Pattern
 #'
 #' If the name exists already, it will overwrite (update) that name without warning.
 #' If the name does not exist, it will add it.
@@ -161,9 +161,9 @@ init.patterns <- function() {
   append.pattern("sas_layout_folder","{brfss_annual_data_folder}layout/") %>%
     append.pattern("sas_layout_file","layout[YR]_sas.RData") %>%
     append.pattern("sas_layout_path","{sas_layout_folder}{sas_layout_file}") %>%
-    append.pattern("brfss_columns_folder","{brfss_annual_data_folder}layout/") %>%
-    append.pattern("brfss_columns_file","columns_[YEAR].RData") %>%
-    append.pattern("brfss_columns_path","{brfss_columns_folder}{brfss_columns_file}") %>%
+    # append.pattern("brfss_columns_folder","{brfss_annual_data_folder}layout/") %>%
+    # append.pattern("brfss_columns_file","columns_[YEAR].RData") %>%
+    # append.pattern("brfss_columns_path","{brfss_columns_folder}{brfss_columns_file}") %>%
 
     ##    data file of responses
 
@@ -202,8 +202,8 @@ init.patterns <- function() {
     append.pattern("xpt_file", "LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).XPT") %>%
     append.pattern("xpt_path", "{xpt_folder}{xpt_file}") %>%
 
-    append.pattern("sas_rdata_file","xpt_[YEAR]([VERS] > 0;_V[VERS]).RData") %>%
-    append.pattern("sas_rdata_path","{sas_data_folder}{sas_rdata_file}") %>%
+    append.pattern("sas_data_file","xpt_[YEAR]([VERS] > 0;_V[VERS]).RData") %>%
+    append.pattern("sas_data_path","{sas_data_folder}{sas_data_file}") %>%
 
     append.pattern("sas_sasout", "SASOUT[YR]_LLCP([VERS] > 0;_V[VERS]).SAS") %>%
     append.pattern("sas_sasout_path", "{sas_raw_folder}{sas_sasout}") %>%
@@ -228,9 +228,9 @@ init.patterns <- function() {
 #'
 #' @examples
 #' \dontrun{
-#' relocate.by.pattern("ascii_path_raw", "./temp/ascii.dat", YEAR = 2021, VERS = 0)
+#' relocate_by_pattern("ascii_path_raw", "./temp/ascii.dat", YEAR = 2021, VERS = 0)
 #' }
-relocate.by.pattern <- function(name, file, ...) {
+relocate_by_pattern <- function(name, file, ...) {
 
   path_out <- apply.pattern(name, ...)
 

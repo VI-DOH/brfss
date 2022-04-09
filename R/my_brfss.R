@@ -10,6 +10,7 @@
 #' @param year int vector of year(s) to set as default
 #' @param geog character vector of geography abbreviations to set as default
 #' @param other_geogs character vector of other geography abbreviations to process
+#' @param source character data source to process, currently "sas" or "ascii"
 #'
 #' @return list with year, geography and other geographies (year, geog, other_geogs)
 #' @export
@@ -21,23 +22,27 @@
 #'
 #' }
 #'
-my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL) {
+my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL, source = NULL) {
+
+  if(!is.null(source)) source<-match.arg(source,c("sas","ascii"))
 
   folder <- apply.pattern("brfss_data_folder")
   path <- paste0(folder, "my_brfss.rda")
 
   if(file.exists(path)) {
     load(file = path)
+    if(is.null(source)) source <- my_brfss$source
     if(is.null(geog)) geog <- my_brfss$geog
     if(is.null(year)) year <- my_brfss$year
     if(is.null(other_geogs)) other_geogs <- my_brfss$other_geogs
   } else {
+    if(is.null(source)) source <- my_brfss.default.source()
     if(is.null(other_geogs)) geog <- my.brfss.default.other.geogs()
     if(is.null(geog)) geog <- my.brfss.default.geog()
     if(is.null(year)) year <- my.brfss.default.year()
 
   }
-  my_brfss <- list(year=year, geog = geog, other_geogs = other_geogs)
+  my_brfss <- list(year=year, geog = geog, other_geogs = other_geogs, source = source)
 
   save(my_brfss,file = path)
   my_brfss
@@ -45,7 +50,7 @@ my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL) {
 
 #' BRFSS Geography of Interest
 #'
-#' Get the default geography for working with BRFSS data
+#' Get the geography of interest for working with BRFSS data
 #'
 #' @return character vector of default geography(s)
 #' @export
@@ -104,6 +109,39 @@ my.other.geogs <- function() {
   }
 }
 
+#' BRFSS Data Source
+#'
+#' Get the source for the BRFSS data of interest
+#'
+#'
+#'
+#' @return character data source ('sas' or 'ascii')
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' my.source()
+#'
+#' }
+#'
+my.source <- function() {
+  folder <- apply.pattern("brfss_data_folder")
+  path <- paste0(folder, "my_brfss.rda")
+
+  if(!file.exists(path)) {
+    return(my.brfss.default.source())
+
+  } else {
+
+    load(file = path)
+    x <- my_brfss$source
+    names(x) <- "source"
+    return(x)
+  }
+}
+
+my.brfss.default.source <- function() { "sas" }
+
 my.brfss.default.geog <- function() { "*" }
 
 my.brfss.default.other.geogs <- function() { "" }
@@ -153,6 +191,17 @@ get.geog <- function(geog = NULL) {
   if(is.null(geog)) geog <- my.geog()
 
   geog
+
+}
+
+##  gets the my_brfss source if source is missing or NULL
+
+get.source <- function(source = NULL) {
+
+
+  if(is.null(source)) source <- my.source()
+
+  source
 
 }
 

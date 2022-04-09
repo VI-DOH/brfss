@@ -46,6 +46,7 @@ calc_modules_by_geog<-function(year,geog,version=0) {
     invisible(
       sapply(colnames(df0), function(col) {
         att<-attributes(df0[[col]])
+        browser()
         if(length(att)==5) {
           section_type<-att["section_type"]
           section_num<-att["section_num"]

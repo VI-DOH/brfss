@@ -1,4 +1,22 @@
 
+#' Download Codebook and Extract the Layout
+#'
+#' Download the CDC prepared codebook for the BRFSS data files and extract the layout. The format of the URL is not consistent by year so more than one pattern is attempted and all should fail but one for a given year.
+#'
+#' @param year integer - year of interest
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' process_codebook(2020)
+#' }
+process_codebook <- function(year = NULL, geog = NULL) {
+
+  download_codebook(year = year, geog = geog)
+  save_codebook_layout(year = year)
+}
+
 #' Download Codebook
 #'
 #' Download the CDC prepared codebook for the BRFSS data files. The format of the URL is not consistent by year
@@ -10,9 +28,9 @@
 #'
 #' @examples
 #' \dontrun{
-#' download.codebook(2020)
+#' download_codebook(2020)
 #' }
-download.codebook <- function(year = NULL, geog = NULL) {
+download_codebook <- function(year = NULL, geog = NULL) {
 
   ## if year is not provided then get the year from the my_brfss object
   ##    if year is provided (is not null), get.year() will simply return that value
@@ -156,11 +174,13 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
   questions <- grep("^Question:", lines, value = TRUE)
   sections <- grep("^Section.Nam.*:", lines, value = TRUE)
   qnums <- grep("^Question Number", lines, value = TRUE)
+  var_types <- grep("^Type.*Variable:", lines, value = TRUE)
 
   label <- stringr::str_trim(gsub(".*:(.*)","\\1",labels))
   question <- stringr::str_trim(gsub(".*:(.*)","\\1",questions))
   section <- stringr::str_trim(gsub(".*:(.*)","\\1",sections))
   question_num <- stringr::str_trim(gsub(".*:(.*)","\\1",qnums))
+  var_type <- stringr::str_trim(gsub(".*:(.*)","\\1",var_types))
 
   sect_type <- rep("",length(label_lines))
   sect_num <- rep("",length(label_lines))
@@ -193,11 +213,11 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
   ## build data frame for storage and later conversion to column name-column width pairs
   ##  for ASCII file reading
 
-  df <- data.frame(column,col_name, label, question, section, sect_type, sect_num) %>%
+  df <- data.frame(column,col_name, label, question, section, sect_type, sect_num, question_num, var_type) %>%
     mutate(start = as.integer(gsub("(.*)-(.*)","\\1",column))) %>%
     mutate(end = as.integer(gsub("(.*)-(.*)","\\2",column))) %>%
     mutate(field_size = end - start + 1) %>%
-    dplyr::relocate(sect_num, .after = sect_type) %>%
+    relocate(sect_num, .after = sect_type) %>%
     select(-column)
 
   ##
@@ -214,7 +234,11 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
   ##    we have to have a DUUMMY variable from 53-59
 
   df_layout_cb <- df  %>% fill_dummies() %>%
-    dplyr::relocate(field_size, start, end, col_name, sect_type, sect_num, section, label, question)
+    mutate(var_type = ifelse(is.na(var_type),"character",var_type)) %>%
+    mutate(var_type = ifelse(var_type == "Num","integer",var_type)) %>%
+    mutate(var_type = ifelse(var_type == "Char","character",var_type)) %>%
+    relocate(field_size, start, end, col_name, sect_type, sect_num, section, label,
+           question_num, var_type, question)
 
   fldr <- apply.pattern("codebook_layout_folder", YEAR = year, GEOG = geog)
   fil <- apply.pattern("codebook_layout_file", YEAR = year, GEOG = geog)

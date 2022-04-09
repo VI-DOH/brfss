@@ -82,7 +82,7 @@ fix.missing.columns<-function(year,year2=year-1) {
 #'
 #' @param year - int - year of interest
 #' @param download - logical - download the data? Useful (set = FALSE) if you already have the downloaded files
-#' @param xpt - logical - read/parse the xpt file? Useful (set = FALSE) if you already have the xpt files processed
+#' @param convert - logical - read the xpt files into data_frames and save? Useful (set = FALSE) if you already have the xpt files processed
 #' @param codebook - logical - download the annual codebook
 #' @param split - logical - split the xpt file by state/geography
 #' @param ... other params
@@ -91,22 +91,23 @@ fix.missing.columns<-function(year,year2=year-1) {
 #' @export
 #'
 #' @examples
-sas.process.year<-function(year,download=TRUE,xpt=TRUE, codebook = TRUE, split = TRUE, verbose=FALSE, ...) {
+sas_process_year<-function(year = NULL,download=TRUE, convert = TRUE, codebook = TRUE,
+                           split = TRUE, verbose=FALSE, ...) {
 
-  if(missing(year)) year <- my.year()
+  year <- get.year(year)
 
   if(download) {
     if(verbose) cat(" ... downloading ... main file ... ")
-    sas.download.data(year=year)
-    sas.download.xpt(year=year)
+    sas_download_metadata(year=year)
+    sas_download_xpt(year=year)
     # if(verbose) cat(" versions ")
-    # sas.download.data.versions(year=year)
+    # sas_download_metadata.versions(year=year)
     if(verbose) cat(" \n ... unzipping files\n ")
     unzip.all(year=year)
   }
 
 
-  if(xpt) {
+  if(convert) {
     if(verbose) cat(" ... reading main xpt file\n ")
     read.xpt(year=year)
 
@@ -119,16 +120,16 @@ sas.process.year<-function(year,download=TRUE,xpt=TRUE, codebook = TRUE, split =
     }
   }
 
-  save.sas.layout(year = year)
+  save_sas_layout(year = year)
   #sas.save.sasout(year = year)
 
 
   if(codebook) {
-    download.codebook(year = year)
+    download_codebook(year = year)
     save_codebook_layout(year = year)
   }
 
-  if(split) cleave.geogs(year=year,...)
+  if(split) split_geogs(year=year, source = 'sas' , ...)
 
   save_response_stats(year = year)
   save_module_stats(year = year)
@@ -148,7 +149,7 @@ sas.save.sasout<-function(year) {
 }
 
 
-sas.download.data<-function(year) {
+sas_download_metadata<-function(year) {
 
   #  files<-sas.url.pattern.downloads.data()
   files<-get.pattern.group("sas_downloads")
@@ -187,7 +188,7 @@ sas.download.data<-function(year) {
 #'
 #' @export
 #'
-sas.download.xpt<-function(year = NULL) {
+sas_download_xpt<-function(year = NULL) {
 
   year <- get.year(year)
 
@@ -236,7 +237,7 @@ sas.download.xpt<-function(year = NULL) {
 }
 
 
-sas.download.data.versions<-function(year) {
+sas_download_metadata.versions<-function(year) {
 
   #files<-sas.url.pattern.downloads.versions()
   files<-get.pattern.group("sas_version_downloads")
@@ -351,7 +352,7 @@ read.xpt<-function(year = NULL,version = 0,
   ##
 
   if(is.null(save_file)) {
-    save_file<- apply.pattern("sas_rdata_path",YEAR = year, VERS = version)
+    save_file<- apply.pattern("sas_data_path",YEAR = year, VERS = version)
   }
 
   ##
@@ -380,7 +381,7 @@ read.xpt<-function(year = NULL,version = 0,
     save(list=c(fname),file = save_file)
     return(TRUE)
   } else {
-    if(verbose) cat(xptname," doesn't exist\n")
+    if(verbose) cat(xpt_file," doesn't exist\n")
     return(FALSE)
   }
 }
@@ -419,8 +420,6 @@ add.col.attributes <- function(df_in, year = NULL, version=0) {
 #' for all geographies.This function splits out the geographies of interest.
 #'
 #' @param year integer - year of interest
-#' @param rdata_folder character - location of .RData file with full BRFSS XPT data
-#' @param rdata_file character - filename of .RData file with full BRFSS XPT data
 #' @param main logical - process main XPT file
 #' @param versions logical - process versioned XPT file
 #' @param my_geog character - abbreviation for primary state/geography of interest (e. "MT")
@@ -431,11 +430,10 @@ add.col.attributes <- function(df_in, year = NULL, version=0) {
 #' @examples
 #'
 #'\dontrun{
-#' cleave.geogs(year = 2020,rdata_folder="./data/2020/", rdata_file="xpt_2020.RData",
-#'    main=TRUE,versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
+#' cleave.geogs.sas(year = 2020, main=TRUE,versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
 #'}
 #'
-cleave.geogs<-function(year = NULL, rdata_folder=NULL, rdata_file=NULL,
+cleave.geogs.sas<-function(year = NULL,
                        main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
 
   if(!(main || versions)) return(NULL)
@@ -459,6 +457,8 @@ cleave.geogs<-function(year = NULL, rdata_folder=NULL, rdata_file=NULL,
   df_geogs <- get.geogs.all()
 
   sapply(ver,function(version) {
+
+    rdata_file <- apply.pattern("sas_data_path",YEAR = year, VERS = version)
 
     df_xpt<-load.sas(year,rdata_file = rdata_file, version)
 
@@ -552,9 +552,9 @@ load.sas<-function(year, rdata_file=NULL, version=0) {
 
   if(is.null(rdata_file)) {
     # if(version == 0) {
-    rdata_file <- apply.pattern("sas_rdata_path",YEAR = year, VERS = version)
+    rdata_file <- apply.pattern("sas_data_path",YEAR = year, VERS = version)
     # } else {
-    #   rdata_file<- apply.pattern("sas_rdata_version",YEAR = year, VERS = version)
+    #   rdata_file<- apply.pattern("sas_data_version",YEAR = year, VERS = version)
     # }
   }
 
@@ -788,7 +788,7 @@ sas.build.geogs <- function(year) {
 #' @export
 #'
 #' @examples
-save.sas.layout<-function(year = NULL) {
+save_sas_layout<-function(year = NULL) {
   require(stringr)
   require(dplyr)
 
@@ -853,7 +853,7 @@ save.sas.layout<-function(year = NULL) {
                                  section, label) %>%
     group_by(section) %>%
     mutate(group_index = row_number()) %>%
-    dplyr::relocate(group_index,.before = label) %>%
+    relocate(group_index,.before = label) %>%
     as.data.frame() %>%
     fill_dummies()
 
@@ -1034,7 +1034,8 @@ fill_dummies <- function(df) {
   fillem <- ((start-last)>1)
   df_fill <- data.frame(start = last+1, end = start -1 ) %>%
     mutate(field_size = end - start + 1) %>%
-    filter(fillem) %>% relocate(field_size , 1) %>%
+    filter(fillem) %>%
+    relocate(field_size , 1) %>%
     # mutate(start = as.character(start), end = as.character(end)) %>%
     mutate(col_name = paste0("DUMMY_",start)) %>%
     mutate(sect_type = "DUMMY") %>%

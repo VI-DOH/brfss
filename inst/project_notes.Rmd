@@ -27,7 +27,7 @@ output: html_notebook
  
   * download the main data file and all versions from the CDC BRFSS data url  
     
-    `sas.download.data(year=year)`  
+    `sas_download_metadata(year=year)`  
 
   * unzip all zip files 
   

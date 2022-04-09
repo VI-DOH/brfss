@@ -10,7 +10,7 @@ my.geog()
 character vector of default geography(s)
 }
 \description{
-Get the default geography for working with BRFSS data
+Get the geography of interest for working with BRFSS data
 }
 \examples{
 \dontrun{

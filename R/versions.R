@@ -16,19 +16,43 @@
 #' maxvers<-highest_version(2018)
 #'}
 #'
-highest_version<-function(year=NULL) {
+highest_version<-function(year=NULL, ...) {
+
+  source <- get.source()
+
+  if(is.null(source)) source <- "sas"
 
   year <- get.year(year)
 
-  fldr<-apply.pattern("sas_data_folder",YEAR = year)
+  if(source == "sas") {
+    fldr<-apply.pattern("sas_data_folder",YEAR = year)
+  } else {
+
+    fldr <- apply.pattern("ascii_data_folder", YEAR = year)
+  }
 
   files<-list.files(fldr)
-  files<-files[grep("_V[0-9][.]",files)]
-  vers<-as.integer(gsub(".*_V([0-9]*)[.].*","\\1",files))
+
+  if(length(files) == 0) {
+    if(source == "sas") {
+      fldr<-apply.pattern("sas_data_folder",YEAR = year)
+    } else {
+      fldr <- apply.pattern("ascii_path", YEAR = year)
+    }
+    files<-list.files(fldr)
+
+  }
+
+  if(length(files) > 0) {
+
+    files<-files[grep("_V[0-9][.]",files)]
+    vers<-as.integer(gsub(".*_V([0-9]*)[.].*","\\1",files))
+  } else vers = 0
+
   max(vers)
 }
 
-calc_responses<-function(year,geogs,versions) {
+calc_responses<-function(year,geogs,versions, ...) {
 
   if(missing(versions)) versions <- 0:highest_version(year)
 
@@ -73,10 +97,10 @@ responses_by_geog<-function(year,geog,version=0) {
 }
 
 
-save_response_stats<-function(year) {
+save_response_stats<-function(year, ...) {
   require(dplyr)
 
-  df_responses<-calc_responses(year = year)
+  df_responses<-calc_responses(year = year, ...)
   nm<-paste0("df_responses_",year)
   assign(nm,df_responses)
 

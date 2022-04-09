@@ -4,7 +4,7 @@
 \alias{my.brfss}
 \title{BRFSS Geography/Years of Interest}
 \usage{
-my.brfss(year = NULL, geog = NULL, other_geogs = NULL)
+my.brfss(year = NULL, geog = NULL, other_geogs = NULL, source = NULL)
 }
 \arguments{
 \item{year}{int vector of year(s) to set as default}
@@ -12,6 +12,8 @@ my.brfss(year = NULL, geog = NULL, other_geogs = NULL)
 \item{geog}{character vector of geography abbreviations to set as default}
 
 \item{other_geogs}{character vector of other geography abbreviations to process}
+
+\item{source}{character data source to process, currently "sas" or "ascii"}
 }
 \value{
 list with year, geography and other geographies (year, geog, other_geogs)
