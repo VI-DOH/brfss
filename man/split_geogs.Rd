@@ -36,7 +36,7 @@ for all geographies, whether the SAS (XPT) file or the ASCII (ASC) file. This fu
 \examples{
 
 \dontrun{
-cleave.geogs.sas(year = 2020, source = 'sas', main=TRUE, versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
+split_geogs(year = 2020, source = 'sas', main=TRUE, versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
 }
 
 

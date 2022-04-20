@@ -40,7 +40,7 @@ set.pattern <- function(name, pattern= NULL, group="", desc = "") {
 
 
 pattern.file.name <- function() {
-  "./data/file_patterns.rda"
+  "./data/naming_patterns.rda"
 }
 
 append.pattern <- function(df, name , pattern , group = "", desc = "") {
@@ -55,14 +55,14 @@ init.patterns <- function() {
   require(dplyr, quietly = TRUE, warn.conflicts = FALSE)
   require(tibble)
 
-  fname <- "./data/file_patterns.rda"
+  fname <- "./data/naming_patterns.rda"
   if(file.exists(fname)) file.remove(fname)
 
 
-  file_patterns <- data.frame(name = character(0) , pattern = character(0) , group = character(0),
+  naming_patterns <- data.frame(name = character(0) , pattern = character(0) , group = character(0),
                               desc = character(0))
 
-  file_patterns  <- file_patterns %>%
+  naming_patterns  <- naming_patterns %>%
 
     append.pattern("data_folder","./data/",
                    desc ="Standard location of user created data") %>%
@@ -106,6 +106,9 @@ init.patterns <- function() {
     append.pattern("brfss_annual_data_folder","{brfss_data_folder}[YEAR]/",
                    desc = "Folder to store the annual processed BRFSS data") %>%
 
+    append.pattern("annual_metadata_folder","{brfss_annual_data_folder}metadata/",
+                   desc ="Standard location of user created metadata") %>%
+
     append.pattern("brfss_geog_folder","{brfss_data_folder}[YEAR]/geog/[GEOG]/",
                    desc = "Folder to store the annual processed BRFSS data from specific geographies") %>%
 
@@ -115,11 +118,15 @@ init.patterns <- function() {
     append.pattern("brfss_geog_path","{brfss_geog_folder}{brfss_geog_file}",
                    desc = "Full path for annual processed BRFSS data (main survey) from specific geographies") %>%
 
-    #############################################################################
-  ##
-  ##  codebook patterns
+    append.pattern("brfss_data_df","df_[GEOG]_[YEAR]([VERS] > 0;_V[VERS])",
+                   desc = "Consistent name for BRFSS data object (data.frame) stored and retrieved") %>%
 
-  append.pattern("brfss_url_codebook",
+
+    #############################################################################
+    ##
+    ##  codebook patterns
+
+    append.pattern("brfss_url_codebook",
                  "https://www.cdc.gov/brfss/annual_data/[YEAR]/pdf/",
                  desc ="Base URL of BRFSS codebook") %>%
 
@@ -145,6 +152,9 @@ init.patterns <- function() {
                    desc = "file name of the annual codebook file") %>%
 
     append.pattern("codebook_ext","pdf",
+                   desc = "ext of the annual codebook file (txt, rtf, html, or pdf") %>%
+
+    append.pattern("codebook_path","{codebook_folder}{codebook_file}.{codebook_ext}",
                    desc = "ext of the annual codebook file (.txt, .rtf, or .pdf") %>%
 
     append.pattern("codebook_layout_folder","{sas_layout_folder}",
@@ -156,25 +166,33 @@ init.patterns <- function() {
     append.pattern("codebook_layout_path","{codebook_layout_folder}{codebook_layout_file}",
                    desc = "path to the annual codebook layout file") %>%
 
+    append.pattern("codebook_values_file","values[YR]_CB.RData",
+                   desc = "file name of the annual codebook values file") %>%
+
+    append.pattern("codebook_values_path","{codebook_layout_folder}{codebook_values_file}",
+                   desc = "path to the annual codebook layout file") %>%
+
+
     #########################################################################################
 
-  append.pattern("sas_layout_folder","{brfss_annual_data_folder}layout/") %>%
+    append.pattern("sas_layout_folder","{brfss_annual_data_folder}layout/") %>%
     append.pattern("sas_layout_file","layout[YR]_sas.RData") %>%
     append.pattern("sas_layout_path","{sas_layout_folder}{sas_layout_file}") %>%
-    # append.pattern("brfss_columns_folder","{brfss_annual_data_folder}layout/") %>%
-    # append.pattern("brfss_columns_file","columns_[YEAR].RData") %>%
-    # append.pattern("brfss_columns_path","{brfss_columns_folder}{brfss_columns_file}") %>%
 
-    ##    data file of responses
+
+    ##    data file of response totals
 
     append.pattern("brfss_responses_folder","{brfss_annual_data_folder}") %>%
     append.pattern("brfss_responses_file","responses_[YEAR].RData") %>%
     append.pattern("brfss_responses_path","{brfss_responses_folder}{brfss_responses_file}") %>%
 
+    ##    data file of modules
+
     append.pattern("brfss_modules_folder","{brfss_annual_data_folder}") %>%
     append.pattern("brfss_modules_file","modules_[YEAR].RData") %>%
     append.pattern("brfss_modules_path","{brfss_modules_folder}{brfss_modules_file}") %>%
 
+    #####################################################################################################
     ##  ascii data
 
     append.pattern("ascii_filename_zip","LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]_)ASC.zip") %>%
@@ -194,6 +212,8 @@ init.patterns <- function() {
     append.pattern("ascii_filename","LLCP[YEAR]ASC([VERS] > 0;_V[VERS]).rda") %>%
     append.pattern("ascii_path","{ascii_data_folder}{ascii_filename}") %>%
 
+    append.pattern("ascii_df","df_ascii_[YEAR]([VERS] > 0;_V[VERS])") %>%
+
     ###################################################################################
 
   append.pattern("sas_raw_folder","{brfss_raw_data_folder}[YEAR]/sas/") %>%
@@ -201,6 +221,7 @@ init.patterns <- function() {
     append.pattern("xpt_folder", "{sas_raw_folder}") %>%
     append.pattern("xpt_file", "LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).XPT") %>%
     append.pattern("xpt_path", "{xpt_folder}{xpt_file}") %>%
+    append.pattern("xpt_df","df_xpt_[YEAR]([VERS] > 0;_V[VERS])") %>%
 
     append.pattern("sas_data_file","xpt_[YEAR]([VERS] > 0;_V[VERS]).RData") %>%
     append.pattern("sas_data_path","{sas_data_folder}{sas_data_file}") %>%
@@ -210,7 +231,7 @@ init.patterns <- function() {
     append.pattern("saq_layout_raw","{brfss_annual_raw_data_folder}SAQ[YR].csv") %>%
     append.pattern("saq_layout","{brfss_annual_data_folder}saq_layout[YEAR].rda")
 
-  usethis::use_data(file_patterns, overwrite = TRUE)
+  usethis::use_data(naming_patterns, overwrite = TRUE)
 
 }
 
@@ -281,15 +302,15 @@ pattern.names <- function(filter=".*") {
 #'
 refresh.patterns <- function() {
 
-  file_patterns <- pattern.file.name()
-  if(file.exists(file_patterns)) {
-    file.remove(file_patterns)
+  naming_patterns <- pattern.file.name()
+  if(file.exists(naming_patterns)) {
+    file.remove(naming_patterns)
   }
   env <- new.env()
-  data("file_patterns", package = "brfss", envir = env )
+  data("naming_patterns", package = "brfss", envir = env )
 
-  file_patterns <- get(ls(env),envir = env)
-  save.patterns(file_patterns)
+  naming_patterns <- get(ls(env),envir = env)
+  save.patterns(naming_patterns)
 
   invisible()
 }
@@ -301,22 +322,22 @@ refresh.patterns <- function() {
 #'
 get.patterns <- function() {
 
-  file_patterns <- orrr::get.rdata(pattern.file.name())
-  if(is.null(file_patterns)) {
+  naming_patterns <- orrr::get.rdata(pattern.file.name())
+  if(is.null(naming_patterns)) {
     env <- new.env()
-    data("file_patterns", package = getPackageName(), envir = env )
+    data("naming_patterns", package = getPackageName(), envir = env )
 
-    file_patterns <- get(ls(env),envir = env)
-    save.patterns(file_patterns)
+    naming_patterns <- get(ls(env),envir = env)
+    save.patterns(naming_patterns)
   }
 
-  file_patterns
+  naming_patterns
 }
 
-save.patterns <- function(file_patterns) {
+save.patterns <- function(naming_patterns) {
 
   suppressMessages(
-    usethis::use_data(file_patterns, overwrite = TRUE)
+    usethis::use_data(naming_patterns, overwrite = TRUE)
   )
 
 }
@@ -383,14 +404,14 @@ get.pattern <- function(name) {
 get.pattern.group <- function(group) {
   require(dplyr,quietly = T, warn.conflicts = F)
 
-  file_patterns <- get.patterns()
+  naming_patterns <- get.patterns()
 
-  file_patterns <- file_patterns  %>% filter(group=={{group}})
+  naming_patterns <- naming_patterns  %>% filter(group=={{group}})
 
-  patterns <- file_patterns %>%
+  patterns <- naming_patterns %>%
     pull(pattern)
 
-  names(patterns) <- file_patterns %>%
+  names(patterns) <- naming_patterns %>%
     pull(name)
 
 
@@ -416,9 +437,9 @@ get.pattern.group <- function(group) {
 get.pattern.info <- function(name) {
   require(dplyr,quietly = T, warn.conflicts = F)
 
-  file_patterns <- get.patterns()
+  naming_patterns <- get.patterns()
 
-  file_patterns %>% filter(name=={{name}})
+  naming_patterns %>% filter(name=={{name}})
 
 }
 

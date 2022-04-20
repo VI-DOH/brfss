@@ -168,13 +168,13 @@ brfss_field_values_filename<-function(year) {
 #'
 #' @return
 #'
-brfss_data_path <- function(year = NULL, geog, version = 0, rw = c("r","w")) {
+brfss_data_path <- function(year = NULL, geog = NULL, version = 0, rw = c("r","w")) {
 
   read <- rw == 'r'
   write <- rw == 'w'
 
   year <- get.year(year)
-  my_geog <- my.geog()
+  my_geog <- get.geog(geog)
 
   #geogs <- get.geogs(named = TRUE)
 

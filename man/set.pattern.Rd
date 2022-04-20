@@ -2,7 +2,7 @@
 % Please edit documentation in R/patterns.R
 \name{set.pattern}
 \alias{set.pattern}
-\title{Set File Pattern}
+\title{Set Naming Pattern}
 \usage{
 set.pattern(name, pattern = NULL, group = "", desc = "")
 }

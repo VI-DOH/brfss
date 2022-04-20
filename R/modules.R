@@ -35,9 +35,18 @@ modules_used<-function(year = NULL, geogs = NULL) {
 
 calc_modules_by_geog<-function(year,geog,version=0) {
 
+  ##
+  ##    change numeric geog (fips) to abbrev
+
   if(is.numeric(geog)) geog<-geog_abbs(geog)
 
+  ##
+  ##    if the version exists for that geog
+
   if(brfss_geog_version_exists(year,geog,version)) {
+
+    ##
+    ##    get the data for that year/geog/version
 
     df0<-brfss_data(year,geog,version)
 
@@ -45,8 +54,11 @@ calc_modules_by_geog<-function(year,geog,version=0) {
     df_columns<-data.frame()
     invisible(
       sapply(colnames(df0), function(col) {
+        ##
+        ##    get the attributes
+
         att<-attributes(df0[[col]])
-        browser()
+
         if(length(att)==5) {
           section_type<-att["section_type"]
           section_num<-att["section_num"]
@@ -60,6 +72,7 @@ calc_modules_by_geog<-function(year,geog,version=0) {
                          section_index,
                          section_name,
                          label)
+
           df_columns<<-rbind(df_columns,df)
         }
       })

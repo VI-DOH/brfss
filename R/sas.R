@@ -91,7 +91,7 @@ fix.missing.columns<-function(year,year2=year-1) {
 #' @export
 #'
 #' @examples
-sas_process_year<-function(year = NULL,download=TRUE, convert = TRUE, codebook = TRUE,
+sas_process_year<-function(year = NULL, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE,
                            split = TRUE, verbose=FALSE, ...) {
 
   year <- get.year(year)
@@ -106,6 +106,9 @@ sas_process_year<-function(year = NULL,download=TRUE, convert = TRUE, codebook =
     unzip.all(year=year)
   }
 
+  if (layout) save_sas_layout(year = year)
+
+  if(codebook) process_codebook(year = year)
 
   if(convert) {
     if(verbose) cat(" ... reading main xpt file\n ")
@@ -120,14 +123,6 @@ sas_process_year<-function(year = NULL,download=TRUE, convert = TRUE, codebook =
     }
   }
 
-  save_sas_layout(year = year)
-  #sas.save.sasout(year = year)
-
-
-  if(codebook) {
-    download_codebook(year = year)
-    save_codebook_layout(year = year)
-  }
 
   if(split) split_geogs(year=year, source = 'sas' , ...)
 
@@ -137,17 +132,17 @@ sas_process_year<-function(year = NULL,download=TRUE, convert = TRUE, codebook =
   invisible()
 }
 
-sas.save.sasout<-function(year) {
-
-  fname<-paste0("df_columns_",year)
-  assign(fname,read.sasout(year))
-  file <- apply.pattern("brfss_columns_path", YEAR=year)
-
-  if(!dir.exists(dirname(file))) dir.create(dirname(file))
-
-  save(list=fname,file = file)
-}
-
+# sas.save.sasout<-function(year) {
+#
+#   fname<-paste0("df_columns_",year)
+#   assign(fname,read_sasout(year))
+#   file <- apply.pattern("brfss_columns_path", YEAR=year)
+#
+#   if(!dir.exists(dirname(file))) dir.create(dirname(file))
+#
+#   save(list=fname,file = file)
+# }
+#
 
 sas_download_metadata<-function(year) {
 
@@ -295,7 +290,7 @@ sas_download_metadata.versions<-function(year) {
 #'
 #' Creates a data frame from the xpt file provided by CDC. The sasout file is used to provide
 #' some useful attributes for each column.
-#' This function can get the default file names folder location from the file_patterns data.
+#' This function can get the default file names folder location from the naming_patterns data.
 #'
 #' @param year integer: year of interest
 #' @param version interger: version of interest (default is 0 ... main survey)
@@ -372,11 +367,12 @@ read.xpt<-function(year = NULL,version = 0,
     cat("Getting sasout\n")
 
 
-    df_xpt <- df_xpt %>% add.col.attributes( year = year, version = version)
+    df_xpt <- df_xpt %>% add_col_attributes( year = year, version = version)
 
     if(!dir.exists(dirname(save_file))) dir.create(dirname(save_file),recursive = T)
 
-    fname<-paste0("df_xpt_",year,ifelse(version>0,paste0("_V",version),""))
+    fname<-apply.pattern("xpt_df", YEAR = year, VERS = version)
+
     assign(fname,df_xpt)
     save(list=c(fname),file = save_file)
     return(TRUE)
@@ -386,9 +382,13 @@ read.xpt<-function(year = NULL,version = 0,
   }
 }
 
-add.col.attributes <- function(df_in, year = NULL, version=0) {
+add_col_attributes <- function(df_in, year = NULL, version=0, source = NULL) {
 
-  df_sasout<-read.sasout(year)
+  if(is.null(source)) source <- my.source()
+
+  df_sasout<- get.layout()
+
+    #browser()
 
   mapply(function(lbl,v,typ,n,i,nm) {
     #cat(v,"|",typ,"|",n,"|",i,"|",nm)
@@ -407,8 +407,8 @@ add.col.attributes <- function(df_in, year = NULL, version=0) {
 
     }
 
-  }, df_sasout$label, df_sasout$varname, df_sasout$section_type, df_sasout$section_number,
-  df_sasout$index,df_sasout$section_name)
+  }, df_sasout$label, df_sasout$col_name, df_sasout$sect_type, df_sasout$sect_num,
+  df_sasout$question_num,df_sasout$section)
 
   df_in
 
@@ -627,7 +627,7 @@ get.sas.labels<-function(df_xpt) {
 #' @export
 #'
 #'
-read.sasout<-function(year = NULL,folder=NULL,file=NULL,version=0) {
+read_sasout<-function(year = NULL,folder=NULL,file=NULL,version=0) {
 
   year <- get.year(year)
 
@@ -779,91 +779,6 @@ sas.build.geogs <- function(year) {
   geogs
 }
 
-
-#' Get BRFSS layout from SASout
-#'
-#' @param year
-#'
-#' @return
-#' @export
-#'
-#' @examples
-save_sas_layout<-function(year = NULL) {
-  require(stringr)
-  require(dplyr)
-
-  year <- get.year(year)
-
-  # get the filename for the data
-  #  name format based on year
-  if(year>2010) {
-    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0)
-
-  } else {
-    return(NULL)
-
-  }
-
-  #  read the sasout file
-
-  lines<-readLines(file, warn = F, encoding = "latin1")
-
-  lines <- gsub("—", "-",lines)
-
-  # get the start point of interest and remove everything before
-
-  start<-as.integer(grep("^Label$",lines)) + 1
-  if (length(start)==0) start<-grep("\\* ASSIGN ",lines)
-  lines<-lines[start:length(lines)]
-
-  # get the end point of interest (; by itself on a line) and remove everything after
-  #   including that end line
-
-  lines<-lines[1:(grep("^;$",lines)-1) ]
-
-  #####################################
-  ##
-  ##  put together broken lines
-
-  varlines<-grep(" = '", lines)
-  vline2<-c(varlines[2:length(varlines)]-1,length(lines))
-
-  ulines<-as.character(mapply(function(l0,l1) {
-    paste(lines[l0:l1],collapse="")
-
-  },varlines,vline2))
-
-  vars<-gsub("(.*) =.*","\\1",ulines)
-  vars<-str_trim(vars)
-  #vars<-gsub("^_","X_",vars)
-
-  question<-gsub("(.*) = '(.*)'$","\\2",ulines)
-
-
-  df_ranges<-read.sas.field.ranges(year)
-
-  df<- dplyr::left_join(df_ranges,data.frame(var=vars,label=question,stringsAsFactors = F),by="var")
-
-  df <- df %>% deduped_layout()
-
-  colnames(df)[colnames(df)=="var"]<-"col_name"
-  df$field_size<-as.integer(df$end)-as.integer(df$start)+1
-
-  df_layout_sas <- df %>% select(field_size,start,end,col_name,  sect_type, sect_num,
-                                 section, label) %>%
-    group_by(section) %>%
-    mutate(group_index = row_number()) %>%
-    relocate(group_index,.before = label) %>%
-    as.data.frame() %>%
-    fill_dummies()
-
-  fldr <- apply.pattern("sas_layout_folder",YEAR = year)
-  if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
-
-  save(df_layout_sas, file = apply.pattern("sas_layout_path",YEAR = year))
-  invisible()
-}
-#####################################################################################################
 ##
 ##    get the sas field ranges for fwf
 
@@ -879,10 +794,10 @@ save_sas_layout<-function(year = NULL) {
 #'
 #' @examples
 #' \dontrun{
-#' read.sas.field.ranges(2021)
+#' read_sas_field_ranges(2021)
 #'
 #' }
-read.sas.field.ranges<-function(year) {
+read_sas_field_ranges<-function(year) {
   require(stringr)
 
   # get the filename for the data

@@ -4,7 +4,7 @@
 \alias{brfss_data_path}
 \title{Get BRFSS data file path}
 \usage{
-brfss_data_path(year = NULL, geog, version = 0, rw = c("r", "w"))
+brfss_data_path(year = NULL, geog = NULL, version = 0, rw = c("r", "w"))
 }
 \arguments{
 \item{year}{integer - year of interest}

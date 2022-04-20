@@ -17,15 +17,12 @@ ascii_process_year <- function(year = NULL, download = TRUE, convert = TRUE, cod
 
   year <- get.year(year)
 
-  if(codebook) {
-    download_codebook(year = year)
-    save_codebook_layout(year = year)
-  }
-
   if(download) {
     if(verbose) cat(" ... downloading ... main ascii file ... ")
     ascii.download.data(year=year)
   }
+
+  if(codebook) process_codebook(year = year)
 
   if(convert) {
     convert_ascii(year = year)
@@ -156,9 +153,13 @@ convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versi
     if(verbose) cat("... reading version [", version, "] : ", path, "\n")
     df <- read.ascii(filename = path, layout = layout, verbose = verbose)
 
-    df_name <- paste0("df_ascii_",year)
-    if(version>1) df_name <- paste0(df_name,"_V",version)
-    assign(df_name,value = df)
+    df <- add_col_attributes(df, year = year, version = version)
+
+    df_name <- apply.pattern("ascii_df", YEAR = year, VERS = version)
+    # paste0("df_ascii_",year)
+    # if(version>0) df_name <- paste0(df_name,"_V",version)
+    assign(df_name, value = df )
+
     path <- apply.pattern("ascii_path", YEAR = year, VERS = version)
     if(!dir.exists(dirname(path))) dir.create(dirname(path))
 
@@ -267,7 +268,8 @@ read.ascii<-function(filename=NULL,layout = NULL, completes=T, verbose = FALSE) 
 #' @examples
 #'
 #'\dontrun{
-#' cleave.geogs.ascii(year = 2020, main=TRUE,versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
+#' cleave.geogs.ascii(year = 2020, main=TRUE,versions=TRUE,
+#' my_geog="MT", other_geogs=NULL,verbose=TRUE)
 #'}
 #'
 cleave.geogs.ascii<-function(year = NULL,

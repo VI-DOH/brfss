@@ -16,6 +16,8 @@
 #'
 brfss_data <- function(year = NULL, geog = NULL, version = 0) {
 
+  year <- get.year(year)
+  geog <- get.geog(geog)
 
   if(is.numeric(geog)) geog<-geog_abbs(geog)
 

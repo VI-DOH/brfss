@@ -18,7 +18,7 @@ require(dplyr)
 #' @examples
 #'
 #'\dontrun{
-#' cleave.geogs.sas(year = 2020, source = 'sas', main=TRUE, versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
+#' split_geogs(year = 2020, source = 'sas', main=TRUE, versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
 #'}
 #'
 #'
@@ -42,6 +42,7 @@ split_geogs<-function(year = NULL, source = NULL,
   if(main) ver<-0
 
   vermax <- highest_version(year)
+  if(vermax == 0) versions = FALSE
 
   if(versions) ver<-c(ver,1:vermax)
 
@@ -143,7 +144,7 @@ process_year <- function(year = NULL, source = NULL, download=TRUE, convert=TRUE
   source<-match.arg(source,c("sas","ascii"))
 
   if(source == 'sas') {
-    sas_process_year(year = year, download=download, convert=convert, codebook = codebook,
+    sas_process_year(year = year, download=download, layout = TRUE, convert=convert, codebook = codebook,
                      split = split, verbose=verbose, ...)
   } else {
     ascii_process_year(year = year, download=download, convert=convert, codebook = codebook,

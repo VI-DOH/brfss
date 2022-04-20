@@ -42,7 +42,7 @@
 #'   \item{desc}{description of pattern use}
 #'   ...
 #' }
-"file_patterns"
+"naming_patterns"
 
 
 #' Storage for Default Year and State/Geography

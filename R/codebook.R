@@ -78,31 +78,26 @@ download_codebook <- function(year = NULL, geog = NULL) {
     })
   )
 }
-
-
 #############################################################
 ##
-##    Save Layout from codebook
+##    Read Lines from Codebook
 ##
-#' Build the Layout from CDC Provided Codebook
+#' Read the CDC Provided Codebook File
 #'
 #' If a filename is not provided, it uses the file_pattern data.frame
 #'to figure out the name of the file. The layout data.frame is used to
-#'parse the BRFSS ascii fixed width file
-#'
-#' @param file character name of layout file - if missing (NULL) then my.brfss() is called to
+#'parse the BRFSS ascii fixed width file, and to populate column attributes with information such
+#'as label, survey section module number. If a file name is not passed, then my.brfss() is called to
 #' determine the year and geographical place of interest. The geographical place of interest
 #' may not be used, but will be passed for pattern matching of file name in case it is needed
 #'
-#' @return data.frame containing the layout to be passed to read.fwf
+#' @param file character name of layout file
+#'
+#' @return character vector containing the lines in the file
 #' @export
 #'
-#' @examples
-#############################################################
-##
-##    layout from codebook
-##
-save_codebook_layout <- function(file=NULL, year = NULL) {
+#'
+read_codebook <- function(file=NULL, year = NULL) {
   require(dplyr)
 
   year <- get.year(year)
@@ -128,7 +123,9 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
 
     lines <- striprtf::read_rtf(file)
 
-    lines <- gsub("^[*]| {0,1}","",lines)
+    lines <- gsub("^[*][|] {0,1}","",lines)
+    lines <- gsub("[|]","  ",lines)
+
     lines <- lines %>%
       strsplit(split = "\n") %>%
       unlist(recursive = TRUE)
@@ -149,8 +146,62 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
       unlist(recursive = TRUE)
 
   } else {
-    return(NULL)
+    lines <- NULL
   }
+
+  lines
+}
+
+#' Set Codebook Extension
+#'
+#' Convenience function to set the codebook extension
+#'
+#' @param ext character - extension (pdf, rtf, txt, or html)
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' set_codebook_ext("pdf")
+#' }
+#'
+set_codebook_ext <- function(ext) {
+
+  set.pattern(name = "codebook_ext", pattern = ext )
+}
+
+#############################################################
+##
+##    Save Layout from codebook
+##
+#' Build the Layout from CDC Provided Codebook
+#'
+#' If a filename is not provided, it uses the file_pattern data.frame
+#'to figure out the name of the file. The layout data.frame is used to
+#'parse the BRFSS ascii fixed width file, and to populate column attributes with information such
+#'as label, survey section module number. If a file name is not passed, then my.brfss() is called to
+#' determine the year and geographical place of interest. The geographical place of interest
+#' may not be used, but will be passed for pattern matching of file name in case it is needed
+#'
+#' @param file character name of layout file
+#'
+#' @return data.frame containing the layout to be used for decoding/parsing the ascii file
+#' @export
+#'
+#'
+
+#############################################################
+##
+##    layout from codebook
+##
+save_codebook_layout <- function(file=NULL, year = NULL) {
+  require(dplyr)
+
+  year <- get.year(year)
+  geog <- get.geog()
+
+  lines <- read_codebook(file=file, year = year)
+  if(is.null(lines)) return(NULL)
 
   ##############################################################
   ##
@@ -173,7 +224,7 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
   labels <- lines[label_lines]
   questions <- grep("^Question:", lines, value = TRUE)
   sections <- grep("^Section.Nam.*:", lines, value = TRUE)
-  qnums <- grep("^Question Number", lines, value = TRUE)
+  qnums <- grep("^Question.Number", lines, value = TRUE)
   var_types <- grep("^Type.*Variable:", lines, value = TRUE)
 
   label <- stringr::str_trim(gsub(".*:(.*)","\\1",labels))
@@ -316,3 +367,5 @@ get.codebook.layout <- function(year = NULL) {
   orrr::get.rdata(file = file)
 
 }
+
+

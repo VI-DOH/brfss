@@ -32,7 +32,7 @@ read.xpt(
 \description{
 Creates a data frame from the xpt file provided by CDC. The sasout file is used to provide
 some useful attributes for each column.
-This function can get the default file names folder location from the file_patterns data.
+This function can get the default file names folder location from the naming_patterns data.
 }
 \examples{
 \dontrun{

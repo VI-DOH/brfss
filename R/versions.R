@@ -43,11 +43,13 @@ highest_version<-function(year=NULL, ...) {
 
   }
 
+  vers <- 0
   if(length(files) > 0) {
 
     files<-files[grep("_V[0-9][.]",files)]
     vers<-as.integer(gsub(".*_V([0-9]*)[.].*","\\1",files))
-  } else vers = 0
+    if(length(vers)==0) vers <- 0
+  }
 
   max(vers)
 }

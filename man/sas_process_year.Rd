@@ -9,8 +9,9 @@ and create a data frame with all data from the XPT file, as well as any other ve
 sas_process_year(
   year = NULL,
   download = TRUE,
-  convert = TRUE,
+  layout = TRUE,
   codebook = TRUE,
+  convert = TRUE,
   split = TRUE,
   verbose = FALSE,
   ...
@@ -21,9 +22,9 @@ sas_process_year(
 
 \item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
 
-\item{convert}{- logical - read the xpt files into data_frames and save? Useful (set = FALSE) if you already have the xpt files processed}
-
 \item{codebook}{- logical - download the annual codebook}
+
+\item{convert}{- logical - read the xpt files into data_frames and save? Useful (set = FALSE) if you already have the xpt files processed}
 
 \item{split}{- logical - split the xpt file by state/geography}
 

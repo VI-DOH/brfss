@@ -33,7 +33,8 @@ for all geographies. This function splits out the geographies of interest.
 \examples{
 
 \dontrun{
-cleave.geogs.ascii(year = 2020, main=TRUE,versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
+cleave.geogs.ascii(year = 2020, main=TRUE,versions=TRUE,
+my_geog="MT", other_geogs=NULL,verbose=TRUE)
 }
 
 }
