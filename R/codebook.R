@@ -15,6 +15,7 @@ process_codebook <- function(year = NULL, geog = NULL) {
 
   download_codebook(year = year, geog = geog)
   save_codebook_layout(year = year)
+  save_codebook_values()
 }
 
 #' Download Codebook
@@ -70,8 +71,13 @@ download_codebook <- function(year = NULL, geog = NULL) {
       status <- httr::HEAD(url)$status
       if(status==200) {
 
+        to <- getOption("timeout")
+        options(timeout = 180)
+
         download.file(url = url,destfile = destfile,
                       method = "libcurl",quiet = F, mode = "wb")
+
+        options(timeout = to)
 
         set.pattern("codebook_ext", gsub("[.]","",ext))
       }
@@ -255,6 +261,19 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
 
   sect_type[mods] <- "Module"
   sect_num[mods] <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[mod_lines]))
+
+  ##   Blank Section Name for  Weighting Variables
+  ##     for some reason, the state codebook for 2021 has
+  ##      Module 1 for all weighting variables
+
+  wgts <- grep("^Sect.*Nam.*:.*Weight", sections)
+  sect_type[wgts] <- ""
+
+  ##   set blank section types to the 'Non-Survey'
+
+  blnks <- nchar(sect_type) == 0
+  sect_type[blnks] <- "Non-Survey"
+  sect_num[blnks] <- 0
 
   ## parse column name and column range from text
 

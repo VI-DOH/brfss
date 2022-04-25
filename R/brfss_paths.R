@@ -174,9 +174,8 @@ brfss_data_path <- function(year = NULL, geog = NULL, version = 0, rw = c("r","w
   write <- rw == 'w'
 
   year <- get.year(year)
-  my_geog <- get.geog(geog)
 
-  #geogs <- get.geogs(named = TRUE)
+  my_geog <- get.geog()
 
   if(str_something(my_geog) &&  (geog == my_geog)) {
     fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year)

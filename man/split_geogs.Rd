@@ -11,6 +11,7 @@ split_geogs(
   versions = TRUE,
   my_geog = NULL,
   other_geogs = NULL,
+  factorize = FALSE,
   verbose = TRUE
 )
 }

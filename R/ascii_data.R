@@ -13,7 +13,8 @@ ascii_data_url<-function(year) {
 }
 #
 
-ascii_process_year <- function(year = NULL, download = TRUE, convert = TRUE, codebook = TRUE, split = TRUE, verbose=FALSE, ...) {
+ascii_process_year <- function(year = NULL, download = TRUE, convert = TRUE, codebook = TRUE,
+                               split = TRUE, factorize = TRUE, verbose=FALSE, ...) {
 
   year <- get.year(year)
 
@@ -28,7 +29,7 @@ ascii_process_year <- function(year = NULL, download = TRUE, convert = TRUE, cod
     convert_ascii(year = year)
   }
 
-  if(split) split_geogs(year=year, source = 'ascii' , ...)
+  if(split) split_geogs(year=year, source = 'ascii', factorize = factorize, ...)
 
   save_response_stats(year = year)
   save_module_stats(year = year)

@@ -163,7 +163,7 @@ fixed_width_layout<-function(year) {
   # here is where we fix the gaps ...
   #  if there is not data in the column(s) following those data, then we add a gap
   #   fix is a vector of items that lack data in the next column,
-  #   i.e. the next data starts in column x which is not 1 column after the end of my data
+  #   i.e. the next data starts in column x which is not 1 column after the end of this data
 
   fix<-which(nxt!=(end+1))
   add_st<-end[fix]+1

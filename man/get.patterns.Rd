@@ -5,7 +5,10 @@
 \title{Get File Pattern Data
 #'}
 \usage{
-get.patterns()
+get.patterns(names = ".*")
+}
+\arguments{
+\item{names}{character pattern (see grep) to apply to names}
 }
 \value{
 data frame with all pattern data

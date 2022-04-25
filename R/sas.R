@@ -91,8 +91,12 @@ fix.missing.columns<-function(year,year2=year-1) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' sas_process_year(year = 2020, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE, split = TRUE)
+#'
+#' }
 sas_process_year<-function(year = NULL, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE,
-                           split = TRUE, verbose=FALSE, ...) {
+                           factorize = TRUE, split = TRUE, verbose=FALSE, ...) {
 
   year <- get.year(year)
 
@@ -112,6 +116,7 @@ sas_process_year<-function(year = NULL, download=TRUE, layout = TRUE, codebook =
 
   if(convert) {
     if(verbose) cat(" ... reading main xpt file\n ")
+
     read.xpt(year=year)
 
     ivers<-1
@@ -123,8 +128,7 @@ sas_process_year<-function(year = NULL, download=TRUE, layout = TRUE, codebook =
     }
   }
 
-
-  if(split) split_geogs(year=year, source = 'sas' , ...)
+  if(split) split_geogs(year=year, source = 'sas', factorize = factorize, ...)
 
   save_response_stats(year = year)
   save_module_stats(year = year)
@@ -390,25 +394,28 @@ add_col_attributes <- function(df_in, year = NULL, version=0, source = NULL) {
 
     #browser()
 
-  mapply(function(lbl,v,typ,n,i,nm) {
+  mapply(function(lbl,v,typ,n,i,nm,qu) {
     #cat(v,"|",typ,"|",n,"|",i,"|",nm)
-
+    #browser()
     if(!is.null(df_in[[v]])) {
       if(is.na(typ) || is.null(typ)) typ<=""
       if(is.na(n) || is.null(n)) n<=""
       if(is.na(i) || is.null(i)) i<=""
       if(is.na(nm) || is.null(nm)) nm<=""
+      if(is.na(qu) || is.null(qu)) qu<=""
+
       attr(df_in[[v]],"section_type")<<-typ
       attr(df_in[[v]],"section_num")<<-n
       attr(df_in[[v]],"section_index")<<-i
       attr(df_in[[v]],"section_name")<<-stringr::str_trim(nm)
       attr(df_in[[v]],"label")<<-lbl
+      attr(df_in[[v]],"question")<<-qu
     } else {
 
     }
 
   }, df_sasout$label, df_sasout$col_name, df_sasout$sect_type, df_sasout$sect_num,
-  df_sasout$question_num,df_sasout$section)
+  df_sasout$question_num,df_sasout$section, df_sasout$question)
 
   df_in
 
@@ -504,8 +511,10 @@ cleave.geogs.sas<-function(year = NULL,
 
           })
 
-          dfname<-paste0("df_",nm,"_",year)
-          if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
+          # dfname<-paste0("df_",nm,"_",year)
+          # if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
+
+          dfname<-apply.pattern("brfss_data_df", YEAR= year, GEOG = nm, VERS = version)
 
           assign(dfname,df_state)
 

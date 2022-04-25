@@ -9,7 +9,9 @@ set.pattern(name, pattern = NULL, group = "", desc = "")
 \arguments{
 \item{name}{character: name of pattern}
 
-\item{group}{}
+\item{pattern}{character}
+
+\item{group}{character}
 }
 \value{
 Nothing

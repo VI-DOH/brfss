@@ -59,7 +59,7 @@ calc_modules_by_geog<-function(year,geog,version=0) {
 
         att<-attributes(df0[[col]])
 
-        if(length(att)==5) {
+        if(length(att)==6) {
           section_type<-att["section_type"]
           section_num<-att["section_num"]
           section_index<-att["section_index"]

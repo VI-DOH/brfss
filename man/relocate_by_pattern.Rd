@@ -2,7 +2,7 @@
 % Please edit documentation in R/patterns.R
 \name{relocate_by_pattern}
 \alias{relocate_by_pattern}
-\title{Move File to Standard Location}
+\title{Move/Rename File to Standard Location}
 \usage{
 relocate_by_pattern(name, file, ...)
 }
@@ -17,7 +17,7 @@ relocate_by_pattern(name, file, ...)
 logical status of operation
 }
 \description{
-Move a file (using file.rename()) to aa location specified in the standard (expected)
+Move a file (using file.rename()) to a location specified in the standard (expected)
  location using pattern naming.
 }
 \examples{

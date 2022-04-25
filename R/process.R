@@ -24,7 +24,7 @@ require(dplyr)
 #'
 split_geogs<-function(year = NULL, source = NULL,
                       main=TRUE, versions=TRUE, my_geog=NULL,
-                      other_geogs=NULL,verbose=TRUE) {
+                      other_geogs=NULL, factorize = FALSE, verbose=TRUE) {
 
   if(!(main || versions)) return(NULL)
 
@@ -101,6 +101,11 @@ split_geogs<-function(year = NULL, source = NULL,
 
           })
 
+
+          if(factorize) {
+            df_state <- df_state %>% make_factors()
+          }
+
           dfname<-paste0("df_",nm,"_",year)
           if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
 
@@ -128,9 +133,11 @@ split_geogs<-function(year = NULL, source = NULL,
 #' @param year - int - year of interest
 #' @param source character - data source ('sas' or 'ascii')
 #' @param download - logical - download the data? Useful (set = FALSE) if you already have the downloaded files
-#' @param convert - logical - read the downloaded files into data_frames and save? Useful (set = FALSE) if you already have the downloaded files processed
+#' @param convert - logical - read the downloaded files into data_frames and save?
+#' Useful (set = FALSE) if you already have the downloaded files processed
 #' @param codebook - logical - download and process the annual codebook
 #' @param split - logical - split the processed data file by state/geography
+#' @param factorize - logical - convert columns to factors where appropriate
 #' @param ... other params
 #'
 #' @return invisible()
@@ -138,17 +145,71 @@ split_geogs<-function(year = NULL, source = NULL,
 #'
 
 process_year <- function(year = NULL, source = NULL, download=TRUE, convert=TRUE, codebook = TRUE,
-                         split = TRUE, verbose=FALSE, ...) {
+                         split = TRUE, factorize = TRUE, verbose=FALSE, ...) {
 
   source <- get.source(source)
   source<-match.arg(source,c("sas","ascii"))
 
+  browser()
   if(source == 'sas') {
     sas_process_year(year = year, download=download, layout = TRUE, convert=convert, codebook = codebook,
-                     split = split, verbose=verbose, ...)
+                     split = split, factorize = factorize, verbose=verbose, ...)
   } else {
     ascii_process_year(year = year, download=download, convert=convert, codebook = codebook,
-                       split = split, verbose=verbose, ...)
+                       split = split, factorize = factorize, verbose=verbose, ...)
   }
 
 }
+
+#' Save BRFSS Data
+#'
+#' Save BRFSS data frame to a .RData file. This standardizes the object name and the file name
+#'
+#' @param df data frame - BRFSS data
+#' @param year integer - year of interest
+#' @param geog character - 2-char state/territory abbreviation
+#' @param version integer - version of interest (default = 0)
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' save_brfss <- function(df_brfss, year= 202, geog = "MT")
+#' }
+save_brfss <- function(df, year= NULL, geog = NULL, version = 0) {
+
+  year <- get.year(year)
+  geog <- get.geog(geog)
+
+  dfname<-apply.pattern("brfss_data_df", YEAR= year, GEOG = geog, VERS = version)
+
+  assign(dfname,df)
+
+  fname <- brfss_data_path(year = year, geog = geog, version = version, rw = 'w')
+
+  save(list = c(dfname),file = fname)
+
+}
+
+#########################################################################################
+##
+##    TODO: means to add state-specific columns and or processing -
+##
+##        eg. in the VI CTYCODE is the island so mutate the column (or a new column) and
+##             apply the factors
+##              create your state=specific age categories
+##
+##########################################################################################
+
+#########################################################################################
+##
+##    TODO: means to add state-specific layout
+##
+##########################################################################################
+
+#########################################################################################
+##
+##    TODO: means to combine versions
+##
+##########################################################################################
+

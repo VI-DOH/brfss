@@ -7,6 +7,8 @@
 apply.pattern(name, ...)
 }
 \arguments{
+\item{name}{character - the pattern name}
+
 \item{...}{variables to insert}
 }
 \value{

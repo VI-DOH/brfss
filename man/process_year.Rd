@@ -13,6 +13,7 @@ process_year(
   convert = TRUE,
   codebook = TRUE,
   split = TRUE,
+  factorize = TRUE,
   verbose = FALSE,
   ...
 )
@@ -24,11 +25,14 @@ process_year(
 
 \item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
 
-\item{convert}{- logical - read the downloaded files into data_frames and save? Useful (set = FALSE) if you already have the downloaded files processed}
+\item{convert}{- logical - read the downloaded files into data_frames and save?
+Useful (set = FALSE) if you already have the downloaded files processed}
 
 \item{codebook}{- logical - download and process the annual codebook}
 
 \item{split}{- logical - split the processed data file by state/geography}
+
+\item{factorize}{- logical - convert columns to factors where appropriate}
 
 \item{...}{other params}
 }

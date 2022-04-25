@@ -73,8 +73,8 @@ calc_responses<-function(year,geogs,versions, ...) {
         if(brfss_geog_version_exists(year,geog,version)) {
 
           df_resp_cnts <- brfss_data(year,geog,version)
-          df_add <- data.frame(year=year,geog=geog, version=version,
-                               responses=nrow(df_resp_cnts))
+          df_add <- data.frame(year = year,geog = geog, version = version,
+                               responses= nrow(df_resp_cnts))
           df0<<-rbind(df0, df_add)
 
         }

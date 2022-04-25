@@ -12,6 +12,7 @@ sas_process_year(
   layout = TRUE,
   codebook = TRUE,
   convert = TRUE,
+  factorize = TRUE,
   split = TRUE,
   verbose = FALSE,
   ...
@@ -37,4 +38,10 @@ invisible()
 Process BRFSS Annual Data Files
 Use this function to process a single year of BRFSS data. This function sill download, unzip,
 and create a data frame with all data from the XPT file, as well as any other versions of the survey.
+}
+\examples{
+\dontrun{
+sas_process_year(year = 2020, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE, split = TRUE)
+
+}
 }

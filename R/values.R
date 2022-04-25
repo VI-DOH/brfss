@@ -22,6 +22,7 @@ split_it <- function(str, sep = "=") {
 #' @examples
 save_codebook_values <- function(file = NULL, year = NULL) {
 
+  year <- get.year(year)
   df_values_cb <- codebook_values(file = file, year = year)
 
   fname <- apply.pattern("codebook_values_path", YEAR=year)
@@ -49,7 +50,6 @@ codebook_values <- function(file = NULL, year = NULL) {
     lines <- brfss::read_codebook(file = file)
 
   }
-
   #############################################################################
 
   label_lines <- grep("^Label:", lines)
@@ -157,11 +157,13 @@ codebook_values <- function(file = NULL, year = NULL) {
     filter(!grepl("^Notes:",.$text)) %>%
     mutate(text = stringr::str_trim(text))
 
+
   df_final <- df0 %>%
     mutate(text = gsub("(^.*?) {8,}.*","\\1",text))  %>%
 
     ## Get rid of 'go to somewhere' text in line
     mutate(text = gsub("[—]*Go to .*","",text))  %>%
+    mutate(text = gsub("[—]*Code=.*","",text))  %>%
     mutate(text = gsub("If .* is .* go to.*","",text))  %>%
     #    mutate(text = gsub("(^.*)—Go to .*","\\1",text)) %>%
 
@@ -196,8 +198,23 @@ codebook_values <- function(file = NULL, year = NULL) {
 
 }
 
-quest_types <- function(df_layout, df_vals) {
+#' Calculates the Type of BRFSS Questions
+#'
+#' This is normally not called by the user, but used internally to get the factors for each question.
+#' Values returned are: factor, range, or NA. Weighting variables are among the NA values.
+#'
+#' @param df_layout data frame containng the column layout derived from the codebook
+#' @param df_vals data frame containng the column values derived from the codebook
+#'
+#' @return data frame continaing the type for each column
+#' @export
+#'
+quest_types <- function(df_layout = NULL, df_vals = NULL) {
+  require(tibble, warn.conflicts = FALSE, quietly = TRUE)
 
+  if(is.null(df_vals)) df_vals <- codebook_values(year = year)
+
+  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year)
 
   is.calc <- grepl("^Calc",df_layout$section)
   is.wt <- grepl("[Ww]eighting.V",df_layout$section)
@@ -216,15 +233,19 @@ quest_types <- function(df_layout, df_vals) {
     if(nrow(df0)>0) {
       maxv <- df0 %>% pull(maxval)
       txt <- df0 %>% pull(text)
+
       dk <- any(grepl("^[Dd]on.{0,1}t [Kk]now",txt))
       ref <-any(grepl("^[Rr]efused$",txt))
       yes1 <- tolower(txt[1]) == "yes"
+      fm1 <- grepl("male",tolower(txt[1]))
 
       #if(col == "DIFFWALK") browser()
 
-      if(any(!is.na(maxv)) && !calc && !wt) {
+      #      if(any(!is.na(maxv)) && !calc && !wt) {
+      if(any(!is.na(maxv)) && !wt) {
         return("range")
-      } else if((dk || ref || yes1) && !calc && !wt){
+        #      } else if((fm1 || dk || ref || yes1) && !wt){ #&& !calc && !wt){
+      } else if(!wt){ #&& !calc && !wt){
         return ("factor")
       }else {
         return (NA)
@@ -234,7 +255,7 @@ quest_types <- function(df_layout, df_vals) {
     }
   }, col_names, is.calc, is.wt)
 
-  df <- data.frame(col_name = col_names, type = types, calc = is.calc, wt = is.wt)
+  df <- data.frame(col_name = col_names, type = types, calc = is.calc, wt = is.wt, row.names = NULL)
   df
 }
 
@@ -256,45 +277,157 @@ quest_types <- function(df_layout, df_vals) {
 #' df_brfss <- brfss_data(year = year, geog = "MT")
 #' df_layout <- get.codebook.layout(year = year)
 #' df_vals <- codebook_values(year = year)
-#' df_brfss <- factorize(df_brfss = df_brfss, df_layout = df_layout, df_vals = df_vals)
+#' df_brfss <- make_factors(df_brfss = df_brfss, df_layout = df_layout, df_vals = df_vals)
 #' }
 #'
-factorize <- function(df_brfss = NULL, year = NULL, df_layout = NULL, df_vals = NULL) {
+make_factors <- function(df_brfss = NULL, year = NULL, df_layout = NULL, df_vals = NULL) {
 
   #year = get.year(year)
-
   if(is.null(df_brfss)) df_brfss <- brfss_data()
   if(is.null(df_vals)) df_vals <- codebook_values(year = year)
 
   if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year)
 
-
   df_factors <- quest_types(df_layout, df_vals) %>%
     filter(type == "factor")  %>%
     {row.names(.)<-NULL;.}
 
-  df_brfss <- brfss::brfss_data()
-
   invisible(
     sapply(df_factors$col_name, function(col) {
+
       a<- attributes(df_brfss[[col]])
       df <- df_vals %>% filter(col_name==col)
       levels <- df %>% pull(value)
       labels <- df %>% pull(text)
-      x <- factor(df_brfss[[col]],levels = levels, labels = labels)
-      attributes(x) <- c(attributes(x),a)
-      df_brfss[col] <<- x
+      x <- df_brfss[[col]]
+
+      if(orrr::is.integer_like(levels)) levels <- as.integer(levels)
+      if(orrr::is.integer_like(x)) x <- as.integer(x)
+
+      f <- factor(x,levels = levels, labels = labels)
+      attributes(f) <- c(attributes(f),a)
+      df_brfss[col] <<- f
     })
   )
 
   df_brfss
 }
 
-valid_only <- function(data, invalid = c("don.{0,1}t know)|refused")) {
 
-  data %>% filter(!grepl(invalid,., ignore.case = TRUE)) %>%
-    filter(!is.na(.))
+#' Subset Data For Valid Responses
+#'
+#' Removes 'Don't Know' and 'Refused' as well as Missing responses
+#'
+#' Invalid responses are indicated by the `invalid` pattern. Include other columns,
+#' such as weighting and others for subsetting, like sex or age.
+#'
+#' The default pattern for invalid responses is "don.{0,1}t know|refused" (regexp formatted)
+#'
+#' @param df data frame - BRFSS data
+#' @param coi  character - column to use for filtering
+#' @param other_cols - other columns to keep
+#' @param invalid - pattern for invalid rsponses
+#'
+#' @return the subsetted data frame
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' df <- brfss_data()
+#' coi <- "GENHLTH"
+#' other_cols <- c("_LLCPWT","_SEX","_AGE65YR")
+#' df_coi <- df %>% valid_only(coi = coi, other_cols = other_cols)
+#' }
+#'
+valid_only <- function(df, coi, other_cols=character(0), invalid = c("don.{0,1}t know|refused")) {
+
+  df <- df %>%
+    select({{coi}}, other_cols) %>%
+    filter(!grepl(invalid,.[[coi]], ignore.case = TRUE)) %>%
+    filter(!is.na(.[[coi]]))
+
+  #  get rid of empty levels
+
+  if(is.factor(df[[coi]])) df <- df %>%
+      mutate({{coi}} := droplevels(.[[coi]]))
+
+  df
+}
+
+#' Simple Response Counts
+#'
+#' Report counts of responses in a simply formatted table. Options include removing NAs, including only valid responses,
+#' including totals, and including percents. Table is printed to console.
+#'
+#' @param df_brfss data frame - BRFSS data
+#' @param coi character or symbol - the column to report on
+#' @param na.rm logical - remove NAs (default = TRUE)
+#' @param valid logical - remove "Don't Know" and "Refused" responses (default = FALSE)
+#' @param total logical - show a total line (default = TRUE)
+#' @param pct logical - include a percent column (default = TRUE)
+#'
+
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' df_brfss <- brfss_data(year = 2021, geog = "VI")
+#' df_brfss %>% simple_counts(COVIDVAC, valid = T)
+#' }
+simple_counts <- function(df_brfss, coi, na.rm = TRUE, valid = FALSE, total = TRUE, pct = TRUE) {
+
+  arguments <- as.list(match.call())
+  coi = eval(arguments$coi, df_brfss)
+
+  if(length(coi) > 1 || !coi %in% colnames(df_brfss)) coi <- rlang::as_name(arguments$coi)
+
+  if(na.rm) df_brfss <- df_brfss %>% filter(!is.na(!!sym(coi)))
+
+  if(valid) df_brfss <- df_brfss %>% valid_only(coi = coi)
 
 
+  df_totals <- df_brfss %>%
+    group_by(!!sym(coi)) %>%
+    summarise(n=n()) %>%
+    as.data.frame() %>%
+    mutate(!!sym(coi) := as.character(!!sym(coi)))
 
+  if(pct) df_totals <- df_totals %>% mutate(pct = round(n/sum(n)*100,2))
+
+
+  if(total) {
+    df_totals <- df_totals %>%
+      bind_rows(
+        {
+          x<-data.frame(XXX="TOTAL",n=sum(.$n));
+          if(total) x <- x %>% mutate(pct = 100.00)
+
+          colnames(x)[1] <- coi;
+          x
+        }
+      )
+  }
+
+  # section_type<-att["section_type"]
+  # section_num<-att["section_num"]
+  # section_index<-att["section_index"]
+  # section_name<-att["section_name"]
+  # label<-att["label"]
+
+  title <- paste0(attributes(df_brfss[[coi]])$section_type, " ",
+                 attributes(df_brfss[[coi]])$section_num, ": ",
+                 attributes(df_brfss[[coi]])$section_name)
+
+  title <- c(title,attributes(df_brfss[[coi]])$label)
+
+  x <- capture.output(print(df_totals, row.names=F))
+
+  tblwid <- nchar(x[1])
+  line1 <- strrep("=",max(nchar(title)))
+  line2 <- strrep("-",tblwid)
+  line3 <- strrep("-",tblwid)
+
+  x<-c("\n",title,line1,x[1],line2,x[2:(length(x)-1)],line3,tail(x,1))
+  x <- paste0(x,collapse = "\n")
+  cat(x)
 }
