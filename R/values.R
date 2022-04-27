@@ -23,14 +23,14 @@ split_it <- function(str, sep = "=") {
 save_codebook_values <- function(file = NULL, year = NULL) {
 
   year <- get.year(year)
-  df_values_cb <- codebook_values(file = file, year = year)
+  df_values_cb <- parse_codebook_values(file = file, year = year)
 
   fname <- apply.pattern("codebook_values_path", YEAR=year)
 
   save(df_values_cb, file = fname)
 }
 
-#' Codebook Values
+#' Parse Codebook Values
 #'
 #' The annual codebook is parsed for possible values for each variable.
 #'
@@ -41,7 +41,7 @@ save_codebook_values <- function(file = NULL, year = NULL) {
 #' @export
 #'
 #' @examples
-codebook_values <- function(file = NULL, year = NULL) {
+parse_codebook_values <- function(file = NULL, year = NULL) {
 
   if (is.null(file)) {
     year <- get.year(year)
@@ -197,6 +197,45 @@ codebook_values <- function(file = NULL, year = NULL) {
   df_final
 
 }
+#' Get Values
+#'
+#' The annual codebook is parsed for possible values for each variable and saved. If SAQ Values are available,
+#' they are merged. This function retrieves those values
+#'
+#' @param year integer - year of interest for codebook
+#'
+#' @export
+#'
+#' @examples
+values <- function( year = NULL) {
+
+  year <- get.year(year)
+
+  fname <- apply.pattern("merged_values_path", YEAR=year)
+
+  if(!file.exists(fname)) {
+    fname <- apply.pattern("codebook_values_path", YEAR=year)
+  }
+  orrr:::get.rdata(file = fname)
+}
+
+#' Get Codebook Values
+#'
+#' The annual codebook is parsed for possible values for each variable and saved. This function retrieves those values
+#'
+#' @param year integer - year of interest for codebook
+#'
+#' @export
+#'
+#' @examples
+codebook_values <- function( year = NULL) {
+
+  year <- get.year(year)
+
+  fname <- apply.pattern("codebook_values_path", YEAR=year)
+
+  orrr:::get.rdata(file = fname)
+}
 
 #' Calculates the Type of BRFSS Questions
 #'
@@ -284,9 +323,9 @@ make_factors <- function(df_brfss = NULL, year = NULL, df_layout = NULL, df_vals
 
   #year = get.year(year)
   if(is.null(df_brfss)) df_brfss <- brfss_data()
-  if(is.null(df_vals)) df_vals <- codebook_values(year = year)
+  if(is.null(df_vals)) df_vals <- values(year = year)
 
-  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year)
+  if(is.null(df_layout)) df_layout <- get.layout(year = year)
 
   df_factors <- quest_types(df_layout, df_vals) %>%
     filter(type == "factor")  %>%

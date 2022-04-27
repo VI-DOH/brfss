@@ -11,6 +11,7 @@
 #' @param geog character vector of geography abbreviations to set as default
 #' @param other_geogs character vector of other geography abbreviations to process
 #' @param source character data source to process, currently "sas" or "ascii"
+#' @param extent character data source extent, currently "local" or "national"
 #'
 #' @return list with year, geography and other geographies (year, geog, other_geogs)
 #' @export
@@ -22,27 +23,30 @@
 #'
 #' }
 #'
-my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL, source = NULL) {
+my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL, source = NULL, extent = NULL) {
 
   if(!is.null(source)) source<-match.arg(source,c("sas","ascii"))
+  if(!is.null(extent)) extent<-match.arg(extent,c("local","national"))
 
   folder <- apply.pattern("brfss_data_folder")
   path <- paste0(folder, "my_brfss.rda")
 
   if(file.exists(path)) {
     load(file = path)
+    if(is.null(extent)) extent <- my_brfss$extent
     if(is.null(source)) source <- my_brfss$source
     if(is.null(geog)) geog <- my_brfss$geog
     if(is.null(year)) year <- my_brfss$year
     if(is.null(other_geogs)) other_geogs <- my_brfss$other_geogs
   } else {
+    if(is.null(extent)) extent <- my_brfss.default.extent()
     if(is.null(source)) source <- my_brfss.default.source()
     if(is.null(other_geogs)) geog <- my.brfss.default.other.geogs()
     if(is.null(geog)) geog <- my.brfss.default.geog()
     if(is.null(year)) year <- my.brfss.default.year()
 
   }
-  my_brfss <- list(year=year, geog = geog, other_geogs = other_geogs, source = source)
+  my_brfss <- list(year=year, geog = geog, other_geogs = other_geogs, source = source, extent = extent)
 
   save(my_brfss,file = path)
   my_brfss
@@ -140,7 +144,43 @@ my.source <- function() {
   }
 }
 
+#' BRFSS Data Source Extent
+#'
+#' Get the extent for the BRFSS data of interest. The extent is either 'local' or 'national'. Generally, data
+#' downloaded from the publicly available data set are 'national' since they cpontains data from all geographies,
+#' and data downloaded from the secure CDC state-specific site are 'local' since they only contains data for that
+#' geography (state or territory)
+#'
+#'
+#'
+#' @return character data extent ('local' or 'national')
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' my.extent()
+#'
+#' }
+#'
+my.extent <- function() {
+  folder <- apply.pattern("brfss_data_folder")
+  path <- paste0(folder, "my_brfss.rda")
+
+  if(!file.exists(path)) {
+    return(my.brfss.default.extent())
+
+  } else {
+
+    load(file = path)
+    x <- my_brfss$extent
+    names(x) <- "extent"
+    return(x)
+  }
+}
+
 my.brfss.default.source <- function() { "sas" }
+
+my.brfss.default.extent <- function() { "local" }
 
 my.brfss.default.geog <- function() { "*" }
 
@@ -202,6 +242,17 @@ get.source <- function(source = NULL) {
   if(is.null(source)) source <- my.source()
 
   source
+
+}
+
+##  gets the my_brfss extent if extent is missing or NULL
+
+get.extent <- function(extent = NULL) {
+
+
+  if(is.null(extent)) extent <- my.extent()
+
+  extent
 
 }
 

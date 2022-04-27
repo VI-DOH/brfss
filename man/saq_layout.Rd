@@ -4,7 +4,7 @@
 \alias{saq_layout}
 \title{Get State-Added-Questions Layout}
 \usage{
-saq_layout(year, geog = "")
+saq_layout(year = NULL, geog = NULL)
 }
 \arguments{
 \item{year}{integer year of interest}

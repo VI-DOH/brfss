@@ -209,7 +209,8 @@ get.layout <- function(year = NULL) {
 
   year <- get.year(year)
 
-  df_layout <- get.codebook.layout(year = year)
+  df_layout <- get.merged.layout(year = year)
+  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year)
 
   if(is.null(df_layout)) df_layout <- sas_layout(year)
 

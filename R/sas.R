@@ -82,10 +82,14 @@ fix.missing.columns<-function(year,year2=year-1) {
 #'
 #' @param year - int - year of interest
 #' @param download - logical - download the data? Useful (set = FALSE) if you already have the downloaded files
-#' @param convert - logical - read the xpt files into data_frames and save? Useful (set = FALSE) if you already have the xpt files processed
-#' @param codebook - logical - download the annual codebook
+#' @param layout - logical - save sas layout
+#' @param convert - logical - read the xpt files into data_frames and save? Useful (set = FALSE)
+#' if you already have the xpt files processed
+#' @param saq - logical - are there state-added questions for processing
+#' @param codebook - logical - download and process the annual codebook
 #' @param split - logical - split the xpt file by state/geography
-#' @param ... other params
+#' @param factorize - logical - add values as factors to columns
+#' @param ... further arguments passed to other methods
 #'
 #' @return invisible()
 #' @export
@@ -95,8 +99,9 @@ fix.missing.columns<-function(year,year2=year-1) {
 #' sas_process_year(year = 2020, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE, split = TRUE)
 #'
 #' }
-sas_process_year<-function(year = NULL, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE,
-                           factorize = TRUE, split = TRUE, verbose=FALSE, ...) {
+
+sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE, codebook = TRUE, saq = FALSE,
+                                   convert = TRUE, split = TRUE, factorize = TRUE, verbose=FALSE, ...)  {
 
   year <- get.year(year)
 
@@ -113,6 +118,14 @@ sas_process_year<-function(year = NULL, download=TRUE, layout = TRUE, codebook =
   if (layout) save_sas_layout(year = year)
 
   if(codebook) process_codebook(year = year)
+
+  if(saq) {
+    build_saq_layout()
+    merge_saq_layout()
+
+    build_saq_values()
+    merge_saq_values()
+  }
 
   if(convert) {
     if(verbose) cat(" ... reading main xpt file\n ")

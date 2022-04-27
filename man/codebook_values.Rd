@@ -2,18 +2,13 @@
 % Please edit documentation in R/values.R
 \name{codebook_values}
 \alias{codebook_values}
-\title{Codebook Values}
+\title{Get Codebook Values}
 \usage{
-codebook_values(file = NULL, year = NULL)
+codebook_values(year = NULL)
 }
 \arguments{
-\item{file}{character - filename of layout file}
-
 \item{year}{integer - year of interest for codebook}
 }
-\value{
-
-}
 \description{
-The annual codebook is parsed for possible values for each variable.
+The annual codebook is parsed for possible values for each variable and saved. This function retrieves those values
 }

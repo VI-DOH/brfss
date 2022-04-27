@@ -177,7 +177,9 @@ brfss_data_path <- function(year = NULL, geog = NULL, version = 0, rw = c("r","w
 
   my_geog <- get.geog()
 
-  if(str_something(my_geog) &&  (geog == my_geog)) {
+  ## added && FALSE to force all files to be in brfss_geog_folder
+
+  if(str_something(my_geog) &&  (geog == my_geog) && FALSE) {
     fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year)
   } else {
     fldr <- apply.pattern("brfss_geog_folder",  YEAR = year, GEOG = geog)

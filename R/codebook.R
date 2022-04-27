@@ -387,4 +387,30 @@ get.codebook.layout <- function(year = NULL) {
 
 }
 
+#' Get Merged Layout
+#'
+#' Get layout created from merging national layout with state-added questions
+#'
+#' @param year integer - year of interest
+#'
+#' @return data frame with layout data
+#' @export
+#'
+
+get.merged.layout <- function(year = NULL) {
+
+  year <- get.year(year)
+
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year)
+  fil <- apply.pattern("merged_layout_file", YEAR = year)
+
+  file <- paste0(fldr,fil)
+
+  if(!file.exists(file)) return(NULL)
+
+
+  orrr::get.rdata(file = file)
+
+}
+
 

@@ -120,7 +120,7 @@ init.patterns <- function() {
                    desc = "Consistent name for BRFSS data object (data.frame) stored and retrieved") %>%
 
 
-  #############################################################################
+    #############################################################################
   ##
   ##  codebook patterns
 
@@ -143,7 +143,7 @@ init.patterns <- function() {
                    group ="codebook_downloads",
                    desc ="Post-2016 codebook name in html") %>%
 
-    append.pattern("codebook_folder","{brfss_annual_raw_data_folder}",
+    append.pattern("codebook_folder","{brfss_annual_raw_data_folder}/codebook/",
                    desc = "location of the annual codebook file") %>%
 
     append.pattern("codebook_file","[GEOG][YR]CODE_LLCP",
@@ -191,9 +191,6 @@ init.patterns <- function() {
     append.pattern("brfss_modules_path","{brfss_modules_folder}{brfss_modules_file}") %>%
 
 
-    append.pattern("merged_layout_file","layout[YR]_mrg.rda") %>%
-
-
     #####################################################################################################
   ##  ascii data
 
@@ -235,13 +232,26 @@ init.patterns <- function() {
   ##
   ##    State-Added Questions (SAQ)
 
-    append.pattern("saq_raw_folder","{brfss_annual_raw_data_folder}") %>%
+  append.pattern("saq_raw_folder","{brfss_annual_raw_data_folder}/saq/") %>%
     append.pattern("saq_raw_file","[GEOG][YR]_layout_SAQ.csv")  %>%
+    append.pattern("saq_raw_values_file","[GEOG][YR]_values_SAQ.csv")  %>%
     append.pattern("saq_raw_path","{saq_raw_folder}{saq_raw_file}")%>%
+    append.pattern("saq_raw_values_path","{saq_raw_folder}{saq_raw_values_file}")%>%
 
     append.pattern("saq_layout_folder","{sas_layout_folder}") %>%
     append.pattern("saq_layout_file","layout[YR]_SAQ.rda") %>%
-    append.pattern("saq_layout_path","{saq_layout_folder}{saq_layout_file}")
+    append.pattern("saq_values_file","values[YR]_SAQ.rda") %>%
+    append.pattern("saq_layout_path","{saq_layout_folder}{saq_layout_file}") %>%
+    append.pattern("saq_values_path","{saq_layout_folder}{saq_values_file}") %>%
+
+
+    ##  files from merging the saq data with the national data
+
+    append.pattern("merged_layout_file","layout[YR]_mrg.rda") %>%
+    append.pattern("merged_layout_path","{codebook_layout_folder}{merged_layout_file}") %>%
+    append.pattern("merged_values_file","values[YR]_mrg.rda") %>%
+    append.pattern("merged_values_path","{codebook_layout_folder}{merged_values_file}")
+
 
   #########################################################################
   ##
@@ -599,7 +609,20 @@ patterns.national <- function() {
 #' @examples
 patterns.local <- function() {
   set.pattern("sas_sasout","SASOUT[YR]_STATES.SAS")
-  set.pattern("xpt_file","VI[YR]FINL([VERS] > 0;_V[VERS]).XPT")
+  set.pattern("xpt_file","[GEOG][YR]FINL([VERS] > 0;_V[VERS]).XPT")
+
+}
+
+#' Set My Patterns to Extent Defaults
+#'
+#' @export
+#'
+#' @examples
+patterns.extent <- function(extent = NULL) {
+
+  extent <- get.extent(extent)
+
+  if(extent == "local") patterns.local() else patterns.national()
 
 }
 

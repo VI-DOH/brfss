@@ -13,8 +13,31 @@ ascii_data_url<-function(year) {
 }
 #
 
-ascii_process_year <- function(year = NULL, download = TRUE, convert = TRUE, codebook = TRUE,
-                               split = TRUE, factorize = TRUE, verbose=FALSE, ...) {
+#' Process BRFSS Annual Data Files
+#' Use this function to process a single year of BRFSS data. This function sill download, unzip,
+#' and create a data frame with all data from the ASCII .DAT file, as well as any other versions of the survey.
+#'
+#' @param year - int - year of interest
+#' @param download - logical - download the data? Useful (set = FALSE) if you already have the downloaded files
+#' @param convert - logical - read the xpt files into data_frames and save? Useful (set = FALSE)
+#' if you already have the xpt files processed
+#' @param saq - logical - are there state-added questions for processing
+#' @param codebook - logical - download and process the annual codebook
+#' @param split - logical - split the xpt file by state/geography
+#' @param factorize - logical - add values as factors to columns
+#' @param ... further arguments passed to other methods
+#'
+#' @return invisible()
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ascii_process_year(year = 2020, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE, split = TRUE)
+#'
+#' }
+
+ascii_process_year <- function(year = NULL, download = TRUE, codebook = TRUE, saq = FALSE,
+                               convert = TRUE, split = TRUE, factorize = TRUE, verbose=FALSE, ...) {
 
   year <- get.year(year)
 
@@ -24,6 +47,16 @@ ascii_process_year <- function(year = NULL, download = TRUE, convert = TRUE, cod
   }
 
   if(codebook) process_codebook(year = year)
+
+  if(saq) {
+    build_saq_layout()
+    merge_saq_layout()
+
+    build_saq_values()
+    merge_saq_values()
+
+
+  }
 
   if(convert) {
     convert_ascii(year = year)
@@ -137,7 +170,7 @@ convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versi
   year<-get.year(year)
 
   if(is.null(layout)) {
-    layout <- get.codebook.layout(year)
+    layout <- get.layout(year)
   }
 
   if(is.null(layout)) {

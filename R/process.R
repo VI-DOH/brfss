@@ -101,7 +101,6 @@ split_geogs<-function(year = NULL, source = NULL,
 
           })
 
-
           if(factorize) {
             df_state <- df_state %>% make_factors()
           }
@@ -150,7 +149,6 @@ process_year <- function(year = NULL, source = NULL, download=TRUE, convert=TRUE
   source <- get.source(source)
   source<-match.arg(source,c("sas","ascii"))
 
-  browser()
   if(source == 'sas') {
     sas_process_year(year = year, download=download, layout = TRUE, convert=convert, codebook = codebook,
                      split = split, factorize = factorize, verbose=verbose, ...)
