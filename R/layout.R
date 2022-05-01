@@ -11,11 +11,11 @@ save_sas_layout<-function(year = NULL) {
   require(dplyr)
 
   year <- get.year(year)
-
+  extent <- get.extent()
   # get the filename for the data
   #  name format based on year
   if(year>2010) {
-    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0)
+    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0, EXT = extent)
 
   } else {
     return(NULL)
@@ -91,12 +91,12 @@ save_sas_layout<-function(year = NULL) {
 #' @return
 #' @export
 #'
-sas_layout<-function(year = NULL) {
+sas_layout<-function(year = NULL, ...) {
   require(stringr)
   require(dplyr)
 
   year <- get.year(year)
-  orrr::get.rdata(file = apply.pattern("sas_layout_path",YEAR = year))
+  orrr::get.rdata(file = apply.pattern("sas_layout_path",YEAR = year, ...))
 
 }
 
@@ -205,14 +205,14 @@ merge_layout<-function(df_quest, year = NULL) {
 #' @export
 #'
 
-get.layout <- function(year = NULL) {
+get.layout <- function(year = NULL, ...) {
 
   year <- get.year(year)
 
-  df_layout <- get.merged.layout(year = year)
-  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year)
+  df_layout <- get.merged.layout(year = year, ...)
+  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year, ...)
 
-  if(is.null(df_layout)) df_layout <- sas_layout(year)
+  if(is.null(df_layout)) df_layout <- sas_layout(year, ...)
 
   df_layout
 }

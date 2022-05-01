@@ -4,7 +4,7 @@
 \alias{sas_download_xpt}
 \title{Download SAS XPT files from CDC website}
 \usage{
-sas_download_xpt(year = NULL)
+sas_download_xpt(year = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest}

@@ -11,11 +11,11 @@
 #' \dontrun{
 #' process_codebook(2020)
 #' }
-process_codebook <- function(year = NULL, geog = NULL) {
+process_codebook <- function(year = NULL, ...) {
 
-  download_codebook(year = year, geog = geog)
-  save_codebook_layout(year = year)
-  save_codebook_values()
+  download_codebook(year = year, ...)
+  save_codebook_layout(year = year, ...)
+  save_codebook_values(year = year, ...)
 }
 
 #' Download Codebook
@@ -31,7 +31,7 @@ process_codebook <- function(year = NULL, geog = NULL) {
 #' \dontrun{
 #' download_codebook(2020)
 #' }
-download_codebook <- function(year = NULL, geog = NULL) {
+download_codebook <- function(year = NULL, ...) {
 
   ## if year is not provided then get the year from the my_brfss object
   ##    if year is provided (is not null), get.year() will simply return that value
@@ -45,7 +45,7 @@ download_codebook <- function(year = NULL, geog = NULL) {
   ##    GEOG is not needed unless the user changes the folder pattern
   ##    but is included here in case
 
-  fldrout <- apply.pattern("codebook_folder",YEAR = year, GEOG = geog)
+  fldrout <- apply.pattern("codebook_folder",YEAR = year, ...)
   ext <- apply.pattern("codebook_ext")
 
   ## create the folder/dir if it does not exist
@@ -64,7 +64,7 @@ download_codebook <- function(year = NULL, geog = NULL) {
 
       ext <- gsub(".*([.].*)", "\\1", url)
 
-      fileout <- apply.pattern("codebook_file",YEAR = year)
+      fileout <- apply.pattern("codebook_file",YEAR = year, ...)
       fileout <- paste0(fileout,ext)
       destfile <- paste0(fldrout,fileout)
 
@@ -103,16 +103,16 @@ download_codebook <- function(year = NULL, geog = NULL) {
 #' @export
 #'
 #'
-read_codebook <- function(file=NULL, year = NULL) {
+read_codebook <- function(file=NULL, year = NULL, ...) {
   require(dplyr)
 
   year <- get.year(year)
   geog <- get.geog()
 
   if(is.null(file)) {
-    fldr <- apply.pattern("codebook_folder", YEAR = year, GEOG = geog)
-    fil <- apply.pattern("codebook_file", YEAR = year, GEOG = geog)
-    ext <- apply.pattern("codebook_ext", YEAR = year, GEOG = geog)
+    fldr <- apply.pattern("codebook_folder", YEAR = year, ...)
+    fil <- apply.pattern("codebook_file", YEAR = year, ...)
+    ext <- apply.pattern("codebook_ext", YEAR = year, ...)
     file <- paste0(fldr,fil,".",ext)
   }
 
@@ -200,7 +200,7 @@ set_codebook_ext <- function(ext) {
 ##
 ##    layout from codebook
 ##
-save_codebook_layout <- function(file=NULL, year = NULL) {
+save_codebook_layout <- function(file=NULL, year = NULL, ...) {
   require(dplyr)
 
   year <- get.year(year)
@@ -310,8 +310,8 @@ save_codebook_layout <- function(file=NULL, year = NULL) {
     relocate(field_size, start, end, col_name, sect_type, sect_num, section, label,
            question_num, var_type, question)
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, GEOG = geog)
-  fil <- apply.pattern("codebook_layout_file", YEAR = year, GEOG = geog)
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, ...)
+  fil <- apply.pattern("codebook_layout_file", YEAR = year, ...)
 
   file <- paste0(fldr,fil)
 
@@ -371,12 +371,12 @@ deduped_layout <- function(df) {
 #' @export
 #'
 
-get.codebook.layout <- function(year = NULL) {
+get.codebook.layout <- function(year = NULL, ...) {
 
   year <- get.year(year)
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year)
-  fil <- apply.pattern("codebook_layout_file", YEAR = year)
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, ...)
+  fil <- apply.pattern("codebook_layout_file", YEAR = year, ...)
 
   file <- paste0(fldr,fil)
 
@@ -397,12 +397,12 @@ get.codebook.layout <- function(year = NULL) {
 #' @export
 #'
 
-get.merged.layout <- function(year = NULL) {
+get.merged.layout <- function(year = NULL, ...) {
 
   year <- get.year(year)
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year)
-  fil <- apply.pattern("merged_layout_file", YEAR = year)
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, ...)
+  fil <- apply.pattern("merged_layout_file", YEAR = year, ...)
 
   file <- paste0(fldr,fil)
 

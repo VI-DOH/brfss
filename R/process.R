@@ -24,7 +24,7 @@ require(dplyr)
 #'
 split_geogs<-function(year = NULL, source = NULL,
                       main=TRUE, versions=TRUE, my_geog=NULL,
-                      other_geogs=NULL, factorize = FALSE, verbose=TRUE) {
+                      other_geogs=NULL, factorize = FALSE, verbose=TRUE, ...) {
 
   if(!(main || versions)) return(NULL)
 
@@ -143,18 +143,22 @@ split_geogs<-function(year = NULL, source = NULL,
 #' @export
 #'
 
-process_year <- function(year = NULL, source = NULL, download=TRUE, convert=TRUE, codebook = TRUE,
-                         split = TRUE, factorize = TRUE, verbose=FALSE, ...) {
+process_year <- function(year = NULL, source = NULL, download=TRUE, layout = TRUE, convert=TRUE, codebook = TRUE,
+                         split = TRUE, factorize = TRUE, verbose=FALSE, geog = NULL, extent = NULL) {
 
   source <- get.source(source)
   source<-match.arg(source,c("sas","ascii"))
 
+  geog =  get.geog(geog)
+  extent = get.extent(extent)
+
   if(source == 'sas') {
-    sas_process_year(year = year, download=download, layout = TRUE, convert=convert, codebook = codebook,
-                     split = split, factorize = factorize, verbose=verbose, ...)
+
+    sas_process_year(year = year, download=download, layout = layout, convert=convert, codebook = codebook,
+                     split = split, factorize = factorize, verbose=verbose, GEOG = geog, EXT = extent)
   } else {
     ascii_process_year(year = year, download=download, convert=convert, codebook = codebook,
-                       split = split, factorize = factorize, verbose=verbose, ...)
+                       split = split, factorize = factorize, verbose=verbose, GEOG = geog, EXT = extent)
   }
 
 }

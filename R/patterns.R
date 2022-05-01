@@ -49,218 +49,6 @@ append.pattern <- function(df, name , pattern , group = "", desc = "") {
     tibble::add_row( name, pattern , group, desc)
 }
 
-init.patterns <- function() {
-  require(dplyr, quietly = TRUE, warn.conflicts = FALSE)
-  require(tibble)
-
-  fname <- "./data/naming_patterns.rda"
-  if(file.exists(fname)) file.remove(fname)
-
-
-  naming_patterns <- data.frame(name = character(0) , pattern = character(0) , group = character(0),
-                                desc = character(0))
-
-  naming_patterns  <- naming_patterns %>%
-
-    append.pattern("data_folder","./data/",
-                   desc ="Standard location of user created data") %>%
-
-    append.pattern("raw_data_folder","./data_raw/",
-                   desc ="Standard location of data from another source") %>%
-
-    append.pattern("output_folder","./output/",
-                   desc ="Standard location of data, files, or reports for sharing") %>%
-
-    append.pattern("brfss_url_files","https://www.cdc.gov/brfss/annual_data/[YEAR]/files/",
-                   desc ="Base URL of BRFSS data") %>%
-
-    append.pattern("sasout_download_file","SASOUT[YR]_LLCP.SAS",
-                   group ="sas_downloads",
-                   desc ="URL filename of BRFSS SASOUT data") %>%
-
-    append.pattern("sas_format_file", "FORMAT[YR].sas",
-                   group ="sas_downloads",
-                   desc = "SAS Format library file") %>%
-
-    append.pattern("sas_formas_file", "FORMAS[YR].sas",
-                   group ="sas_downloads",
-                   desc = "SAS Format assignment file") %>%
-
-    append.pattern("xpt_download_zip_file","LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]_)XPT.zip",
-                   group ="xpt_downloads",
-                   desc ="URL filename of BRFSS XPT data") %>%
-
-    append.pattern("brfss_url_documentation", "https://www.cdc.gov/brfss/annual_data/[YEAR]/pdf/") %>%
-
-    append.pattern("brfss_raw_data_folder","{raw_data_folder}",
-                   desc = "Folder to store raw (imported/downloaded from CDC) data") %>%
-
-    append.pattern("brfss_annual_raw_data_folder","{brfss_raw_data_folder}[YEAR]/",
-                   desc = "Folder to store the annual raw (imported/downloaded from CDC) data") %>%
-
-    append.pattern("brfss_data_folder","{data_folder}",
-                   desc = "Folder to store processed BRFSS data") %>%
-
-    append.pattern("brfss_annual_data_folder","{brfss_data_folder}[YEAR]/",
-                   desc = "Folder to store the annual processed BRFSS data") %>%
-
-    append.pattern("annual_metadata_folder","{brfss_annual_data_folder}metadata/",
-                   desc ="Standard location of user created metadata") %>%
-
-    append.pattern("brfss_geog_folder","{brfss_data_folder}[YEAR]/geog/[GEOG]/",
-                   desc = "Folder to store the annual processed BRFSS data from specific geographies") %>%
-
-    append.pattern("brfss_geog_file","[GEOG]_[YEAR]([VERS] > 0;_V[VERS]).rda",
-                   desc = "File name for annual processed BRFSS data (main survey) from specific geographies") %>%
-
-    append.pattern("brfss_geog_path","{brfss_geog_folder}{brfss_geog_file}",
-                   desc = "Full path for annual processed BRFSS data (main survey) from specific geographies") %>%
-
-    append.pattern("brfss_data_df","df_[GEOG]([VERS] > 0;_V[VERS])_[YEAR]",
-                   desc = "Consistent name for BRFSS data object (data.frame) stored and retrieved") %>%
-
-
-    #############################################################################
-  ##
-  ##  codebook patterns
-
-  append.pattern("brfss_url_codebook",
-                 "https://www.cdc.gov/brfss/annual_data/[YEAR]/pdf/",
-                 desc ="Base URL of BRFSS codebook") %>%
-
-    append.pattern("brfss_codebook_file1",
-                   "{brfss_url_codebook}codebook[YR]_llcp.pdf",
-                   group ="codebook_downloads",
-                   desc ="Pre-2017 codebook name") %>%
-
-    append.pattern("brfss_codebook_file2",
-                   "{brfss_url_codebook}codebook[YR]_llcp-v2-508.pdf",
-                   group ="codebook_downloads",
-                   desc ="Post-2016 codebook name") %>%
-
-    append.pattern("brfss_codebook_file3",
-                   "{brfss_url_codebook}codebook[YR]_llcp-v2-508.HTML",
-                   group ="codebook_downloads",
-                   desc ="Post-2016 codebook name in html") %>%
-
-    append.pattern("codebook_folder","{brfss_annual_raw_data_folder}/codebook/",
-                   desc = "location of the annual codebook file") %>%
-
-    append.pattern("codebook_file","[GEOG][YR]CODE_LLCP",
-                   desc = "file name of the annual codebook file") %>%
-
-    append.pattern("codebook_ext","pdf",
-                   desc = "ext of the annual codebook file (txt, rtf, html, or pdf") %>%
-
-    append.pattern("codebook_path","{codebook_folder}{codebook_file}.{codebook_ext}",
-                   desc = "ext of the annual codebook file (.txt, .rtf, or .pdf") %>%
-
-    append.pattern("codebook_layout_folder","{sas_layout_folder}",
-                   desc = "location of the annual codebook layout file") %>%
-
-    append.pattern("codebook_layout_file","layout[YR]_CB.rda",
-                   desc = "file name of the annual codebook layout file") %>%
-
-    append.pattern("codebook_layout_path","{codebook_layout_folder}{codebook_layout_file}",
-                   desc = "path to the annual codebook layout file") %>%
-
-    append.pattern("codebook_values_file","values[YR]_CB.rda",
-                   desc = "file name of the annual codebook values file") %>%
-
-    append.pattern("codebook_values_path","{codebook_layout_folder}{codebook_values_file}",
-                   desc = "path to the annual codebook layout file") %>%
-
-
-    #########################################################################################
-
-  append.pattern("sas_layout_folder","{brfss_annual_data_folder}layout/") %>%
-    append.pattern("sas_layout_file","layout[YR]_sas.rda") %>%
-    append.pattern("sas_layout_path","{sas_layout_folder}{sas_layout_file}") %>%
-
-
-    ##    data file of response totals
-
-    append.pattern("brfss_responses_folder","{brfss_annual_data_folder}") %>%
-    append.pattern("brfss_responses_file","responses_[YEAR].rda") %>%
-    append.pattern("brfss_responses_path","{brfss_responses_folder}{brfss_responses_file}") %>%
-
-    ##    data file of modules
-
-    append.pattern("brfss_modules_folder","{brfss_annual_data_folder}") %>%
-    append.pattern("brfss_modules_file","modules_[YEAR].rda") %>%
-    append.pattern("brfss_modules_path","{brfss_modules_folder}{brfss_modules_file}") %>%
-
-
-    #####################################################################################################
-  ##  ascii data
-
-  append.pattern("ascii_filename_zip","LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]_)ASC.zip") %>%
-    #
-    append.pattern("ascii_downloads_url","{brfss_url_files}{ascii_filename_zip}",
-                   group = "ascii_downloads") %>%
-
-    append.pattern("ascii_raw_data_folder","{brfss_raw_data_folder}[YEAR]/ascii/") %>%
-
-    append.pattern("ascii_filename_raw","LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).ASC") %>%
-
-    append.pattern("ascii_path_zip","{ascii_raw_data_folder}{ascii_filename_zip}") %>%
-
-    append.pattern("ascii_path_raw","{ascii_raw_data_folder}{ascii_filename_raw}") %>%
-
-    append.pattern("ascii_data_folder","{brfss_data_folder}[YEAR]/ascii/") %>%
-    append.pattern("ascii_filename","LLCP[YEAR]ASC([VERS] > 0;_V[VERS]).rda") %>%
-    append.pattern("ascii_path","{ascii_data_folder}{ascii_filename}") %>%
-
-    append.pattern("ascii_df","df_ascii_[YEAR]([VERS] > 0;_V[VERS])") %>%
-
-    ###################################################################################
-
-  append.pattern("sas_raw_folder","{brfss_raw_data_folder}[YEAR]/sas/") %>%
-    append.pattern("sas_data_folder","{brfss_annual_data_folder}xpt/") %>%
-    append.pattern("xpt_folder", "{sas_raw_folder}") %>%
-    append.pattern("xpt_file", "LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).XPT") %>%
-    append.pattern("xpt_path", "{xpt_folder}{xpt_file}") %>%
-    append.pattern("xpt_df","df_xpt_[YEAR]([VERS] > 0;_V[VERS])") %>%
-
-    append.pattern("sas_data_file","xpt_[YEAR]([VERS] > 0;_V[VERS]).rda") %>%
-    append.pattern("sas_data_path","{sas_data_folder}{sas_data_file}") %>%
-
-    append.pattern("sas_sasout", "SASOUT[YR]_LLCP([VERS] > 0;_V[VERS]).SAS") %>%
-    append.pattern("sas_sasout_path", "{sas_raw_folder}{sas_sasout}") %>%
-
-    #####################################################################################
-  ##
-  ##    State-Added Questions (SAQ)
-
-  append.pattern("saq_raw_folder","{brfss_annual_raw_data_folder}/saq/") %>%
-    append.pattern("saq_raw_file","[GEOG][YR]_layout_SAQ.csv")  %>%
-    append.pattern("saq_raw_values_file","[GEOG][YR]_values_SAQ.csv")  %>%
-    append.pattern("saq_raw_path","{saq_raw_folder}{saq_raw_file}")%>%
-    append.pattern("saq_raw_values_path","{saq_raw_folder}{saq_raw_values_file}")%>%
-
-    append.pattern("saq_layout_folder","{sas_layout_folder}") %>%
-    append.pattern("saq_layout_file","layout[YR]_SAQ.rda") %>%
-    append.pattern("saq_values_file","values[YR]_SAQ.rda") %>%
-    append.pattern("saq_layout_path","{saq_layout_folder}{saq_layout_file}") %>%
-    append.pattern("saq_values_path","{saq_layout_folder}{saq_values_file}") %>%
-
-
-    ##  files from merging the saq data with the national data
-
-    append.pattern("merged_layout_file","layout[YR]_mrg.rda") %>%
-    append.pattern("merged_layout_path","{codebook_layout_folder}{merged_layout_file}") %>%
-    append.pattern("merged_values_file","values[YR]_mrg.rda") %>%
-    append.pattern("merged_values_path","{codebook_layout_folder}{merged_values_file}")
-
-
-  #########################################################################
-  ##
-  ##  end of patterns ... save data
-
-  usethis::use_data(naming_patterns, overwrite = TRUE)
-
-}
-
 #' Move/Rename File to Standard Location
 #'
 #' Move a file (using file.rename()) to a location specified in the standard (expected)
@@ -563,67 +351,53 @@ patternize<-function(strIn, ...) {
   ##    check for logical expressions
   ##    e.g. "LLCP([VERS]==0;[YEAR])([VERS]>0;[YR]V[VERS])_XPT.zip"
 
-  #check <- grepl(".*[(](.*)[)].*",ret)
+  while(has_conditions(ret)) {
 
-  while(grepl(".*[(](.*)[)].*",ret)) {
+    next_cond <- next_condition(ret)
+    expr <- substr(ret, next_cond$start, next_cond$end)
 
-    expr <- gsub(".*[(](.*)[)].*","\\1",ret)
-
-    expr <-  gsub("(.*);(.*)","\\1",expr)
-    ok <- eval(parse(text = expr))
-
-    if (ok) {
-      ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\2\\3",ret)
+    if(grepl("[",expr, fixed = TRUE)) {
+      expr <- ""
     } else {
-      ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\3",ret)
+      expr <- eval_pattern_cond(expr)
     }
 
-    check <- grepl(".*[(](.*)[)].*",ret)
-
+    ret  <- paste0(substring(ret, 1,next_cond$start-1),
+                   expr,
+                   substring(ret, next_cond$end+1))
   }
 
   ret
 }
 
-#' Set My Patterns to National Default
-#'
-#' These naming patterns are generally used for data directly downloaded from the CDC BRFSS Public data website
-#' (https://www.cdc.gov/brfss/annual_data/annual_YYYY.html)
-#'
-#' @export
-#'
-#' @examples
-patterns.national <- function() {
-  set.pattern("sas_sasout", "SASOUT[YR]_LLCP([VERS] > 0;_V[VERS]).SAS")
-  set.pattern("xpt_file", "LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).XPT")
-
+next_condition <- function(expr) {
+  start <- max(gregexpr("(",expr, fixed  = T)[[1]])
+  ends <- gregexpr(")",expr, fixed  = T)[[1]]
+  end <- min(ends[ends>start])
+  list(start = start, end = end)
 }
 
-#' Set My Patterns to Local Default
-#'
-#' These naming patterns are generally used for data directly downloaded from the CDC passwor-protected data website
-#' (https://nccd.cdc.gov/BRFSSStates/Index.html#/actions)
-
-#' @export
-#'
-#' @examples
-patterns.local <- function() {
-  set.pattern("sas_sasout","SASOUT[YR]_STATES.SAS")
-  set.pattern("xpt_file","[GEOG][YR]FINL([VERS] > 0;_V[VERS]).XPT")
-
+has_conditions <- function(expr) {
+  grepl(".*[(](.*)[)].*",expr)
 }
 
-#' Set My Patterns to Extent Defaults
-#'
-#' @export
-#'
-#' @examples
-patterns.extent <- function(extent = NULL) {
+eval_pattern_cond <- function(expr_in) {
+  expr <- gsub(".*[(](.*)[)].*","\\1",expr_in)
+  expr <-  gsub("(.*);(.*)","\\1",expr)
 
-  extent <- get.extent(extent)
 
-  if(extent == "local") patterns.local() else patterns.national()
+  if(grepl(" *[=!]= *'",expr)) {
+    expr <- gsub(" *([A-Za-z]*) *([=!]=)","'\\1' \\2",expr)
+  }
+  ok <- eval(parse(text = expr))
 
+  if (ok) {
+    ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\2\\3",expr_in)
+  } else {
+    ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\3",expr_in)
+  }
+
+  ret
 }
 
 

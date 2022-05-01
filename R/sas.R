@@ -16,8 +16,8 @@ sas.url.pattern.download.doc<-function() {
   )
 }
 
-unzip.all<-function(year,rmzip=TRUE) {
-  folder<-apply.pattern("sas_raw_folder",YEAR =year)
+unzip.all<-function(year,rmzip=TRUE, ...) {
+  folder<-apply.pattern("sas_raw_folder",YEAR =year, ...)
   files<-list.files(folder,full.names = T)
 
   files<-files[grep("[.]zip$",files)]
@@ -107,17 +107,17 @@ sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE, codeb
 
   if(download) {
     if(verbose) cat(" ... downloading ... main file ... ")
-    sas_download_metadata(year=year)
-    sas_download_xpt(year=year)
+    sas_download_metadata(year=year, ...)
+    sas_download_xpt(year=year, ...)
     # if(verbose) cat(" versions ")
     # sas_download_metadata.versions(year=year)
     if(verbose) cat(" \n ... unzipping files\n ")
-    unzip.all(year=year)
+    unzip.all(year=year, ...)
   }
 
   if (layout) save_sas_layout(year = year)
 
-  if(codebook) process_codebook(year = year)
+  if(codebook) process_codebook(year = year, ...)
 
   if(saq) {
     build_saq_layout()
@@ -161,12 +161,13 @@ sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE, codeb
 # }
 #
 
-sas_download_metadata<-function(year) {
+sas_download_metadata<-function(year, ...) {
 
   #  files<-sas.url.pattern.downloads.data()
+
   files<-get.pattern.group("sas_downloads")
   urlfiles<- apply.pattern("brfss_url_files",YEAR=year)
-  folderout<-apply.pattern("sas_raw_folder",YEAR=year)
+  folderout<-apply.pattern("sas_raw_folder",YEAR=year, ...)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   sapply(files,function(file) {
@@ -200,14 +201,14 @@ sas_download_metadata<-function(year) {
 #'
 #' @export
 #'
-sas_download_xpt<-function(year = NULL) {
+sas_download_xpt<-function(year = NULL, ...) {
 
   year <- get.year(year)
 
   #files<-sas.url.pattern.downloads.versions()
   file_pttrn<-get.pattern("xpt_download_zip_file")
 
-  folderout<-apply.pattern("sas_raw_folder",YEAR=year)
+  folderout<-apply.pattern("sas_raw_folder",YEAR=year, ...)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   urlfiles<-apply.pattern("brfss_url_files",YEAR=year)
@@ -221,7 +222,7 @@ sas_download_xpt<-function(year = NULL) {
 
   while(ok) {
 
-    file<-patternize(strIn = file_pttrn,YEAR = year,VERS = version )
+    file<-patternize(strIn = file_pttrn,YEAR = year,VERS = version, ...)
 
     url<-paste0(urlfiles,file)
 
@@ -249,12 +250,12 @@ sas_download_xpt<-function(year = NULL) {
 }
 
 
-sas_download_metadata.versions<-function(year) {
+sas_download_metadata.versions<-function(year, ...) {
 
   #files<-sas.url.pattern.downloads.versions()
   files<-get.pattern.group("sas_version_downloads")
 
-  folderout<-apply.pattern("sas_raw_folder",YEAR=year)
+  folderout<-apply.pattern("sas_raw_folder",YEAR=year, ...)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   urlfiles<-apply.pattern("brfss_url_files",YEAR=year)
@@ -338,7 +339,7 @@ read.xpt<-function(year = NULL,version = 0,
 
 
   year <- get.year(year)
-
+  extent <- get.extent()
   ########################################################################%%%%%%%%%
   ##
   ##    If file and folder names not supplied, create them from the file patterns
@@ -348,7 +349,7 @@ read.xpt<-function(year = NULL,version = 0,
   ##
 
   if(is.null(sasout_file)) {
-    sasout_file<-apply.pattern("sas_sasout_path",YEAR = year, VERS = version)
+    sasout_file<-apply.pattern("sas_sasout_path",YEAR = year, VERS = version, EXT = extent)
   }
 
   ##
@@ -356,7 +357,7 @@ read.xpt<-function(year = NULL,version = 0,
   ##
 
   if(is.null(xpt_file)) {
-    xpt_file <- apply.pattern("xpt_path",YEAR = year, VERS = version)
+    xpt_file <- apply.pattern("xpt_path",YEAR = year, VERS = version, EXT = extent)
   }
 
   ##
@@ -364,7 +365,7 @@ read.xpt<-function(year = NULL,version = 0,
   ##
 
   if(is.null(save_file)) {
-    save_file<- apply.pattern("sas_data_path",YEAR = year, VERS = version)
+    save_file<- apply.pattern("sas_data_path",YEAR = year, VERS = version, EXT = extent)
   }
 
   ##
@@ -822,11 +823,15 @@ sas.build.geogs <- function(year) {
 read_sas_field_ranges<-function(year) {
   require(stringr)
 
+  year <- get.year(year)
+  extent <- get.extent()
+
+
   # get the filename for the data
   #  name format based on year
 
   if(year>2010) {
-    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0)
+    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0, EXT = extent)
 
   } else {
     return(NULL)

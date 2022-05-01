@@ -20,12 +20,12 @@ split_it <- function(str, sep = "=") {
 #' @export
 #'
 #' @examples
-save_codebook_values <- function(file = NULL, year = NULL) {
+save_codebook_values <- function(file = NULL, year = NULL, ...) {
 
   year <- get.year(year)
   df_values_cb <- parse_codebook_values(file = file, year = year)
 
-  fname <- apply.pattern("codebook_values_path", YEAR=year)
+  fname <- apply.pattern("codebook_values_path", YEAR=year, ...)
 
   save(df_values_cb, file = fname)
 }
@@ -41,13 +41,13 @@ save_codebook_values <- function(file = NULL, year = NULL) {
 #' @export
 #'
 #' @examples
-parse_codebook_values <- function(file = NULL, year = NULL) {
+parse_codebook_values <- function(file = NULL, year = NULL, ...) {
 
   if (is.null(file)) {
     year <- get.year(year)
-    lines <- brfss::read_codebook(year = year)
+    lines <- read_codebook(year = year, ...)
   } else {
-    lines <- brfss::read_codebook(file = file)
+    lines <- read_codebook(file = file, ...)
 
   }
   #############################################################################
@@ -207,14 +207,14 @@ parse_codebook_values <- function(file = NULL, year = NULL) {
 #' @export
 #'
 #' @examples
-values <- function( year = NULL) {
+values <- function( year = NULL, ...) {
 
   year <- get.year(year)
 
-  fname <- apply.pattern("merged_values_path", YEAR=year)
+  fname <- apply.pattern("merged_values_path", YEAR=year, ...)
 
   if(!file.exists(fname)) {
-    fname <- apply.pattern("codebook_values_path", YEAR=year)
+    fname <- apply.pattern("codebook_values_path", YEAR=year, ...)
   }
   orrr:::get.rdata(file = fname)
 }
@@ -228,11 +228,11 @@ values <- function( year = NULL) {
 #' @export
 #'
 #' @examples
-codebook_values <- function( year = NULL) {
+codebook_values <- function( year = NULL, ...) {
 
   year <- get.year(year)
 
-  fname <- apply.pattern("codebook_values_path", YEAR=year)
+  fname <- apply.pattern("codebook_values_path", YEAR=year, ...)
 
   orrr:::get.rdata(file = fname)
 }
@@ -248,12 +248,12 @@ codebook_values <- function( year = NULL) {
 #' @return data frame continaing the type for each column
 #' @export
 #'
-quest_types <- function(df_layout = NULL, df_vals = NULL) {
+quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
   require(tibble, warn.conflicts = FALSE, quietly = TRUE)
 
-  if(is.null(df_vals)) df_vals <- codebook_values(year = year)
+  if(is.null(df_vals)) df_vals <- codebook_values(year = year, ...)
 
-  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year)
+  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year, ...)
 
   is.calc <- grepl("^Calc",df_layout$section)
   is.wt <- grepl("[Ww]eighting.V",df_layout$section)

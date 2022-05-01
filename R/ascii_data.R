@@ -46,7 +46,7 @@ ascii_process_year <- function(year = NULL, download = TRUE, codebook = TRUE, sa
     ascii.download.data(year=year)
   }
 
-  if(codebook) process_codebook(year = year)
+  if(codebook) process_codebook(year = year, ...)
 
   if(saq) {
     build_saq_layout()
