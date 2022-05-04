@@ -12,7 +12,8 @@ split_geogs(
   my_geog = NULL,
   other_geogs = NULL,
   factorize = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{

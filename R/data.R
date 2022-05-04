@@ -9,7 +9,7 @@
 #' Common variables to use are YEAR and GEOG. If you pass YEAR to function that applies a pattern, the
 #' variable [YR] (2-digit) will be created internally. Year should be a 4-digit integer.
 #'
-#' There is a hierarchy built in so that one named path such as a folder can be inside another's pattern.
+#' There is a hierarchy built in so that one named pattern such as a folder can be inside another's pattern.
 #'
 #' Examples ...
 #'
@@ -22,16 +22,12 @@
 #' brfss_annual_raw_data_folder                     {brfss_raw_data_folder}[YEAR]/
 #' brfss_data_folder                                {data_folder}
 #' brfss_annual_data_folder                         {brfss_data_folder}[YEAR]/
-#' brfss_geog_folder                                {brfss_data_folder}[YEAR]/geog/
-#' brfss_geog_file                                  [GEOG]_[YEAR].RData
-#' brfss_geog_file_version                          [GEOG]_[YEAR]_V[VERS].RData
-#' brfss_geog_path                                  {brfss_geog_folder}{brfss_geog_file}
 #' codebook_layout_folder                           {brfss_annual_raw_data_folder}
 #' codebook_layout_file                             codebook[YR]_llcp
 #' codebook_layout_ext                              pdf
-#' sas_layout_folder                              {brfss_annual_data_folder}layout/
-#' sas_layout_file                                layout_[YEAR].RData
-#' sas_layout_path                                {sas_layout_folder}{sas_layout_file}
+#' sas_layout_folder                                {brfss_annual_data_folder}layout/
+#' sas_layout_file                                  layout_[YEAR].RData
+#' sas_layout_path                                  {sas_layout_folder}{sas_layout_file}
 #'
 #' @format A data frame with 4 variables:
 #' \describe{

@@ -351,10 +351,6 @@ cleave.geogs.ascii<-function(year = NULL,
 
     add_cols<-character(0)
 
-    # fldr_geog <- normalizePath(apply.pattern("brfss_geog_folder", YEAR = year, GEOG= geog),
-    #                            winslash = "/", mustWork = FALSE)
-
-
     mapply(function(id,nm) {
 
       if(id%in%geogs) {

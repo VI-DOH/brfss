@@ -4,10 +4,12 @@
 \alias{values}
 \title{Get Values}
 \usage{
-values(year = NULL)
+values(year = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest for codebook}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \description{
 The annual codebook is parsed for possible values for each variable and saved. If SAQ Values are available,

@@ -4,7 +4,7 @@
 \alias{brfss_data}
 \title{Get BRFSS Survey Data}
 \usage{
-brfss_data(year = NULL, geog = NULL, version = 0)
+brfss_data(year = NULL, geog = NULL, version = 0, extent = "local")
 }
 \arguments{
 \item{year}{- int - year of interest}

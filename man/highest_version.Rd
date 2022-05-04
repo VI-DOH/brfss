@@ -8,6 +8,8 @@ highest_version(year = NULL, ...)
 }
 \arguments{
 \item{year}{- the 4-digit year of interest}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \value{
 integer - the highest version number found in the filenames

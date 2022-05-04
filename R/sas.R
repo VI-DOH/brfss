@@ -135,11 +135,12 @@ sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE, codeb
     ivers<-1
     if(verbose) cat(" ... trying versions\n ")
     while (read.xpt(year=year,version=ivers,verbose=TRUE)) {
-      #browser()
+
       if(verbose) cat("Read version=",ivers,"\n")
       ivers<-ivers + 1
     }
   }
+
 
   if(split) split_geogs(year=year, source = 'sas', factorize = factorize, ...)
 
@@ -198,6 +199,7 @@ sas_download_metadata<-function(year, ...) {
 #' Download SAS XPT files from CDC website
 #'
 #' @param year integer - year of interest
+#' @param ... other arguments to be passed to apply.pattern()
 #'
 #' @export
 #'
@@ -498,10 +500,6 @@ cleave.geogs.sas<-function(year = NULL,
     }
 
     add_cols<-character(0)
-
-    # fldr_geog <- normalizePath(apply.pattern("brfss_geog_folder", YEAR = year, GEOG= geog),
-    #                            winslash = "/", mustWork = FALSE)
-
 
     mapply(function(id,nm) {
 

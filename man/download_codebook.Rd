@@ -4,10 +4,12 @@
 \alias{download_codebook}
 \title{Download Codebook}
 \usage{
-download_codebook(year = NULL, geog = NULL)
+download_codebook(year = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \description{
 Download the CDC prepared codebook for the BRFSS data files. The format of the URL is not consistent by year

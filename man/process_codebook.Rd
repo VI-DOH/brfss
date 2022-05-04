@@ -4,10 +4,12 @@
 \alias{process_codebook}
 \title{Download Codebook and Extract the Layout}
 \usage{
-process_codebook(year = NULL, geog = NULL)
+process_codebook(year = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \description{
 Download the CDC prepared codebook for the BRFSS data files and extract the layout. The format of the URL is not consistent by year so more than one pattern is attempted and all should fail but one for a given year.

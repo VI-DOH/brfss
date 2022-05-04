@@ -200,6 +200,7 @@ merge_layout<-function(df_quest, year = NULL) {
 #' First, an attempt is made to get the codebook layout. If that fails, an attempt is made to get the sas layout.
 #'
 #' @param year
+#' @param ... other arguments to be passed to apply.pattern()
 #'
 #' @return data.frame containing layout information
 #' @export

@@ -39,8 +39,8 @@ my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL, source = NULL, e
     if(is.null(year)) year <- my_brfss$year
     if(is.null(other_geogs)) other_geogs <- my_brfss$other_geogs
   } else {
-    if(is.null(extent)) extent <- my_brfss.default.extent()
-    if(is.null(source)) source <- my_brfss.default.source()
+    if(is.null(extent)) extent <- my.brfss.default.extent()
+    if(is.null(source)) source <- my.brfss.default.source()
     if(is.null(other_geogs)) geog <- my.brfss.default.other.geogs()
     if(is.null(geog)) geog <- my.brfss.default.geog()
     if(is.null(year)) year <- my.brfss.default.year()

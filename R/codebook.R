@@ -14,6 +14,7 @@
 process_codebook <- function(year = NULL, ...) {
 
   download_codebook(year = year, ...)
+  browser()
   save_codebook_layout(year = year, ...)
   save_codebook_values(year = year, ...)
 }
@@ -148,6 +149,18 @@ read_codebook <- function(file=NULL, year = NULL, ...) {
 
     lines <- readLines(file) %>%
       htm2txt::htm2txt(file) %>%
+      gsub(" "," ",.) %>%
+      grep("^$", ., invert = T, value = T) %>%
+      grep("^ *$", ., invert = T, value = T)
+
+    comments <- rev(grep("<!--",lines))
+    comment_ends <- rev(grep("-->",lines))
+
+    mapply(function(s,e) {
+      lines <- lines[-(s:e)]
+    }, comments, comment_ends)
+
+    lines <- lines %>%
       strsplit(split = "\n") %>%
       unlist(recursive = TRUE)
 
@@ -371,12 +384,12 @@ deduped_layout <- function(df) {
 #' @export
 #'
 
-get.codebook.layout <- function(year = NULL, ...) {
+get.codebook.layout <- function(year = NULL) {
 
   year <- get.year(year)
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, ...)
-  fil <- apply.pattern("codebook_layout_file", YEAR = year, ...)
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year)
+  fil <- apply.pattern("codebook_layout_file", YEAR = year)
 
   file <- paste0(fldr,fil)
 
@@ -397,12 +410,12 @@ get.codebook.layout <- function(year = NULL, ...) {
 #' @export
 #'
 
-get.merged.layout <- function(year = NULL, ...) {
+get.merged.layout <- function(year = NULL) {
 
   year <- get.year(year)
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, ...)
-  fil <- apply.pattern("merged_layout_file", YEAR = year, ...)
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year)
+  fil <- apply.pattern("merged_layout_file", YEAR = year)
 
   file <- paste0(fldr,fil)
 

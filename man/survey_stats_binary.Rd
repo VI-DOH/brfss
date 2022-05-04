@@ -15,6 +15,8 @@ survey_stats_binary(df0, coi, num_vals, den_vals, ...)
 
 \item{den_vals}{- integer: values from column in the denominator}
 
+\item{...}{other arguments to be passed to other functions}
+
 \item{year}{- integer: if missing will calculate from df}
 
 \item{subset}{- character: name of column to subset data by}

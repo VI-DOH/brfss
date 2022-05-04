@@ -4,10 +4,12 @@
 \alias{codebook_values}
 \title{Get Codebook Values}
 \usage{
-codebook_values(year = NULL)
+codebook_values(year = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest for codebook}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \description{
 The annual codebook is parsed for possible values for each variable and saved. This function retrieves those values

@@ -43,7 +43,7 @@ calc_modules_by_geog<-function(year,geog,version=0) {
   ##
   ##    if the version exists for that geog
 
-  if(brfss_geog_version_exists(year,geog,version)) {
+  if(brfss_version_exists(year,geog,version)) {
 
     ##
     ##    get the data for that year/geog/version

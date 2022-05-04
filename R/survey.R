@@ -14,7 +14,7 @@
 #'
 #' }
 #'
-brfss_data <- function(year = NULL, geog = NULL, version = 0) {
+brfss_data <- function(year = NULL, geog = NULL, version = 0, extent = "local") {
 
   year <- get.year(year)
   geog <- get.geog(geog)
@@ -76,6 +76,7 @@ binary_yes<-function() {
 #' @param subset - character: name of column to subset data by
 #' @param conf - numeric: confidence level, default is .95
 #' @param weighting - character: name of column with weighting
+#' @param ... other arguments to be passed to other functions
 #'
 #' @return data.frame: statistics for each subset
 #' @export

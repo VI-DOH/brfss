@@ -7,6 +7,7 @@
 #'   Looks through the filenames in the BRFSS data folder for files with the pattern  *_Vn.* where n is the version number.
 #'
 #' @param year - the 4-digit year of interest
+#' @param ... other arguments to be passed to apply.pattern()
 #'
 #' @return integer - the highest version number found in the filenames
 #' @export
@@ -25,19 +26,19 @@ highest_version<-function(year=NULL, ...) {
   year <- get.year(year)
 
   if(source == "sas") {
-    fldr<-apply.pattern("sas_data_folder",YEAR = year)
+    fldr<-apply.pattern("sas_data_folder",YEAR = year, ...)
   } else {
 
-    fldr <- apply.pattern("ascii_data_folder", YEAR = year)
+    fldr <- apply.pattern("ascii_data_folder", YEAR = year, ...)
   }
 
   files<-list.files(fldr)
 
   if(length(files) == 0) {
     if(source == "sas") {
-      fldr<-apply.pattern("sas_data_folder",YEAR = year)
+      fldr<-apply.pattern("sas_data_folder",YEAR = year, ...)
     } else {
-      fldr <- apply.pattern("ascii_path", YEAR = year)
+      fldr <- apply.pattern("ascii_path", YEAR = year, ...)
     }
     files<-list.files(fldr)
 
@@ -69,8 +70,37 @@ calc_responses<-function(year,geogs,versions, ...) {
   invisible(
     sapply(geogs,function(geog){
       sapply(versions,function(version){
+        browser()
+        if(brfss_version_exists(year,geog,version)) {
 
-        if(brfss_geog_version_exists(year,geog,version)) {
+          df_resp_cnts <- brfss_data(year,geog,version)
+          df_add <- data.frame(year = year,geog = geog, version = version,
+                               responses= nrow(df_resp_cnts))
+          df0<<-rbind(df0, df_add)
+
+        }
+      })
+    } )
+  )
+  df0
+}
+calc_responses_SAVE<-function(year,geogs,versions, ...) {
+
+  if(missing(versions)) versions <- 0:highest_version(year)
+
+  if(missing(geogs)) {
+    geogs<-geog_abbs()
+  } else {
+
+    if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
+  }
+
+  df0<-data.frame()
+  invisible(
+    sapply(geogs,function(geog){
+      sapply(versions,function(version){
+        browser()
+        if(brfss_version_exists(year,geog,version)) {
 
           df_resp_cnts <- brfss_data(year,geog,version)
           df_add <- data.frame(year = year,geog = geog, version = version,
@@ -88,7 +118,7 @@ responses_by_geog<-function(year,geog,version=0) {
 
   if(is.numeric(geog)) geog<-geog_abbs(geog)
 
-  if(brfss_geog_version_exists(year,geog,version)) {
+  if(brfss_version_exists(year,geog,version)) {
 
     df0<-brfss_data(year,geog,version)
 

@@ -10,11 +10,15 @@ process_year(
   year = NULL,
   source = NULL,
   download = TRUE,
+  layout = TRUE,
   convert = TRUE,
   codebook = TRUE,
   split = TRUE,
   factorize = TRUE,
+  saq = FALSE,
   verbose = FALSE,
+  geog = NULL,
+  extent = NULL,
   ...
 )
 }

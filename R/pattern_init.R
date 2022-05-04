@@ -71,20 +71,32 @@ init.patterns <- function() {
   append.pattern("brfss_data_folder","{data_folder}",
                  desc = "Folder to store processed BRFSS data") %>%
 
-    append.pattern("brfss_annual_data_folder","{brfss_data_folder}[YEAR]/",
+    append.pattern("brfss_annual_data_folder",
+                   paste0("{brfss_data_folder}[YEAR]/",
+                          "([EXT] == 'local';geog/[GEOG]/([SRC] == 'sas';sas/)([SRC] == 'ascii';ascii/))",
+                          "([EXT] == 'national';([SRC] == 'sas';sas/)([SRC] == 'ascii';ascii/))"),
                    desc = "Folder to store the annual processed BRFSS data") %>%
+
+    append.pattern("brfss_annual_data_file",
+                   paste0("([EXT] == 'local';[GEOG]_[YEAR])",
+                          "([EXT] == 'national';([SRC] == 'sas';sas_[YEAR])([SRC] == 'ascii';ascii_[YEAR]))",
+                          "([VERS] > 0;_V[VERS])",
+                          ".rda"),
+                   desc = "File name for annual processed BRFSS data (main survey) from specific geographies") %>%
+
+    append.pattern("brfss_annual_data_path",
+                   "{brfss_annual_data_folder}{brfss_annual_data_file}",
+                   desc = "Full path for annual processed BRFSS data
+                   (main survey) from specific geographies") %>%
 
     append.pattern("annual_metadata_folder","{brfss_annual_data_folder}metadata/",
                    desc ="Standard location of user created metadata") %>%
-
-    append.pattern("brfss_geog_folder","{brfss_data_folder}[YEAR]/geog/[GEOG]/",
-                   desc = "Folder to store the annual processed BRFSS data from specific geographies") %>%
-
-    append.pattern("brfss_geog_file","[GEOG]_[YEAR]([VERS] > 0;_V[VERS]).rda",
-                   desc = "File name for annual processed BRFSS data (main survey) from specific geographies") %>%
-
-    append.pattern("brfss_geog_path","{brfss_geog_folder}{brfss_geog_file}",
-                   desc = "Full path for annual processed BRFSS data (main survey) from specific geographies") %>%
+#
+#     append.pattern("brfss_geog_file","[GEOG]_[YEAR]([VERS] > 0;_V[VERS]).rda",
+#                    desc = "File name for annual processed BRFSS data (main survey) from specific geographies") %>%
+#
+#     append.pattern("brfss_geog_path","{brfss_geog_folder}{brfss_geog_file}",
+#                    desc = "Full path for annual processed BRFSS data (main survey) from specific geographies") %>%
 
     append.pattern("brfss_data_df","df_[GEOG]([VERS] > 0;_V[VERS])_[YEAR]",
                    desc = "Consistent name for BRFSS data object (data.frame) stored and retrieved") %>%
@@ -169,7 +181,7 @@ init.patterns <- function() {
     append.pattern("ascii_downloads_url","{brfss_url_files}{ascii_filename_zip}",
                    group = "ascii_downloads") %>%
 
-    append.pattern("ascii_raw_data_folder","{brfss_raw_data_folder}[YEAR]/ascii/") %>%
+    append.pattern("ascii_raw_data_folder","{brfss_annual_raw_data_folder}ascii/") %>%
 
     append.pattern("ascii_filename_raw","LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).ASC") %>%
 
@@ -178,7 +190,7 @@ init.patterns <- function() {
     append.pattern("ascii_path_raw","{ascii_raw_data_folder}{ascii_filename_raw}") %>%
 
     append.pattern("ascii_data_folder","{brfss_data_folder}[YEAR]/ascii/") %>%
-    append.pattern("ascii_filename","LLCP[YEAR]ASC([VERS] > 0;_V[VERS]).rda") %>%
+    append.pattern("ascii_filename","ascii_[YEAR]([VERS] > 0;_V[VERS]).rda") %>%
     append.pattern("ascii_path","{ascii_data_folder}{ascii_filename}") %>%
 
     append.pattern("ascii_df","df_ascii_[YEAR]([VERS] > 0;_V[VERS])") %>%
@@ -187,7 +199,7 @@ init.patterns <- function() {
 
   append.pattern("sas_raw_folder","{brfss_raw_data_folder}[YEAR]/([EXT] == 'local';geog/[GEOG]/)sas/") %>%
 
-    append.pattern("sas_data_folder","{brfss_annual_data_folder}xpt/") %>%
+    append.pattern("sas_data_folder","{brfss_annual_data_folder}sas/") %>%
     append.pattern("xpt_folder", "{sas_raw_folder}") %>%
 
     #   set.pattern("xpt_file", "LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).XPT")
@@ -202,7 +214,7 @@ init.patterns <- function() {
     append.pattern("xpt_path", "{xpt_folder}{xpt_file}") %>%
     append.pattern("xpt_df","df_xpt_[YEAR]([VERS] > 0;_V[VERS])") %>%
 
-    append.pattern("sas_data_file","xpt_[YEAR]([VERS] > 0;_V[VERS]).rda") %>%
+    append.pattern("sas_data_file","sas_[YEAR]([VERS] > 0;_V[VERS]).rda") %>%
     append.pattern("sas_data_path","{sas_data_folder}{sas_data_file}") %>%
 
     append.pattern("sas_sasout", "SASOUT[YR]_([EXT] == 'local';STATES)([EXT] == 'national';LLCP).SAS") %>%

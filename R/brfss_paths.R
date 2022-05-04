@@ -164,31 +164,38 @@ brfss_field_values_filename<-function(year) {
 #' @param year integer - year of interest
 #' @param geog character - geography of interest
 #' @param version integer - survey version (0 = main)
+#' @param extent character -'local' or 'national'
+#' @param source character - data source ('ascii' or 'sas')
 #' @param rw character - read/write
 #'
 #' @return
 #'
-brfss_data_path <- function(year = NULL, geog = NULL, version = 0, rw = c("r","w")) {
+#' @export
+
+brfss_data_path <- function(year = NULL, geog = NULL, version = 0, extent = NULL, source = NULL, rw = c("r","w")) {
 
   read <- rw == 'r'
   write <- rw == 'w'
 
   year <- get.year(year)
 
-  my_geog <- get.geog()
+  my_geog <- get.geog(geog)
+  extent <- get.extent(extent)
+  source <- get.source(source)
 
   ## added && FALSE to force all files to be in brfss_geog_folder
 
-  if(str_something(my_geog) &&  (geog == my_geog) && FALSE) {
-    fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year)
-  } else {
-    fldr <- apply.pattern("brfss_geog_folder",  YEAR = year, GEOG = geog)
-  }
+  #if(str_something(my_geog) &&  (geog == my_geog) || TRUE ) {
+    fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year, GEOG = geog, EXT = extent, SRC = source )
+#  } else {
+#    fldr <- apply.pattern("brfss_geog_folder",  YEAR = year, GEOG = geog)
+#  }
 
   if(!dir.exists(fldr) && write) dir.create(fldr, recursive = TRUE)
 
 
-  file <- apply.pattern("brfss_geog_file",  YEAR = year, GEOG = geog, VERS = version)
+#    file <- apply.pattern("brfss_geog_file",  YEAR = year, GEOG = geog, VERS = version)
+    file <- apply.pattern("brfss_annual_data_file",  YEAR = year, GEOG = geog, VERS = version, EXT = extent, SRC = source)
 
   path <- paste0(fldr,file)
 
@@ -196,25 +203,9 @@ brfss_data_path <- function(year = NULL, geog = NULL, version = 0, rw = c("r","w
 
   path
 }
-#
-# brfss_geog_data_filename<-function(year,geog,version=0) {
-#   if(is.numeric(geog)) geog<-geog_abbs(geog)
-#   fname<-paste0(apply.pattern("brfss_geog_folder", YEAR= year, GEOG = geog),
-#                 apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
-#   if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
-#   fname
-# }
-#
-#
-# brfss_data_filename<-function(year,geog,version=0) {
-#   if(is.numeric(geog)) geog<-geog_abbs(geog)
-#   fname<-paste0(apply.pattern("brfss_annual_data_folder", YEAR= year),
-#                 apply.pattern("brfss_geog_file", YEAR = year, GEOG = geog))
-#   if(version>0) fname<-gsub("[.]RData",paste0("_V",version,".RData"),fname)
-#   fname
-# }
 
-brfss_geog_version_exists<-function(year,geog,version=1) {
+
+brfss_version_exists<-function(year,geog,version=1) {
   if(is.numeric(geog)) geog<-geog_abbs(geog)
 
   fname<- brfss_data_path(year = year, geog = geog, version = version, rw = 'r'  )

@@ -401,3 +401,76 @@ eval_pattern_cond <- function(expr_in) {
 }
 
 
+
+#' Try Patterns with Set of Arguments
+#'
+#' View all patterns with a given set of arguments. Useful for pattern naming testing.
+#'
+#' @param names character pattern to be applied to pattern names to subset result
+#' @param ... arguments to be passed to apply.pattern()
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#'
+#' try.patterns("codebook", YEAR = 2018, GEOG = "MT", VERS = 0, EXT = 'local')
+#'
+try.patterns <- function(names = ".*", ...) {
+  #
+  pat_names <- pattern.names() %>% grep(names, ., value = TRUE)
+
+
+
+  pats <- sapply(pat_names, function(nm) {
+
+    apply.pattern(nm, ...)
+  })
+
+
+  df <- data.frame(name = pat_names, result = pats) %>% {rownames(.) <- NULL; .}
+
+
+  df
+
+}
+
+#' Pattern Requirements
+#'
+#' Get the parameter requirements for naming pattern(s).
+#' @param names
+#'
+#' @return data frame - pattern name and arguments required for the named patterns
+#' @export
+#'
+#' @examples
+#'
+#' pattern.requirements("codebook")
+#'
+pattern.requirements <- function(pattern = ".*") {
+  df_pats<- get.patterns(pattern)
+
+  df <- data.frame()
+
+  invisible(
+    mapply(function(nm,pat) {
+
+      params <- character(0)
+
+      pat0 <- pat
+      while(grepl("\\[", pat0)) {
+        x <- gsub(".*?\\[(.*?)\\].*","\\1",pat0)
+        params <- c(params,x)
+        pat0 <- sub("?\\[(.*?)\\]","", pat0)
+      }
+      params <- params %>% stringr::str_replace("YR","YEAR") %>% unique()
+
+      df <<- df %>% bind_rows(data.frame(name = nm, params = paste0(params, collapse = ", ")))
+    }, df_pats$name, df_pats$pattern)
+
+  )
+
+
+  df
+}
+

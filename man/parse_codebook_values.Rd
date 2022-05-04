@@ -4,12 +4,14 @@
 \alias{parse_codebook_values}
 \title{Parse Codebook Values}
 \usage{
-parse_codebook_values(file = NULL, year = NULL)
+parse_codebook_values(file = NULL, year = NULL, ...)
 }
 \arguments{
 \item{file}{character - filename of layout file}
 
 \item{year}{integer - year of interest for codebook}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \value{
 

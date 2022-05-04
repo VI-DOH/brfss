@@ -4,10 +4,12 @@
 \alias{get.codebook.layout}
 \title{Get layout created from the codebook}
 \usage{
-get.codebook.layout(year = NULL)
+get.codebook.layout(year = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \value{
 data frame with layout data

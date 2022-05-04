@@ -4,10 +4,12 @@
 \alias{save_codebook_layout}
 \title{Build the Layout from CDC Provided Codebook}
 \usage{
-save_codebook_layout(file = NULL, year = NULL)
+save_codebook_layout(file = NULL, year = NULL, ...)
 }
 \arguments{
 \item{file}{character name of layout file}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \value{
 data.frame containing the layout to be used for decoding/parsing the ascii file

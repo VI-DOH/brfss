@@ -4,10 +4,10 @@
 \alias{get.layout}
 \title{Get Layout}
 \usage{
-get.layout(year = NULL)
+get.layout(year = NULL, ...)
 }
 \arguments{
-\item{year}{}
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \value{
 data.frame containing layout information

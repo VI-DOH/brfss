@@ -4,12 +4,14 @@
 \alias{save_codebook_values}
 \title{Save Codebook Values}
 \usage{
-save_codebook_values(file = NULL, year = NULL)
+save_codebook_values(file = NULL, year = NULL, ...)
 }
 \arguments{
 \item{file}{character - filename of layout file}
 
 \item{year}{integer - year of interest for codebook}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \description{
 The annual codebook is parsed for possible values for each variable and saved.

@@ -50,11 +50,11 @@ split_geogs<-function(year = NULL, source = NULL,
 
   sapply(ver,function(version) {
 
-
     if(source == 'sas') {
-      rdata_file <- apply.pattern("sas_data_path",YEAR = year, VERS = version)
+
+      rdata_file <- apply.pattern("sas_data_path",YEAR = year, VERS = version, ...)
     } else {
-      rdata_file <- apply.pattern("ascii_path", YEAR = year, VERS = version)
+      rdata_file <- apply.pattern("ascii_path", YEAR = year, VERS = version, ...)
     }
 
     df_brfss <- orrr::get.rdata(file = rdata_file)
@@ -74,10 +74,6 @@ split_geogs<-function(year = NULL, source = NULL,
     }
 
     add_cols<-character(0)
-
-    # fldr_geog <- normalizePath(apply.pattern("brfss_geog_folder", YEAR = year, GEOG= geog),
-    #                            winslash = "/", mustWork = FALSE)
-
 
     mapply(function(id,nm) {
 
@@ -110,7 +106,7 @@ split_geogs<-function(year = NULL, source = NULL,
 
           assign(dfname,df_state)
 
-          fname <- brfss_data_path(year = year, geog = nm, version = version, rw = 'w')
+          fname <- brfss_data_path(year = year, geog = nm, version = version, extent = 'local', rw = 'w')
 
           if(verbose) cat("Going to save :", fname, "\n")
 
@@ -144,7 +140,7 @@ split_geogs<-function(year = NULL, source = NULL,
 #'
 
 process_year <- function(year = NULL, source = NULL, download=TRUE, layout = TRUE, convert=TRUE, codebook = TRUE,
-                         split = TRUE, factorize = TRUE, verbose=FALSE, geog = NULL, extent = NULL) {
+                         split = TRUE, factorize = TRUE, saq = FALSE, verbose=FALSE, geog = NULL, extent = NULL, ...) {
 
   source <- get.source(source)
   source<-match.arg(source,c("sas","ascii"))
@@ -156,9 +152,11 @@ process_year <- function(year = NULL, source = NULL, download=TRUE, layout = TRU
 
     sas_process_year(year = year, download=download, layout = layout, convert=convert, codebook = codebook,
                      split = split, factorize = factorize, verbose=verbose, GEOG = geog, EXT = extent)
+
   } else {
+
     ascii_process_year(year = year, download=download, convert=convert, codebook = codebook,
-                       split = split, factorize = factorize, verbose=verbose, GEOG = geog, EXT = extent)
+                       split = split, factorize = factorize,  saq = saq, verbose=verbose, GEOG = geog, EXT = extent)
   }
 
 }

@@ -4,10 +4,12 @@
 \alias{read_codebook}
 \title{Read the CDC Provided Codebook File}
 \usage{
-read_codebook(file = NULL, year = NULL)
+read_codebook(file = NULL, year = NULL, ...)
 }
 \arguments{
 \item{file}{character name of layout file}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \value{
 character vector containing the lines in the file

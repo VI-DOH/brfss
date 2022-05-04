@@ -4,12 +4,14 @@
 \alias{quest_types}
 \title{Calculates the Type of BRFSS Questions}
 \usage{
-quest_types(df_layout = NULL, df_vals = NULL)
+quest_types(df_layout = NULL, df_vals = NULL, ...)
 }
 \arguments{
 \item{df_layout}{data frame containng the column layout derived from the codebook}
 
 \item{df_vals}{data frame containng the column values derived from the codebook}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \value{
 data frame continaing the type for each column

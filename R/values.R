@@ -16,6 +16,7 @@ split_it <- function(str, sep = "=") {
 #'
 #' @param file character - filename of layout file
 #' @param year integer - year of interest for codebook
+#' @param ... other arguments to be passed to apply.pattern()
 #'
 #' @export
 #'
@@ -23,7 +24,8 @@ split_it <- function(str, sep = "=") {
 save_codebook_values <- function(file = NULL, year = NULL, ...) {
 
   year <- get.year(year)
-  df_values_cb <- parse_codebook_values(file = file, year = year)
+
+  df_values_cb <- parse_codebook_values(file = file, year = year, ...)
 
   fname <- apply.pattern("codebook_values_path", YEAR=year, ...)
 
@@ -36,6 +38,7 @@ save_codebook_values <- function(file = NULL, year = NULL, ...) {
 #'
 #' @param file character - filename of layout file
 #' @param year integer - year of interest for codebook
+#' @param ... other arguments to be passed to apply.pattern()
 #'
 #' @return
 #' @export
@@ -45,8 +48,10 @@ parse_codebook_values <- function(file = NULL, year = NULL, ...) {
 
   if (is.null(file)) {
     year <- get.year(year)
+    browser()
     lines <- read_codebook(year = year, ...)
   } else {
+
     lines <- read_codebook(file = file, ...)
 
   }
@@ -203,6 +208,7 @@ parse_codebook_values <- function(file = NULL, year = NULL, ...) {
 #' they are merged. This function retrieves those values
 #'
 #' @param year integer - year of interest for codebook
+#' @param ... other arguments to be passed to apply.pattern()
 #'
 #' @export
 #'
@@ -224,6 +230,7 @@ values <- function( year = NULL, ...) {
 #' The annual codebook is parsed for possible values for each variable and saved. This function retrieves those values
 #'
 #' @param year integer - year of interest for codebook
+#' @param ... other arguments to be passed to apply.pattern()
 #'
 #' @export
 #'
@@ -244,6 +251,7 @@ codebook_values <- function( year = NULL, ...) {
 #'
 #' @param df_layout data frame containng the column layout derived from the codebook
 #' @param df_vals data frame containng the column values derived from the codebook
+#' @param ... other arguments to be passed to apply.pattern()
 #'
 #' @return data frame continaing the type for each column
 #' @export

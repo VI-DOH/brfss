@@ -8,6 +8,8 @@ sas_download_xpt(year = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest}
+
+\item{...}{other arguments to be passed to apply.pattern()}
 }
 \description{
 Download SAS XPT files from CDC website
