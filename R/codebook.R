@@ -14,7 +14,6 @@
 process_codebook <- function(year = NULL, ...) {
 
   download_codebook(year = year, ...)
-  browser()
   save_codebook_layout(year = year, ...)
   save_codebook_values(year = year, ...)
 }
@@ -107,13 +106,19 @@ download_codebook <- function(year = NULL, ...) {
 read_codebook <- function(file=NULL, year = NULL, ...) {
   require(dplyr)
 
+  args <- list(...)
+
+  geog <- args$geog
+  extent <- args$extent
+
   year <- get.year(year)
-  geog <- get.geog()
+  geog <- get.geog(geog)
+  extent <- get.extent(extent)
 
   if(is.null(file)) {
-    fldr <- apply.pattern("codebook_folder", YEAR = year, ...)
-    fil <- apply.pattern("codebook_file", YEAR = year, ...)
-    ext <- apply.pattern("codebook_ext", YEAR = year, ...)
+    fldr <- apply.pattern("codebook_folder", YEAR = year, GEOG = geog, EXT = extent)
+    fil <- apply.pattern("codebook_file", YEAR = year, GEOG = geog, EXT = extent)
+    ext <- apply.pattern("codebook_ext", YEAR = year, GEOG = geog, EXT = extent)
     file <- paste0(fldr,fil,".",ext)
   }
 
@@ -157,7 +162,7 @@ read_codebook <- function(file=NULL, year = NULL, ...) {
     comment_ends <- rev(grep("-->",lines))
 
     mapply(function(s,e) {
-      lines <- lines[-(s:e)]
+      lines <<- lines[-(s:e)]
     }, comments, comment_ends)
 
     lines <- lines %>%

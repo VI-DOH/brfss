@@ -10,15 +10,15 @@
 
 #' Title
 #'
-#' @param df
-#' @param coi
-#' @param binary
-#' @param num_vals
-#' @param den_vals
+#' @param df data.frame data of interest
+#' @param coi character - column of interest
+#' @param binary logical - only Yes/No
+#' @param num_vals integer: values from column in the numerator
+#' @param den_vals integer: values from column in the denominator
 #' @param exclude
 #' @param weighting
 #' @param min_num
-#' @param subsets
+#' @param subsets character: names of column to subset data by
 #' @param ques
 #' @param ...
 #'

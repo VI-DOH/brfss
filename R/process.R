@@ -148,6 +148,14 @@ process_year <- function(year = NULL, source = NULL, download=TRUE, layout = TRU
   geog =  get.geog(geog)
   extent = get.extent(extent)
 
+  # by definition, state-added- questions are local
+
+  if(extent == 'national' && saq) {
+    warning("Data are national, saq = TRUE is incongruous, setting saq to FALSE")
+    saq <- FALSE
+  }
+  # get the path to travel ... sas or ascii
+
   if(source == 'sas') {
 
     sas_process_year(year = year, download=download, layout = layout, convert=convert, codebook = codebook,
@@ -156,7 +164,8 @@ process_year <- function(year = NULL, source = NULL, download=TRUE, layout = TRU
   } else {
 
     ascii_process_year(year = year, download=download, convert=convert, codebook = codebook,
-                       split = split, factorize = factorize,  saq = saq, verbose=verbose, GEOG = geog, EXT = extent)
+                       split = split, factorize = factorize,  saq = saq,
+                       verbose=verbose, GEOG = geog, EXT = extent)
   }
 
 }

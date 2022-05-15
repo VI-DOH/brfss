@@ -4,7 +4,7 @@
 \alias{modules_used}
 \title{Modules Used by Geography}
 \usage{
-modules_used(year = NULL, geogs = NULL)
+modules_used(year = NULL, geogs = NULL, verbose = FALSE)
 }
 \arguments{
 \item{year}{integer - year of interest}

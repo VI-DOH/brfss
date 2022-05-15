@@ -32,6 +32,56 @@ save_codebook_values <- function(file = NULL, year = NULL, ...) {
   save(df_values_cb, file = fname)
 }
 
+stretch_values <- function(lines) {
+
+  # skips <- get_skips()
+
+  notes_lines <- grep("^Notes:",lines)
+
+  lines <- lines[-notes_lines]
+
+  label_lines <- grep("^Label:", lines)
+  labels <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[label_lines]))
+  col_name_lines <- grep("^SAS.", lines)
+  col_names <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[col_name_lines]))
+
+  ncols <- length(col_names)
+
+  value_lines <- grep("^Value$",lines)
+
+  # if the data are not in html
+  if(length(value_lines) == 0 ) return(lines)
+
+
+  wtd_lines <- grep("^Weighted.Perc",lines)
+  val_ends <- c(lbl_lines[-1]-1,length(lines))
+
+  ##  build the new lines ... all values will be on a single line with their counts and percents
+  ##    just like the pdf and rtf file
+  ##
+
+  new_lines <- character(0)
+
+  next_inc <- 1
+  as.vector(mapply(function(s,e) {
+
+    new_lines <<- c(new_lines,lines[next_inc:(s-1)])
+    ## get the lines for this value set
+    lins_tmp <- lines[s:e]
+
+    x<-sapply(seq(1,length(lins_tmp),5),function(ln) {
+      paste0(lins_tmp[ln:(ln+4)],collapse = "     ")
+    })
+    new_lines <<- c(new_lines,x)
+
+    next_inc <<- e+1
+
+  },value_lines,val_ends)
+  )
+
+  new_lines
+}
+
 #' Parse Codebook Values
 #'
 #' The annual codebook is parsed for possible values for each variable.
@@ -44,18 +94,22 @@ save_codebook_values <- function(file = NULL, year = NULL, ...) {
 #' @export
 #'
 #' @examples
-parse_codebook_values <- function(file = NULL, year = NULL, ...) {
+parse_codebook_values <- function(file=NULL, year = NULL, ...) {
+    require(dplyr)
 
-  if (is.null(file)) {
     year <- get.year(year)
-    browser()
-    lines <- read_codebook(year = year, ...)
-  } else {
+    geog <- get.geog()
 
-    lines <- read_codebook(file = file, ...)
+    lines <- read_codebook(file=file, year = year)
+    if(is.null(lines)) return(NULL)
 
-  }
   #############################################################################
+
+  value_lines <- grep(".*Value.*Value.Label", lines)
+  if(length(value_lines) == 0) {
+    lines <- stretch_values(lines)
+    value_lines <- grep(".*Value.*Value.Label", lines)
+  }
 
   label_lines <- grep("^Label:", lines)
   labels <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[label_lines]))
@@ -64,7 +118,6 @@ parse_codebook_values <- function(file = NULL, year = NULL, ...) {
 
   ncols <- length(col_names)
 
-  value_lines <- grep(".*Value.*Value.Label", lines)
 
   #################################################################
   ##
@@ -89,7 +142,7 @@ parse_codebook_values <- function(file = NULL, year = NULL, ...) {
     warning("Number of col_names differs from number of value sections")
   }
 
-  #######################################################################
+     #######################################################################
   ##
   ##  remove the beginning junk
 
@@ -170,10 +223,10 @@ parse_codebook_values <- function(file = NULL, year = NULL, ...) {
     mutate(text = gsub("[—]*Go to .*","",text))  %>%
     mutate(text = gsub("[—]*Code=.*","",text))  %>%
     mutate(text = gsub("If .* is .* go to.*","",text))  %>%
-    #    mutate(text = gsub("(^.*)—Go to .*","\\1",text)) %>%
+
 
     mutate(value = gsub("^([[:digit:]]+).*","\\1",text)) %>%
-    #mutate(value = ifelse(grepl("^HIDDEN",text),NA,value)) %>%
+
     mutate(maxval = ifelse(grepl("^[[:digit:]]+ *- *([[:digit:]]+).*",text),
                            gsub("^[[:digit:]]+ *- *([[:digit:]]+).*","\\1",text), NA)) %>%
     mutate(text = gsub("^[[:digit:]]+ *- *([[:digit:]]+) +","",text))  %>%

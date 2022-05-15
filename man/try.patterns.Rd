@@ -18,7 +18,8 @@ try.patterns(names = ".*", ...)
 View all patterns with a given set of arguments. Useful for pattern naming testing.
 }
 \examples{
-
+\dontrun{
 try.patterns("codebook", YEAR = 2018, GEOG = "MT", VERS = 0, EXT = 'local')
+}
 
 }

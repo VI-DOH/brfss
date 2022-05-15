@@ -7,7 +7,7 @@
 pattern.requirements(pattern = ".*")
 }
 \arguments{
-\item{names}{}
+\item{pattern}{}
 }
 \value{
 data frame - pattern name and arguments required for the named patterns
@@ -16,7 +16,8 @@ data frame - pattern name and arguments required for the named patterns
 Get the parameter requirements for naming pattern(s).
 }
 \examples{
-
+\dontrun{
 pattern.requirements("codebook")
+}
 
 }

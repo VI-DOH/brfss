@@ -12,7 +12,7 @@
 #' modules_used(2020, "MT")
 #' }
 #'
-modules_used<-function(year = NULL, geogs = NULL) {
+modules_used<-function(year = NULL, geogs = NULL, verbose = FALSE) {
 
   year <- get.year(year)
 
@@ -25,6 +25,7 @@ modules_used<-function(year = NULL, geogs = NULL) {
 
   sapply(geogs, function(geog){
     sapply(0:vers_max,function(ver){
+      if(verbose) cat(paste0(" modules ... trying ", geog, "_V",ver,"\n"))
       df<<-rbind(df,calc_modules_by_geog(year,geog,version = ver))
     })
   })
@@ -78,7 +79,10 @@ calc_modules_by_geog<-function(year,geog,version=0) {
       })
     )
 
-    df_module_chkr<-df_columns[grepl("Mod",df_columns$section_type) & df_columns$section_index==1,
+    df_module_chkr<-df_columns[grepl("Mod",df_columns$section_type) &
+                                 df_columns$section_index==1 &
+                                 !grepl("^Calc",df_columns$section_name)&
+                                 !grepl("^Questionnaire",df_columns$section_name),
                                c("column","section_num", "section_index","section_name")]
 
     df_module_chkr$used<-sapply(df_module_chkr$column,function(col) {
@@ -100,12 +104,12 @@ calc_modules_by_geog<-function(year,geog,version=0) {
 
 }
 
-save_module_stats<-function(year) {
+save_module_stats<-function(year, verbose = FALSE) {
   require(dplyr)
 
   df_responses<-responses(year = year)
 
-  df_mods<-modules_used(year = year)
+  df_mods<-modules_used(year = year, verbose = verbose)
 
 
   df_modules<-dplyr::left_join(df_mods,df_responses,by = c("year", "geog", "version"))

@@ -224,7 +224,7 @@ init.patterns <- function() {
   ##
   ##    State-Added Questions (SAQ)
 
-  append.pattern("saq_raw_folder","{brfss_annual_raw_data_folder}/saq/") %>%
+  append.pattern("saq_raw_folder","{brfss_annual_raw_data_folder}saq/") %>%
     append.pattern("saq_raw_file","[GEOG][YR]_layout_SAQ.csv")  %>%
     append.pattern("saq_raw_values_file","[GEOG][YR]_values_SAQ.csv")  %>%
     append.pattern("saq_raw_path","{saq_raw_folder}{saq_raw_file}")%>%

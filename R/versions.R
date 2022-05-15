@@ -55,7 +55,7 @@ highest_version<-function(year=NULL, ...) {
   max(vers)
 }
 
-calc_responses<-function(year,geogs,versions, ...) {
+calc_responses<-function(year,geogs,versions, verbose = FALSE, ...) {
 
   if(missing(versions)) versions <- 0:highest_version(year)
 
@@ -70,9 +70,9 @@ calc_responses<-function(year,geogs,versions, ...) {
   invisible(
     sapply(geogs,function(geog){
       sapply(versions,function(version){
-        browser()
+        if(verbose) cat(paste0(" versions ... trying ", geog, "_V",version,"\n"))
         if(brfss_version_exists(year,geog,version)) {
-
+          browser()
           df_resp_cnts <- brfss_data(year,geog,version)
           df_add <- data.frame(year = year,geog = geog, version = version,
                                responses= nrow(df_resp_cnts))
@@ -129,6 +129,19 @@ responses_by_geog<-function(year,geog,version=0) {
 }
 
 
+#' Save Response Statistics
+#'
+#' Calculate the number of responses for each version by geography
+#'
+#' @param year integer - year of interest
+#' @param ... other parameters
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' save_response_stats(2018)
+#' }
 save_response_stats<-function(year, ...) {
   require(dplyr)
 

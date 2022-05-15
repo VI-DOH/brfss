@@ -4,12 +4,10 @@
 \alias{get.merged.layout}
 \title{Get Merged Layout}
 \usage{
-get.merged.layout(year = NULL, ...)
+get.merged.layout(year = NULL)
 }
 \arguments{
 \item{year}{integer - year of interest}
-
-\item{...}{other arguments to be passed to apply.pattern()}
 }
 \value{
 data frame with layout data

@@ -20,6 +20,10 @@ brfss_data_path(
 
 \item{version}{integer - survey version (0 = main)}
 
+\item{extent}{character -'local' or 'national'}
+
+\item{source}{character - data source ('ascii' or 'sas')}
+
 \item{rw}{character - read/write}
 }
 \value{

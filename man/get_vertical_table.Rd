@@ -19,6 +19,8 @@ get_vertical_table(
 )
 }
 \arguments{
+\item{df}{data.frame data of interest}
+
 \item{...}{}
 }
 \value{

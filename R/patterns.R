@@ -413,8 +413,9 @@ eval_pattern_cond <- function(expr_in) {
 #' @export
 #'
 #' @examples
-#'
+#'\dontrun{
 #' try.patterns("codebook", YEAR = 2018, GEOG = "MT", VERS = 0, EXT = 'local')
+#'}
 #'
 try.patterns <- function(names = ".*", ...) {
   #
@@ -438,14 +439,15 @@ try.patterns <- function(names = ".*", ...) {
 #' Pattern Requirements
 #'
 #' Get the parameter requirements for naming pattern(s).
-#' @param names
+#' @param pattern
 #'
 #' @return data frame - pattern name and arguments required for the named patterns
 #' @export
 #'
 #' @examples
-#'
+#'\dontrun{
 #' pattern.requirements("codebook")
+#' }
 #'
 pattern.requirements <- function(pattern = ".*") {
   df_pats<- get.patterns(pattern)

@@ -64,8 +64,8 @@ ascii_process_year <- function(year = NULL, download = TRUE, codebook = TRUE, sa
 
   if(split) split_geogs(year=year, source = 'ascii', factorize = factorize, ...)
 
-  save_response_stats(year = year)
-  save_module_stats(year = year)
+  save_response_stats(year = year, verbose = verbose)
+  save_module_stats(year = year, verbose = verbose)
 
   invisible()
 
