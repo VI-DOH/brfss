@@ -21,6 +21,16 @@ get_vertical_table(
 \arguments{
 \item{df}{data.frame data of interest}
 
+\item{coi}{character - column of interest}
+
+\item{binary}{logical - only Yes/No}
+
+\item{num_vals}{integer: values from column in the numerator}
+
+\item{den_vals}{integer: values from column in the denominator}
+
+\item{subsets}{character: names of column to subset data by}
+
 \item{...}{}
 }
 \value{

@@ -72,11 +72,17 @@ calc_responses<-function(year,geogs,versions, verbose = FALSE, ...) {
       sapply(versions,function(version){
         if(verbose) cat(paste0(" versions ... trying ", geog, "_V",version,"\n"))
         if(brfss_version_exists(year,geog,version)) {
-          browser()
-          df_resp_cnts <- brfss_data(year,geog,version)
-          df_add <- data.frame(year = year,geog = geog, version = version,
-                               responses= nrow(df_resp_cnts))
-          df0<<-rbind(df0, df_add)
+
+          id <- geog_id(geog)
+
+          df_resp_cnts <- brfss_data(year,geog,version) %>%
+            filter(`_STATE` == id)
+
+          if(nrow(df_resp_cnts)>0) {
+            df_add <- data.frame(year = year,geog = geog, version = version,
+                                 responses= nrow(df_resp_cnts))
+            df0<<-rbind(df0, df_add)
+          }
 
         }
       })

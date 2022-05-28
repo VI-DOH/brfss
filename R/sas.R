@@ -477,7 +477,7 @@ cleave.geogs.sas<-function(year = NULL,
 
   if(versions) ver<-c(ver,1:vermax)
 
-  df_geogs <- get.geogs.all()
+  df_geogs <- get_geogs_all()
 
   sapply(ver,function(version) {
 

@@ -18,7 +18,7 @@ modules_used<-function(year = NULL, geogs = NULL, verbose = FALSE) {
 
   vers_max<-highest_version(year)
 
-  if(is.null(geogs)) geogs<-get.geogs.all() %>% pull(Abbrev)
+  if(is.null(geogs)) geogs<-get_geogs_all() %>% pull(Abbrev)
 
   df<-data.frame()
 
@@ -49,60 +49,65 @@ calc_modules_by_geog<-function(year,geog,version=0) {
     ##
     ##    get the data for that year/geog/version
 
-    df0<-brfss_data(year,geog,version)
+    id <- geog_id(geog)
+
+    df0<-brfss_data(year,geog,version) %>%
+      filter(`_STATE` == id)
+
+    if(nrow(df0)>0) {
 
 
-    df_columns<-data.frame()
-    invisible(
-      sapply(colnames(df0), function(col) {
-        ##
-        ##    get the attributes
+      df_columns<-data.frame()
+      invisible(
+        sapply(colnames(df0), function(col) {
+          ##
+          ##    get the attributes
 
-        att<-attributes(df0[[col]])
+          att<-attributes(df0[[col]])
 
-        if(length(att)==6) {
-          section_type<-att["section_type"]
-          section_num<-att["section_num"]
-          section_index<-att["section_index"]
-          section_name<-att["section_name"]
-          label<-att["label"]
+          if(length(att)==6) {
+            section_type<-att["section_type"]
+            section_num<-att["section_num"]
+            section_index<-att["section_index"]
+            section_name<-att["section_name"]
+            label<-att["label"]
 
-          df<-data.frame(column=col,
-                         section_type,
-                         section_num,
-                         section_index,
-                         section_name,
-                         label)
+            df<-data.frame(column=col,
+                           section_type,
+                           section_num,
+                           section_index,
+                           section_name,
+                           label)
 
-          df_columns<<-rbind(df_columns,df)
-        }
+            df_columns<<-rbind(df_columns,df)
+          }
+        })
+      )
+
+      df_module_chkr<-df_columns[grepl("Mod",df_columns$section_type) &
+                                   df_columns$section_index==1 &
+                                   !grepl("^Calc",df_columns$section_name)&
+                                   !grepl("^Questionnaire",df_columns$section_name),
+                                 c("column","section_num", "section_index","section_name")]
+
+      df_module_chkr$used<-sapply(df_module_chkr$column,function(col) {
+        nrow(table(df0[[col]]))>0
       })
-    )
 
-    df_module_chkr<-df_columns[grepl("Mod",df_columns$section_type) &
-                                 df_columns$section_index==1 &
-                                 !grepl("^Calc",df_columns$section_name)&
-                                 !grepl("^Questionnaire",df_columns$section_name),
-                               c("column","section_num", "section_index","section_name")]
+      df_module_chkr$geog<-geog
+      df_module_chkr$year<-year
+      df_module_chkr$version<-version
 
-    df_module_chkr$used<-sapply(df_module_chkr$column,function(col) {
-      nrow(table(df0[[col]]))>0
-    })
-
-    df_module_chkr$geog<-geog
-    df_module_chkr$year<-year
-    df_module_chkr$version<-version
-
-    return(df_module_chkr[df_module_chkr$used,c("year","version","geog","section_num","section_name")])
-  } else {
-    return(data.frame(year=integer(0),
-                      version=integer(0),
-                      geog=character(0),
-                      section_num=character(0),
-                      section_name=character(0)))
+      return(df_module_chkr[df_module_chkr$used,c("year","version","geog","section_num","section_name")])
+    }
   }
-
+  return(data.frame(year=integer(0),
+                    version=integer(0),
+                    geog=character(0),
+                    section_num=character(0),
+                    section_name=character(0)))
 }
+
 
 save_module_stats<-function(year, verbose = FALSE) {
   require(dplyr)

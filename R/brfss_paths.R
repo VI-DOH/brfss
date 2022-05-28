@@ -179,22 +179,23 @@ brfss_data_path <- function(year = NULL, geog = NULL, version = 0, extent = NULL
 
   year <- get.year(year)
 
-  my_geog <- get.geog(geog)
-  extent <- get.extent(extent)
+  if(geog == "*") {
+    extent <- "national"
+    geog = NULL
+  } else {
+    geog <- get.geog(geog)
+    extent = "local"
+  }
   source <- get.source(source)
 
   ## added && FALSE to force all files to be in brfss_geog_folder
 
-  #if(str_something(my_geog) &&  (geog == my_geog) || TRUE ) {
     fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year, GEOG = geog, EXT = extent, SRC = source )
-#  } else {
-#    fldr <- apply.pattern("brfss_geog_folder",  YEAR = year, GEOG = geog)
-#  }
+
 
   if(!dir.exists(fldr) && write) dir.create(fldr, recursive = TRUE)
 
 
-#    file <- apply.pattern("brfss_geog_file",  YEAR = year, GEOG = geog, VERS = version)
     file <- apply.pattern("brfss_annual_data_file",  YEAR = year, GEOG = geog, VERS = version, EXT = extent, SRC = source)
 
   path <- paste0(fldr,file)

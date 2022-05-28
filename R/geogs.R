@@ -5,16 +5,43 @@ save.geogs <- function(geogs) {
   save(geogs, file = file)
 }
 
-get.geogs.all <- function() {
+#' Get All Geographies
+#'
+#' Get the data frame containing all geographies
+#'
+#' @return data frame
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get_geogs_all()
+#' }
+get_geogs_all <- function() {
 
   data("geogs", package="brfss")
   geogs
 }
 
 
-geog.name <- function(geog) {
+#' Get Geography Name
+#'
+#' Get the name variable for a geography based on the numeric id or the abbreviation.
+#'
+#' @param geog integer or character - either the 2-character geography abbreviation or the FIPS ID
+#'
+#' @return character name of geography (e.g "Montana" or "Virgin Islands")
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # For Alabama  ...
+#' geog_name(1)
+#' # or
+#' geog_name("AL")
+#' }
+geog_name <- function(geog) {
 
-  geogs <- get.geogs.all()
+  geogs <- get_geogs_all()
 
   if(is.character(geog) && nchar(geog)==2) {
     geog <- geogs %>%
@@ -31,9 +58,26 @@ geog.name <- function(geog) {
   return (geog)
 }
 
-geog.abb <- function(geog) {
+#' Get Geography Abbreviation
+#'
+#' Get the abbreviation variable for a geography based on the numeric id or the full name
+#'
+#' @param geog integer or character - either the full geography name or the FIPS ID
+#'
+#' @return character abbreviation of geography (e.g "MT" or "VI")
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # For Montana  ...
+#' geog_abb(30)
+#' # or
+#' geog_abb("Montana")
+#' }
+#'
+geog_abb <- function(geog) {
 
-  geogs <- get.geogs.all()
+  geogs <- get_geogs_all()
 
   if(is.character(geog) && nchar(geog)!=2) {
     geog <- geogs %>%
@@ -50,9 +94,26 @@ geog.abb <- function(geog) {
   return (geog)
 }
 
-geog.id <- function(geog) {
+#' Get Geography Numeric (FIPS) ID
+#'
+#' Get the id variable for a geography based on the full name or the abbreviation for the geography.
+#'
+#' @param geog character - either the full geography name or the 2-character abbreviation
+#'
+#' @return integer - id of geography
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # For Montana  ...
+#' geog_id("MT")
+#' # or
+#' geog_id("Montana")
+#' }
+#'
+geog_id <- function(geog) {
 
-  geogs <- get.geogs.all()
+  geogs <- get_geogs_all()
 
   if(is.character(geog) && nchar(geog)!=2) {
     geog <- geogs %>%
@@ -66,5 +127,5 @@ geog.id <- function(geog) {
 
   }
 
-  return (geog)
+  return (as.integer(geog))
 }
