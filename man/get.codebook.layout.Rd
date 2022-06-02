@@ -4,7 +4,7 @@
 \alias{get.codebook.layout}
 \title{Get layout created from the codebook}
 \usage{
-get.codebook.layout(year = NULL)
+get.codebook.layout(year = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest}

@@ -55,70 +55,116 @@ highest_version<-function(year=NULL, ...) {
   max(vers)
 }
 
-calc_responses<-function(year,geogs,versions, verbose = FALSE, ...) {
+calc_responses <- function(year = NULL, extent = "national", source = NULL, ...) {
 
-  if(missing(versions)) versions <- 0:highest_version(year)
+  year <- get.year(year)
+  extent <- get.extent(extent)
+  source <- get.source(source)
 
-  if(missing(geogs)) {
-    geogs<-geog_abbs()
-  } else {
+  df_resp <- data.frame()
 
-    if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
-  }
+  sapply(0:highest_version(year), function(version){
+    if(extent == "national") {
+      df_brfss_vers <- brfss_data(year = year, geog = "*", extent="national", version = version)
 
-  df0<-data.frame()
-  invisible(
-    sapply(geogs,function(geog){
-      sapply(versions,function(version){
-        if(verbose) cat(paste0(" versions ... trying ", geog, "_V",version,"\n"))
-        if(brfss_version_exists(year,geog,version)) {
+    } else {
 
-          id <- geog_id(geog)
+      fldr <- apply.pattern("brfss_geog_folder", YEAR = year)
 
-          df_resp_cnts <- brfss_data(year,geog,version) %>%
-            filter(`_STATE` == id)
+      geogs <- list.files(fldr)
 
-          if(nrow(df_resp_cnts)>0) {
-            df_add <- data.frame(year = year,geog = geog, version = version,
-                                 responses= nrow(df_resp_cnts))
-            df0<<-rbind(df0, df_add)
-          }
+      df_brfss_vers <- data.frame()
 
-        }
+      sapply(geogs, function(geog) {
+
+        df <- brfss_data(year = year, geog = geog, extent="local", version = version)
+
+        df_brfss_vers <<- df_brfss_vers %>% bind_rows(df)
       })
-    } )
-  )
-  df0
+
+    }
+
+    if(nrow(df_brfss_vers) > 0) {
+      df_resp <<- df_resp %>% bind_rows(df_brfss_vers  %>%
+                                          group_by(`_STATE`) %>% summarise(n=n()) %>%
+                                          mutate(geog = geog_abb(`_STATE`))%>%
+                                          mutate(year = {{year}}) %>%
+                                          mutate(version = version) %>%
+                                          rename(responses = n) %>%
+                                          select(year,geog,version,responses) %>%
+                                          as.data.frame()
+      )
+    }
+
+
+  })
+  df_resp
 }
-calc_responses_SAVE<-function(year,geogs,versions, ...) {
 
-  if(missing(versions)) versions <- 0:highest_version(year)
-
-  if(missing(geogs)) {
-    geogs<-geog_abbs()
-  } else {
-
-    if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
-  }
-
-  df0<-data.frame()
-  invisible(
-    sapply(geogs,function(geog){
-      sapply(versions,function(version){
-        browser()
-        if(brfss_version_exists(year,geog,version)) {
-
-          df_resp_cnts <- brfss_data(year,geog,version)
-          df_add <- data.frame(year = year,geog = geog, version = version,
-                               responses= nrow(df_resp_cnts))
-          df0<<-rbind(df0, df_add)
-
-        }
-      })
-    } )
-  )
-  df0
-}
+# calc_responses_SAVENEW<-function(year,geogs,versions, verbose = FALSE, ...) {
+#
+#   if(missing(versions)) versions <- 0:highest_version(year)
+#
+#   if(missing(geogs)) {
+#     geogs<-geog_abbs()
+#   } else {
+#
+#     if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
+#   }
+#
+#   df0<-data.frame()
+#   invisible(
+#     sapply(geogs,function(geog){
+#       sapply(versions,function(version){
+#         if(verbose) cat(paste0(" versions ... trying ", geog, "_V",version,"\n"))
+#         if(brfss_version_exists(year,geog,version)) {
+#
+#           id <- geog_id(geog)
+#
+#           df_resp_cnts <- brfss_data(year,geog,version) %>%
+#             filter(`_STATE` == id)
+#
+#           if(nrow(df_resp_cnts)>0) {
+#             df_add <- data.frame(year = year,geog = geog, version = version,
+#                                  responses= nrow(df_resp_cnts))
+#             df0<<-rbind(df0, df_add)
+#           }
+#
+#         }
+#       })
+#     } )
+#   )
+#   df0
+# }
+# calc_responses_SAVE<-function(year,geogs,versions, ...) {
+#
+#   if(missing(versions)) versions <- 0:highest_version(year)
+#
+#   if(missing(geogs)) {
+#     geogs<-geog_abbs()
+#   } else {
+#
+#     if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
+#   }
+#
+#   df0<-data.frame()
+#   invisible(
+#     sapply(geogs,function(geog){
+#       sapply(versions,function(version){
+#         browser()
+#         if(brfss_version_exists(year,geog,version)) {
+#
+#           df_resp_cnts <- brfss_data(year,geog,version)
+#           df_add <- data.frame(year = year,geog = geog, version = version,
+#                                responses= nrow(df_resp_cnts))
+#           df0<<-rbind(df0, df_add)
+#
+#         }
+#       })
+#     } )
+#   )
+#   df0
+# }
 
 responses_by_geog<-function(year,geog,version=0) {
 

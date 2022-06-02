@@ -389,7 +389,7 @@ deduped_layout <- function(df) {
 #' @export
 #'
 
-get.codebook.layout <- function(year = NULL) {
+get.codebook.layout <- function(year = NULL, ...) {
 
   year <- get.year(year)
 

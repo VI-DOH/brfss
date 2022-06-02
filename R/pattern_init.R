@@ -82,7 +82,8 @@ init.patterns <- function() {
                           "([EXT] == 'national';([SRC] == 'sas';sas_[YEAR])([SRC] == 'ascii';ascii_[YEAR]))",
                           "([VERS] > 0;_V[VERS])",
                           ".rda"),
-                   desc = "File name for annual processed BRFSS data (main survey) from specific geographies") %>%
+                   desc = paste0("File name for annual processed BRFSS data (main survey),
+                   from specific geographies")) %>%
 
     append.pattern("brfss_annual_data_path",
                    "{brfss_annual_data_folder}{brfss_annual_data_file}",
@@ -91,12 +92,9 @@ init.patterns <- function() {
 
     append.pattern("annual_metadata_folder","{brfss_annual_data_folder}metadata/",
                    desc ="Standard location of user created metadata") %>%
-#
-#     append.pattern("brfss_geog_file","[GEOG]_[YEAR]([VERS] > 0;_V[VERS]).rda",
-#                    desc = "File name for annual processed BRFSS data (main survey) from specific geographies") %>%
-#
-#     append.pattern("brfss_geog_path","{brfss_geog_folder}{brfss_geog_file}",
-#                    desc = "Full path for annual processed BRFSS data (main survey) from specific geographies") %>%
+
+    append.pattern("brfss_geog_folder","{brfss_data_folder}[YEAR]/geog/",
+                   desc = "Folder holding data for specific geographies") %>%
 
     append.pattern("brfss_data_df","df_[GEOG]([VERS] > 0;_V[VERS])_[YEAR]",
                    desc = "Consistent name for BRFSS data object (data.frame) stored and retrieved") %>%

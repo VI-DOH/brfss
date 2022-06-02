@@ -217,3 +217,59 @@ get.layout <- function(year = NULL, ...) {
 
   df_layout
 }
+
+
+#'  Section of BRFSS Column
+#'
+#'  Gets the section for a BRFSS column from the layout. Useful for figuring out if a
+#'  column of interest is from the core or from a module.
+#'
+#' @param year integer: year of interest
+#' @param col character: column of interest
+#'
+#' @return character
+#' @export
+#'
+#' @examples
+section_type <- function(year = NULL,col) {
+
+  get.layout(year)   %>%
+    filter(col_name == {{col}}) %>%
+    pull(sect_type)
+
+}
+
+#' Core Column?
+#'
+#' @param year integer: year of interest
+#' @param col character: column of interest
+#'
+#' @return logical
+#' @export
+#'
+#' @examples
+is_core <- function(year = NULL,col) {
+
+  year <- get.year(year)
+
+  typ <- section_type(year,col)
+
+  (typ == "Core") && (length(typ) == 1)
+}
+
+#' Module Column?
+#'
+#' @param year integer: year of interest
+#' @param col character: column of interest
+#'
+#' @return logical
+#' @export
+#'
+#' @examples
+is_module <- function(year = NULL,col) {
+
+  typ <- section_type(year,col)
+
+  (typ == "Module") && (length(typ) == 1)
+}
+

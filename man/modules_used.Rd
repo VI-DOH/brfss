@@ -4,7 +4,7 @@
 \alias{modules_used}
 \title{Modules Used by Geography}
 \usage{
-modules_used(year = NULL, geogs = NULL, verbose = FALSE)
+modules_used(year = NULL, extent = NULL, source = NULL, ...)
 }
 \arguments{
 \item{year}{integer - year of interest}
@@ -21,5 +21,6 @@ Modules Used by Geography
 \dontrun{
 modules_used(2020, "MT")
 }
+
 
 }

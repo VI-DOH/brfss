@@ -4,7 +4,7 @@
 \alias{geog_abb}
 \title{Get Geography Abbreviation}
 \usage{
-geog_abb(geog)
+geog_abb(geogs)
 }
 \arguments{
 \item{geog}{integer or character - either the full geography name or the FIPS ID}

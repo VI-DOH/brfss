@@ -282,5 +282,88 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
   }
 
   df_new$num<-num
-  df_new[,c("measure",colnames(df_new)[1:(1+nsubs)],"total","num","mean","se","conf","CI_lower","CI_upper")]
+  df_new[,c("measure",colnames(df_new)[1:(1+nsubs)],
+            "total","num","mean","se","conf","CI_lower","CI_upper")]
 }
+
+
+#' Simple Percents and Confidence Intervals
+#'
+#' Get the percent and CI for a column of data
+#'
+#' @param df_brfss data.frame: the data frame with the columns nedded
+#' @param year integer: year of interest
+#' @param geog character: geography of interest
+#' @param coi character: column of interest
+#' @param wt character: column name of weights
+#' @param strata character: column name of strata
+#' @param exclude character: pattern for excludes
+#'
+#' @return Object of class "svystat"
+#' @export
+#'
+#' @examples
+simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL,
+                         coi,
+                         wt = "_llcpwt",
+                         strata  = "_ststr",
+                         exclude = c("Don.t|Refuse")) {
+
+  require(dplyr)
+  require(magrittr)
+  require(survey)
+  require(tibble)
+
+  browser()
+  if(is.null(df_brfss)) {
+    year <- get.year(year)
+    geog <- get.year(geog)
+    df_brfss <- brfss_data(year,geog)
+  }
+
+  ##
+  ## all column names to lower case
+  ##
+
+  names(df_brfss) %<>% tolower
+  coi <- tolower(coi)
+  wt <- tolower(wt)
+  strata <-  tolower(strata)
+
+  df_eval <- df_brfss %>%
+    select({{coi}},{{wt}},{{strata}}) %>%
+    rename(coi = {{coi}})%>%
+    rename(weights = {{wt}}) %>%
+    rename(strata = {{strata}}) %>%
+    mutate(coi = replace(coi,grepl(exclude,coi),NA)) %>%
+    #  {.[grepl(exclude,.$coi),"coi"] <- NA;.} %>%
+    mutate(coi = droplevels(coi))
+
+  df_eval %>%
+    filter(!is.na(coi)) %>%
+    group_by(coi) %>% summarise(n=n(),wt = sum(weights)) %>%
+    mutate(pct = round(n/sum(n)*100,2)) %>%
+    mutate(pct_wt = wt/sum(wt)*100)
+
+  options(survey.lonely.psu = "adjust")
+
+  # Create survey design
+  brfssdsgn <- svydesign(
+    id=~1,
+    strata = ~strata,
+    weights = ~weights,
+    data = df_eval)
+
+
+  svymean(~factor(coi),
+          brfssdsgn,
+          na.rm = TRUE) %>%
+    as.data.frame() %>%
+    mutate(Response = gsub("^factor.*?[)]","",Response)) %>%
+    mutate(mean = round(mean*100,2)) %>%
+    mutate(SE = round(SE*100,3)) %>%
+    mutate(CI_L = mean - 1.96*SE) %>%
+    mutate(CI_U = mean + 1.96*SE)
+
+}
+

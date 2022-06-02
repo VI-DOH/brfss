@@ -39,23 +39,36 @@ get_geogs_all <- function() {
 #' # or
 #' geog_name("AL")
 #' }
-geog_name <- function(geog) {
+geog_name <- function(geogs) {
 
-  geogs <- get_geogs_all()
+  df_geogs <- get_geogs_all() %>%
+    mutate(Id = as.integer(Id))
 
-  if(is.character(geog) && nchar(geog)==2) {
-    geog <- geogs %>%
-      filter(Abbrev == {{geog}}) %>%
+  if(is.factor(geogs)) {
+    geogs <- as.character(geogs)
+  } else  if(orrr::is.integer_like(geogs)) {
+    geogs <- as.integer(geogs)
+  }
+
+
+  df <- data.frame(geog = geogs)
+
+
+  if(is.character(geogs[1]) && nchar(geogs[1])==2) {
+    geogs <- df %>%
+      left_join(df_geogs, by=c("geog" = "Abbrev")) %>%
       pull(Geog)
 
-  } else if(is.numeric(geog)) {
-    geog <- geogs %>%
-      filter(Id == {{geog}}) %>%
+  } else if(is.numeric(geogs[1])) {
+    geogs <- df %>%
+      left_join(df_geogs, by=c("geog" = "Id")) %>%
       pull(Geog)
 
   }
 
-  return (geog)
+  geogs
+
+
 }
 
 #' Get Geography Abbreviation
@@ -75,23 +88,35 @@ geog_name <- function(geog) {
 #' geog_abb("Montana")
 #' }
 #'
-geog_abb <- function(geog) {
+geog_abb <- function(geogs) {
 
-  geogs <- get_geogs_all()
+  df_geogs <- get_geogs_all() %>%
+    mutate(Id = as.integer(Id))
 
-  if(is.character(geog) && nchar(geog)!=2) {
-    geog <- geogs %>%
-      filter(Geog == {{geog}}) %>%
+  if(is.factor(geogs)) {
+    geogs <- as.character(geogs)
+  } else  if(orrr::is.integer_like(geogs)) {
+    geogs <- as.integer(geogs)
+  }
+
+  df <- data.frame(geog = geogs)
+
+
+  if(is.character(geogs[1]) && nchar(geogs[1])!=2) {
+    geogs <- df %>%
+      left_join(df_geogs, by=c("geog" = "Geog")) %>%
       pull(Abbrev)
 
-  } else if(is.numeric(geog)) {
-    geog <- geogs %>%
-      filter(Id == {{geog}}) %>%
+  } else if(is.numeric(geogs[1])) {
+    geogs <- df %>%
+      left_join(df_geogs, by=c("geog" = "Id")) %>%
       pull(Abbrev)
 
   }
 
-  return (geog)
+  geogs
+
+
 }
 
 #' Get Geography Numeric (FIPS) ID
@@ -111,21 +136,34 @@ geog_abb <- function(geog) {
 #' geog_id("Montana")
 #' }
 #'
-geog_id <- function(geog) {
+geog_id <- function(geogs) {
 
-  geogs <- get_geogs_all()
+  df_geogs <- get_geogs_all() %>%
+    mutate(Id = as.integer(Id))
 
-  if(is.character(geog) && nchar(geog)!=2) {
-    geog <- geogs %>%
-      filter(Geog == {{geog}}) %>%
+  if(is.factor(geogs)) {
+    geogs <- as.character(geogs)
+  } else  if(orrr::is.integer_like(geogs)) {
+    geogs <- as.integer(geogs)
+  }
+
+
+  df <- data.frame(geog = geogs)
+
+
+  if(is.character(geogs[1]) && nchar(geogs[1])!=2) {
+    geogs <- df %>%
+      left_join(df_geogs, by=c("geog" = "Geog")) %>%
       pull(Id)
 
-  } else if(is.character(geog)) {
-    geog <- geogs %>%
-      filter(Abbrev == {{geog}}) %>%
+  } else if(is.character(geogs[1])) {
+    geogs <- df %>%
+      left_join(df_geogs, by=c("geog" = "Abbrev")) %>%
       pull(Id)
 
   }
 
-  return (as.integer(geog))
+  as.integer(geogs)
+
 }
+
