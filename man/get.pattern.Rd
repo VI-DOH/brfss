@@ -4,10 +4,12 @@
 \alias{get.pattern}
 \title{Get File Pattern}
 \usage{
-get.pattern(name)
+get.pattern(name, expand = FALSE)
 }
 \arguments{
 \item{name}{character - name of pattern}
+
+\item{expand}{logical - convert sub patterns}
 }
 \value{
 character - the requested pattern

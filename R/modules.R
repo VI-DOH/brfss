@@ -40,7 +40,7 @@ modules_used <- function(year = NULL, extent = NULL, source = NULL, ...) {
 
     invisible(
       mapply(function(coi, mod_num, module) {
-
+        # if(ver == 1 && mod_num == 2) browser()
         df <- df_brfss %>%
           rename(coi = {{coi}}) %>%
           select(geog,coi) %>%
@@ -281,5 +281,5 @@ module_geogs<-function(year = NULL,modules,versions=FALSE,reduce=TRUE) {
 #' }
 module_data<-function(year) {
 
-  orrr::get.rdata(orrr::dir.project(c("data",year,paste0("modules_",year,".RData")),slash = F))
+  orrr::get.rdata(orrr::dir.project(c("data",year,paste0("modules_",year,".rda")),slash = F))
 }

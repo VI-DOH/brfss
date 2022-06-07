@@ -21,8 +21,8 @@ build_saq_layout<-function(year=NULL, geog=NULL) {
   year <- get.year(year)
   geog <- get.geog(geog)
 
-  saq_filename_csv <- apply.pattern("saq_raw_path", YEAR = year, GEOG = geog)
-  saq_layout <- apply.pattern("saq_layout_path", YEAR = year, GEOG = geog)
+  saq_filename_csv <- apply.pattern("saq_raw_path", YEAR = year, GEOG = geog, EXT = "local")
+  saq_layout <- apply.pattern("saq_layout_path", YEAR = year, GEOG = geog, EXT = "local")
 
   df_layout_saq<-read.csv(saq_filename_csv)
 
@@ -132,8 +132,8 @@ build_saq_values<-function(year=NULL, geog=NULL) {
   year <- get.year(year)
   geog <- get.geog(geog)
 
-  saq_filename_csv <- apply.pattern("saq_raw_values_path", YEAR = year, GEOG = geog)
-  saq_values_path <- apply.pattern("saq_values_path", YEAR = year, GEOG = geog)
+  saq_filename_csv <- apply.pattern("saq_raw_values_path", YEAR = year, GEOG = geog, EXT = "local")
+  saq_values_path <- apply.pattern("saq_values_path", YEAR = year, GEOG = geog, EXT = "local")
 
   df_values_saq<-read.csv(saq_filename_csv, check.names = FALSE, fileEncoding="UTF-8-BOM") %>%
     mutate(value = as.character(value))

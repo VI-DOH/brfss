@@ -9,8 +9,8 @@ simple_stats(
   year = NULL,
   geog = NULL,
   coi,
-  wt = "_llcpwt",
-  strata = "_ststr",
+  wt = "_LLCPWT",
+  strata = "_STSTR",
   exclude = c("Don.t|Refuse")
 )
 }

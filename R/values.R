@@ -21,13 +21,14 @@ split_it <- function(str, sep = "=") {
 #' @export
 #'
 #' @examples
-save_codebook_values <- function(file = NULL, year = NULL, ...) {
+save_codebook_values <- function(file = NULL, year = NULL, geog = geog) {
 
   year <- get.year(year)
+  geog <- get.geog(geog)
 
-  df_values_cb <- parse_codebook_values(file = file, year = year, ...)
+  df_values_cb <- parse_codebook_values(file = file, year = year, geog = geog)
 
-  fname <- apply.pattern("codebook_values_path", YEAR=year, ...)
+  fname <- apply.pattern("codebook_values_path", YEAR=year, GEOG = geog)
 
   save(df_values_cb, file = fname)
 }
@@ -94,11 +95,11 @@ stretch_values <- function(lines) {
 #' @export
 #'
 #' @examples
-parse_codebook_values <- function(file=NULL, year = NULL, ...) {
+parse_codebook_values <- function(file=NULL, year = NULL, geog = NULL) {
     require(dplyr)
 
     year <- get.year(year)
-    geog <- get.geog()
+    geog <- get.geog(geog)
 
     lines <- read_codebook(file=file, year = year)
     if(is.null(lines)) return(NULL)

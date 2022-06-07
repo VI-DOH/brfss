@@ -11,11 +11,16 @@
 #' \dontrun{
 #' process_codebook(2020)
 #' }
-process_codebook <- function(year = NULL, ...) {
+process_codebook <- function(year = NULL, geog = NULL, extent = NULL) {
 
-  download_codebook(year = year, ...)
-  save_codebook_layout(year = year, ...)
-  save_codebook_values(year = year, ...)
+  year = get.year(year)
+  geog = get.geog(geog)
+  extent = get.extent(extent)
+
+  if(extent == "national") download_codebook(year = year, geog = geog)
+
+  save_codebook_layout(year = year, geog = geog)
+  save_codebook_values(year = year, geog = geog)
 }
 
 #' Download Codebook
@@ -31,11 +36,13 @@ process_codebook <- function(year = NULL, ...) {
 #' \dontrun{
 #' download_codebook(2020)
 #' }
-download_codebook <- function(year = NULL, ...) {
+download_codebook <- function(year = NULL, geog = NULL, extent = NULL) {
 
   ## if year is not provided then get the year from the my_brfss object
   ##    if year is provided (is not null), get.year() will simply return that value
   year <- get.year(year)
+  geog <- get.geog(geog)
+  extent <- get.extent(extent)
 
   ##  URL patterns are stored under the group  "codebook_downloads"
 
@@ -45,7 +52,7 @@ download_codebook <- function(year = NULL, ...) {
   ##    GEOG is not needed unless the user changes the folder pattern
   ##    but is included here in case
 
-  fldrout <- apply.pattern("codebook_folder",YEAR = year, ...)
+  fldrout <- apply.pattern("codebook_folder",YEAR = year, GEOG = geog, EXT = extent)
   ext <- apply.pattern("codebook_ext")
 
   ## create the folder/dir if it does not exist
@@ -64,7 +71,7 @@ download_codebook <- function(year = NULL, ...) {
 
       ext <- gsub(".*([.].*)", "\\1", url)
 
-      fileout <- apply.pattern("codebook_file",YEAR = year, ...)
+      fileout <- apply.pattern("codebook_file",YEAR = year, GEOG = geog, EXT = extent)
       fileout <- paste0(fileout,ext)
       destfile <- paste0(fldrout,fileout)
 
@@ -218,11 +225,11 @@ set_codebook_ext <- function(ext) {
 ##
 ##    layout from codebook
 ##
-save_codebook_layout <- function(file=NULL, year = NULL, ...) {
+save_codebook_layout <- function(file=NULL, year = NULL, geog = NULL) {
   require(dplyr)
 
   year <- get.year(year)
-  geog <- get.geog()
+  geog <- get.geog(geog)
 
   lines <- read_codebook(file=file, year = year)
   if(is.null(lines)) return(NULL)
@@ -328,8 +335,8 @@ save_codebook_layout <- function(file=NULL, year = NULL, ...) {
     relocate(field_size, start, end, col_name, sect_type, sect_num, section, label,
            question_num, var_type, question)
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, ...)
-  fil <- apply.pattern("codebook_layout_file", YEAR = year, ...)
+  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, GEOG = geog)
+  fil <- apply.pattern("codebook_layout_file", YEAR = year, GEOG = geog)
 
   file <- paste0(fldr,fil)
 

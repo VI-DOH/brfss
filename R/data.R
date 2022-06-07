@@ -9,7 +9,11 @@
 #' Common variables to use are YEAR and GEOG. If you pass YEAR to function that applies a pattern, the
 #' variable [YR] (2-digit) will be created internally. Year should be a 4-digit integer.
 #'
-#' There is a hierarchy built in so that one named pattern such as a folder can be inside another's pattern.
+#' There is a hierarchy built in so that one named pattern such as a folder can be
+#' inside another's pattern.
+#'
+#' There is also a logical component that allows different patterns to be used when different
+#' conditions are met (e.g. source is 'ascii' or 'sas')
 #'
 #' Examples ...
 #'

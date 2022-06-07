@@ -23,7 +23,7 @@ split_geogs(
 
 \item{main}{logical - process main XPT file}
 
-\item{versions}{logical - process versioned XPT file}
+\item{versions}{logical - process all versioned XPT/ASC files}
 
 \item{my_geog}{character - abbreviation for primary state/geography of interest (e. "MT")}
 
@@ -32,8 +32,9 @@ split_geogs(
 \item{verbose}{logical - provide details during processing}
 }
 \description{
-The main BRFSS  data file created when the file is downloaded and read has data
-for all geographies, whether the SAS (XPT) file or the ASCII (ASC) file. This function splits out the geographies of interest.
+The main BRFSS data file that is created when the downloaded file from the public CDC website
+is read has data for all geographies, whether the SAS (XPT) file or the ASCII (ASC) file.
+This function splits out the geographies of interest.
 }
 \examples{
 

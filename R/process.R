@@ -3,13 +3,14 @@ require(dplyr)
 
 #' Split BRFSS Data by Geography
 #'
-#' The main BRFSS  data file created when the file is downloaded and read has data
-#' for all geographies, whether the SAS (XPT) file or the ASCII (ASC) file. This function splits out the geographies of interest.
+#' The main BRFSS data file that is created when the downloaded file from the public CDC website
+#' is read has data for all geographies, whether the SAS (XPT) file or the ASCII (ASC) file.
+#' This function splits out the geographies of interest.
 #'
 #' @param year integer - year of interest
 #' @param source character - data source ('sas' or 'ascii')
 #' @param main logical - process main XPT file
-#' @param versions logical - process versioned XPT file
+#' @param versions logical - process all versioned XPT/ASC files
 #' @param my_geog character - abbreviation for primary state/geography of interest (e. "MT")
 #' @param other_geogs character - abbreviations for other states/geographies of interest (e. c("ID","WY"))
 #' @param verbose logical - provide details during processing
@@ -24,12 +25,15 @@ require(dplyr)
 #'
 split_geogs<-function(year = NULL, source = NULL,
                       main=TRUE, versions=TRUE, my_geog=NULL,
-                      other_geogs=NULL, factorize = FALSE, verbose=TRUE, ...) {
+                      other_geogs=NULL, factorize = FALSE, verbose=TRUE,
+                      geog = NULL, extent = NULL) {
 
   if(!(main || versions)) return(NULL)
 
   year <- get.year(year)
+  geog <- get.geog(geog)
   source <- get.source(source)
+  extent <- get.extent(extent)
 
   if(is.null(my_geog)) my_geog <- my.geog()
   if(is.null(other_geogs)) other_geogs <- my.other.geogs()
@@ -52,9 +56,11 @@ split_geogs<-function(year = NULL, source = NULL,
 
     if(source == 'sas') {
 
-      rdata_file <- apply.pattern("sas_data_path",YEAR = year, VERS = version, ...)
+      rdata_file <- apply.pattern("brfss_annual_data_path", YEAR = year, GEOG = geog,
+                                  VERS = version, EXT = extent, SRC = "sas")
     } else {
-      rdata_file <- apply.pattern("ascii_path", YEAR = year, VERS = version, ...)
+      rdata_file <- apply.pattern("brfss_annual_data_path", YEAR = year, GEOG = geog,
+                                  VERS = version, EXT = extent, SRC = "ascii")
     }
 
     df_brfss <- orrr::get.rdata(file = rdata_file)
@@ -122,6 +128,8 @@ split_geogs<-function(year = NULL, source = NULL,
 
 
 #' Process BRFSS Annual Data Files
+#'
+#'
 #' Use this function to process a single year of BRFSS data. This function sill download, unzip,
 #' and create a data frame with all data from the XPT file, as well as any other versions of the survey.
 #'
@@ -139,12 +147,15 @@ split_geogs<-function(year = NULL, source = NULL,
 #' @export
 #'
 
-process_year <- function(year = NULL, source = NULL, download=TRUE, layout = TRUE, convert=TRUE, codebook = TRUE,
-                         split = TRUE, factorize = TRUE, saq = FALSE, verbose=FALSE, geog = NULL, extent = NULL, ...) {
+process_year <- function(year = NULL, source = NULL, download=TRUE,
+                         layout = TRUE, convert=TRUE, codebook = TRUE,
+                         split = TRUE, factorize = TRUE, saq = FALSE,
+                         verbose=FALSE, geog = NULL, extent = NULL, ...) {
 
   source <- get.source(source)
   source<-match.arg(source,c("sas","ascii"))
 
+  year =  get.year(year)
   geog =  get.geog(geog)
   extent = get.extent(extent)
 
@@ -158,14 +169,15 @@ process_year <- function(year = NULL, source = NULL, download=TRUE, layout = TRU
 
   if(source == 'sas') {
 
-    sas_process_year(year = year, download=download, layout = layout, convert=convert, codebook = codebook,
-                     split = split, factorize = factorize, verbose=verbose, GEOG = geog, EXT = extent)
+    sas_process_year(year = year, download=download, layout = layout, convert=convert,
+                     codebook = codebook, split = split, factorize = factorize,
+                     verbose=verbose, geog = geog, extent = extent)
 
   } else {
 
     ascii_process_year(year = year, download=download, convert=convert, codebook = codebook,
                        split = split, factorize = factorize,  saq = saq,
-                       verbose=verbose, GEOG = geog, EXT = extent)
+                       verbose=verbose, geog = geog, extent = extent)
   }
 
 }

@@ -305,8 +305,8 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
 #' @examples
 simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL,
                          coi,
-                         wt = "_llcpwt",
-                         strata  = "_ststr",
+                         wt = "_LLCPWT",
+                         strata  = "_STSTR",
                          exclude = c("Don.t|Refuse")) {
 
   require(dplyr)
@@ -314,21 +314,41 @@ simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL,
   require(survey)
   require(tibble)
 
-  browser()
+  # if data frame not provided then get it from
   if(is.null(df_brfss)) {
     year <- get.year(year)
-    geog <- get.year(geog)
-    df_brfss <- brfss_data(year,geog)
+    geog <- get.geog(geog)
+    #df_brfss <- brfss_data(year,geog)
+    df_brfss <- coi_data(coi, year,geog,version = 0)
+
+    invisible(
+      sapply(1:highest_version(year),function(ver) {
+        df_brfss <<- df_brfss %>% bind_rows(coi_data(coi, year,geog,version = ver))
+      })
+    )
   }
+
+  voi <- df_brfss %>% pull(vers) %>% unique()
+
+  df_resp <- responses_by_geog(year,geog) %>%
+    filter(version %in% voi) %>%
+    mutate(pct = responses/sum(responses))
+
+  df_brfss <- df_brfss %>%
+    left_join(df_resp, by = c("vers" = "version")) %>%
+    mutate(FINAL_WT = `_LLCPWT` * pct) %>%
+    select(coi,FINAL_WT, `_STSTR`)
+
 
   ##
   ## all column names to lower case
   ##
 
-  names(df_brfss) %<>% tolower
-  coi <- tolower(coi)
-  wt <- tolower(wt)
-  strata <-  tolower(strata)
+  names(df_brfss) %<>% toupper()
+  coi <- toupper(coi)
+  wt <- toupper(wt)
+  strata <-  toupper(strata)
+
 
   df_eval <- df_brfss %>%
     select({{coi}},{{wt}},{{strata}}) %>%
@@ -339,11 +359,11 @@ simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL,
     #  {.[grepl(exclude,.$coi),"coi"] <- NA;.} %>%
     mutate(coi = droplevels(coi))
 
-  df_eval %>%
-    filter(!is.na(coi)) %>%
-    group_by(coi) %>% summarise(n=n(),wt = sum(weights)) %>%
-    mutate(pct = round(n/sum(n)*100,2)) %>%
-    mutate(pct_wt = wt/sum(wt)*100)
+   df_counts <- df_eval %>%
+     filter(!is.na(coi)) %>%
+     group_by(coi) %>% summarise(n=n(),wt = sum(weights)) %>%
+     mutate(pct = round(n/sum(n)*100,2)) %>%
+     mutate(pct_wt = wt/sum(wt)*100)
 
   options(survey.lonely.psu = "adjust")
 
@@ -354,16 +374,41 @@ simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL,
     weights = ~weights,
     data = df_eval)
 
-
-  svymean(~factor(coi),
+  x <- svymean(~factor(coi),
           brfssdsgn,
           na.rm = TRUE) %>%
     as.data.frame() %>%
-    mutate(Response = gsub("^factor.*?[)]","",Response)) %>%
+    mutate(Response = gsub("^factor.*?[)]","",row.names(.))) %>%
     mutate(mean = round(mean*100,2)) %>%
     mutate(SE = round(SE*100,3)) %>%
-    mutate(CI_L = mean - 1.96*SE) %>%
-    mutate(CI_U = mean + 1.96*SE)
+    mutate(CI_L = round(mean - 1.96*SE,2)) %>%
+    mutate(CI_U = round(mean + 1.96*SE,2)) %>%
+    rename(percent = mean) %>%
+    select(Response, percent, starts_with("CI")) %>%
+    remove_rownames()
+
+    x %>% left_join(df_counts %>% select(coi,n), by=c("Response" = "coi")) %>%
+      relocate(n, .after = Response)
+
+}
+
+coi_data <- function(coi, year, geog, version) {
+
+  vwt <- ifelse(version>0, paste0("_LCPWTV", version) , "_LLCPWT")
+
+  df <- brfss_data(year,geog,version = version)
+
+  if(is.null(df)) return(data.frame())
+
+
+  colnames(df)[colnames(df)==vwt] <- "_LLCPWT"
+
+  df%>%
+    #    rename( coi = {{coi}}) %>%
+    select({{coi}}, `_LLCPWT`, `_STSTR`) %>%
+    mutate(vers = {{version}}) %>%
+    na.exclude()
+  #filter(!is.na(coi))
 
 }
 

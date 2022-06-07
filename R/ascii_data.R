@@ -24,6 +24,7 @@ ascii_data_url<-function(year) {
 #' @param saq - logical - are there state-added questions for processing
 #' @param codebook - logical - download and process the annual codebook
 #' @param split - logical - split the xpt file by state/geography
+#' @param geog - character - geography of interest
 #' @param factorize - logical - add values as factors to columns
 #' @param ... further arguments passed to other methods
 #'
@@ -37,16 +38,19 @@ ascii_data_url<-function(year) {
 #' }
 
 ascii_process_year <- function(year = NULL, download = TRUE, codebook = TRUE, saq = FALSE,
-                               convert = TRUE, split = TRUE, factorize = TRUE, verbose=FALSE, ...) {
+                               convert = TRUE, split = TRUE, factorize = TRUE, verbose=FALSE,
+                               geog = NULL, extent = NULL) {
 
   year <- get.year(year)
+  geog <- get.geog(geog)
+  extent <- get.extent(extent)
 
   if(download) {
     if(verbose) cat(" ... downloading ... main ascii file ... ")
     ascii.download.data(year=year)
   }
 
-  if(codebook) process_codebook(year = year, ...)
+  if(codebook) process_codebook(year = year, geog = geog, extent = extent)
 
   if(saq) {
     build_saq_layout()
@@ -59,10 +63,11 @@ ascii_process_year <- function(year = NULL, download = TRUE, codebook = TRUE, sa
   }
 
   if(convert) {
-    convert_ascii(year = year)
+    convert_ascii(year = year,
+                  geog = geog, extent = extent)
   }
 
-  if(split) split_geogs(year=year, source = 'ascii', factorize = factorize, ...)
+  if(split) split_geogs(year=year, source = 'ascii', factorize = factorize, geog = geog)
 
   save_response_stats(year = year, verbose = verbose)
   save_module_stats(year = year, verbose = verbose)
@@ -165,7 +170,8 @@ ascii.download.data<-function(year = NULL, destpath = NULL, unzip=TRUE, rmzip=TR
 #'}
 #'
 #' @export
-convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versions = TRUE, verbose = FALSE) {
+convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versions = TRUE,
+                        geog = NULL, extent = NULL, verbose = FALSE) {
 
   year<-get.year(year)
 
@@ -181,7 +187,8 @@ convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versi
     if(versions) version = 1 else return()
   }
 
-  path <- apply.pattern("ascii_path_raw", YEAR = year, VERS = version)
+  path <- apply.pattern("ascii_path_raw", YEAR = year, VERS = version,
+                        GEOG = geog, EXT = extent)
 
   while (file.exists(path)) {
     if(verbose) cat("... reading version [", version, "] : ", path, "\n")
@@ -194,7 +201,8 @@ convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versi
     # if(version>0) df_name <- paste0(df_name,"_V",version)
     assign(df_name, value = df )
 
-    path <- apply.pattern("ascii_path", YEAR = year, VERS = version)
+    path <- apply.pattern("ascii_path", YEAR = year, VERS = version,
+                          GEOG = geog, EXT = extent)
     if(!dir.exists(dirname(path))) dir.create(dirname(path))
 
     if(verbose) cat("... writing ", df_name, "to ", path,"\n")
@@ -202,7 +210,8 @@ convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versi
     save(list = c(df_name), file = path)
 
     version <- version + 1
-    path <- apply.pattern("ascii_path_raw", YEAR = year, VERS = version)
+    path <- apply.pattern("ascii_path_raw", YEAR = year, VERS = version,
+                          GEOG = geog, EXT = extent)
 
   }
 
@@ -263,6 +272,12 @@ read.ascii<-function(filename=NULL,layout = NULL, completes=T, verbose = FALSE) 
   names(col_types) <- layout$col_name
   col_types[grepl("^DUMMY",names(col_types))] <- 'NULL'
 
+  ## this is a kludge ... the weight fields should be numeric
+
+  col_types[grepl("_.*WT.*",names(col_types))] <- 'numeric'
+
+  # end kludge
+
   widths <- layout$field_size
 
   x<-readLines(filename)
@@ -322,7 +337,7 @@ cleave.geogs.ascii<-function(year = NULL,
 
   ver<-integer(0)
   if(main) ver<-0
-
+  browser()
   vermax <- highest_version(year)
 
   if(versions) ver<-c(ver,1:vermax)

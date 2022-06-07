@@ -2,9 +2,7 @@
 % Please edit documentation in R/process.R
 \name{process_year}
 \alias{process_year}
-\title{Process BRFSS Annual Data Files
-Use this function to process a single year of BRFSS data. This function sill download, unzip,
-and create a data frame with all data from the XPT file, as well as any other versions of the survey.}
+\title{Process BRFSS Annual Data Files}
 \usage{
 process_year(
   year = NULL,
@@ -44,7 +42,6 @@ Useful (set = FALSE) if you already have the downloaded files processed}
 invisible()
 }
 \description{
-Process BRFSS Annual Data Files
 Use this function to process a single year of BRFSS data. This function sill download, unzip,
 and create a data frame with all data from the XPT file, as well as any other versions of the survey.
 }

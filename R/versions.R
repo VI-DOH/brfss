@@ -62,7 +62,7 @@ calc_responses <- function(year = NULL, extent = "national", source = NULL, ...)
   source <- get.source(source)
 
   df_resp <- data.frame()
-
+  browser()
   sapply(0:highest_version(year), function(version){
     if(extent == "national") {
       df_brfss_vers <- brfss_data(year = year, geog = "*", extent="national", version = version)
@@ -76,7 +76,7 @@ calc_responses <- function(year = NULL, extent = "national", source = NULL, ...)
       df_brfss_vers <- data.frame()
 
       sapply(geogs, function(geog) {
-
+        browser()
         df <- brfss_data(year = year, geog = geog, extent="local", version = version)
 
         df_brfss_vers <<- df_brfss_vers %>% bind_rows(df)
@@ -101,83 +101,23 @@ calc_responses <- function(year = NULL, extent = "national", source = NULL, ...)
   df_resp
 }
 
-# calc_responses_SAVENEW<-function(year,geogs,versions, verbose = FALSE, ...) {
-#
-#   if(missing(versions)) versions <- 0:highest_version(year)
-#
-#   if(missing(geogs)) {
-#     geogs<-geog_abbs()
-#   } else {
-#
-#     if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
-#   }
-#
-#   df0<-data.frame()
-#   invisible(
-#     sapply(geogs,function(geog){
-#       sapply(versions,function(version){
-#         if(verbose) cat(paste0(" versions ... trying ", geog, "_V",version,"\n"))
-#         if(brfss_version_exists(year,geog,version)) {
-#
-#           id <- geog_id(geog)
-#
-#           df_resp_cnts <- brfss_data(year,geog,version) %>%
-#             filter(`_STATE` == id)
-#
-#           if(nrow(df_resp_cnts)>0) {
-#             df_add <- data.frame(year = year,geog = geog, version = version,
-#                                  responses= nrow(df_resp_cnts))
-#             df0<<-rbind(df0, df_add)
-#           }
-#
-#         }
-#       })
-#     } )
-#   )
-#   df0
-# }
-# calc_responses_SAVE<-function(year,geogs,versions, ...) {
-#
-#   if(missing(versions)) versions <- 0:highest_version(year)
-#
-#   if(missing(geogs)) {
-#     geogs<-geog_abbs()
-#   } else {
-#
-#     if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
-#   }
-#
-#   df0<-data.frame()
-#   invisible(
-#     sapply(geogs,function(geog){
-#       sapply(versions,function(version){
-#         browser()
-#         if(brfss_version_exists(year,geog,version)) {
-#
-#           df_resp_cnts <- brfss_data(year,geog,version)
-#           df_add <- data.frame(year = year,geog = geog, version = version,
-#                                responses= nrow(df_resp_cnts))
-#           df0<<-rbind(df0, df_add)
-#
-#         }
-#       })
-#     } )
-#   )
-#   df0
-# }
+#' Response Totals
+#'
+#' @param year integer: the 4-digit year of interest
+#' @param geog character or integer: either the 2-char abbrev, the full name,
+#' or the FIPS ID for the geography of interest
+#'
+#' @return data frame with geog version and count
+#' @export
+#'
+#' @examples
+responses_by_geog<-function(year,geog) {
 
-responses_by_geog<-function(year,geog,version=0) {
+  geog<-geog_abbs(geog)
 
-  if(is.numeric(geog)) geog<-geog_abbs(geog)
+  orrr::get.rdata(file = apply.pattern("brfss_responses_path",YEAR = year)) %>%
+    filter(geog == {{geog}})
 
-  if(brfss_version_exists(year,geog,version)) {
-
-    df0<-brfss_data(year,geog,version)
-
-    return(nrow(df0))
-  } else {
-    return(0)
-  }
 }
 
 
@@ -205,6 +145,7 @@ save_response_stats<-function(year, ...) {
   save(list = c(nm),file = apply.pattern("brfss_responses_path",YEAR = year))
 
 }
+
 
 responses<-function(year = NULL,geogs=NULL,versions, reduce=TRUE) {
 

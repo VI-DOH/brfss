@@ -183,6 +183,7 @@ expand.pattern <- function(pattern) {
 #'
 #'
 #' @param name character - name of pattern
+#' @param expand logical - convert sub patterns
 #'
 #' @return character - the requested pattern
 #' @export
@@ -192,15 +193,19 @@ expand.pattern <- function(pattern) {
 #' get.pattern(name = "raw_data_folder")
 #' }
 #'
-get.pattern <- function(name) {
+get.pattern <- function(name, expand = FALSE) {
   require(dplyr,quietly = T, warn.conflicts = F)
 
   pat_name <- name
 
-  get.patterns() %>%
+  pttrn <- get.patterns() %>%
     filter(name=={{pat_name}}) %>%
     pull(pattern)
 
+  if(expand) {
+    pttrn <- expand.pattern(pttrn)
+  }
+  pttrn
 }
 
 #' Get File Pattern Group

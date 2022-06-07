@@ -88,6 +88,7 @@ fix.missing.columns<-function(year,year2=year-1) {
 #' @param saq - logical - are there state-added questions for processing
 #' @param codebook - logical - download and process the annual codebook
 #' @param split - logical - split the xpt file by state/geography
+#' @param geog - character - geography of interest
 #' @param factorize - logical - add values as factors to columns
 #' @param ... further arguments passed to other methods
 #'
@@ -100,10 +101,15 @@ fix.missing.columns<-function(year,year2=year-1) {
 #'
 #' }
 
-sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE, codebook = TRUE, saq = FALSE,
-                                   convert = TRUE, split = TRUE, factorize = TRUE, verbose=FALSE, ...)  {
+sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE,
+                             codebook = TRUE, saq = FALSE,
+                             convert = TRUE, split = TRUE,
+                             factorize = TRUE, geog = geog, extent = NULL, verbose=FALSE,
+                             ...)  {
 
   year <- get.year(year)
+  geog <- get.year(geog)
+  extent <- get.extent(extent)
 
   if(download) {
     if(verbose) cat(" ... downloading ... main file ... ")
@@ -142,7 +148,8 @@ sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE, codeb
   }
 
 
-  if(split) split_geogs(year=year, source = 'sas', factorize = factorize, ...)
+  if(split) split_geogs(year=year, source = 'sas', factorize = factorize,
+                        geog = geog , extent = extent)
 
   save_response_stats(year = year)
   save_module_stats(year = year)
@@ -408,7 +415,7 @@ add_col_attributes <- function(df_in, year = NULL, version=0, source = NULL) {
 
   df_sasout<- get.layout()
 
-    #browser()
+  #browser()
 
   mapply(function(lbl,v,typ,n,i,nm,qu) {
     #cat(v,"|",typ,"|",n,"|",i,"|",nm)
@@ -457,7 +464,7 @@ add_col_attributes <- function(df_in, year = NULL, version=0, source = NULL) {
 #'}
 #'
 cleave.geogs.sas<-function(year = NULL,
-                       main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
+                           main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
 
   if(!(main || versions)) return(NULL)
 

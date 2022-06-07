@@ -100,7 +100,7 @@ init.patterns <- function() {
                    desc = "Consistent name for BRFSS data object (data.frame) stored and retrieved") %>%
 
 
-    #############################################################################
+  #############################################################################
   ##
   ##  codebook patterns
 
@@ -181,7 +181,10 @@ init.patterns <- function() {
 
     append.pattern("ascii_raw_data_folder","{brfss_annual_raw_data_folder}ascii/") %>%
 
-    append.pattern("ascii_filename_raw","LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).ASC") %>%
+    append.pattern("ascii_filename_raw",
+                   paste0(
+                     "([EXT] == 'national';LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).ASC)",
+                     "([EXT] == 'local';[GEOG][YR]COMP.DAT)")) %>%
 
     append.pattern("ascii_path_zip","{ascii_raw_data_folder}{ascii_filename_zip}") %>%
 
