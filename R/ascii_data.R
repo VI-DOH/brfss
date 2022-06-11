@@ -170,8 +170,8 @@ ascii.download.data<-function(year = NULL, destpath = NULL, unzip=TRUE, rmzip=TR
 #'}
 #'
 #' @export
-convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versions = TRUE,
-                        geog = NULL, extent = NULL, verbose = FALSE) {
+convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE,
+                        versions = TRUE, geog = NULL, extent = NULL, verbose = FALSE) {
 
   year<-get.year(year)
 
@@ -197,8 +197,7 @@ convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE, versi
     df <- add_col_attributes(df, year = year, version = version)
 
     df_name <- apply.pattern("ascii_df", YEAR = year, VERS = version)
-    # paste0("df_ascii_",year)
-    # if(version>0) df_name <- paste0(df_name,"_V",version)
+
     assign(df_name, value = df )
 
     path <- apply.pattern("ascii_path", YEAR = year, VERS = version,

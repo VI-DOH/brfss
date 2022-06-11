@@ -206,23 +206,29 @@ brfss_data_path <- function(year = NULL, geog = NULL, version = 0, extent = NULL
 }
 
 
-brfss_version_exists<-function(year,geog,version=1) {
+brfss_version_exists<-function(year = NULL,geog = NULL, source = NULL,version=1) {
   if(is.numeric(geog)) geog<-geog_abbs(geog)
 
-  fname<- brfss_data_path(year = year, geog = geog, version = version, rw = 'r'  )
-  #  brfss_geog_data_filename(year,geog,version=version)
+  year <- get.year(year)
+
+  if(geog == "*") {
+    extent <- "national"
+    geog = NULL
+  } else {
+    geog <- get.geog(geog)
+    extent = "local"
+  }
+  source <- get.source(source)
+
+  fname<- brfss_data_path(year = year, geog = geog, version = version, source = source, rw = 'r'  )
 
   ok <- !is.null(fname)
-
-  # if(!ok) {
-  #   fname<-brfss_data_filename(year,geog,version=version)
-  #   ok <- file.exists(fname)
-  # }
 
   ok
 }
 
-brfss_data_folder<-function(year) {
-  orrr::dir.project(c("data",year))
-
-}
+#
+# brfss_data_folder<-function(year) {
+#   orrr::dir.project(c("data",year))
+#
+# }

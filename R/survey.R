@@ -4,6 +4,8 @@
 #' @param year - int - year of interest
 #' @param geog - character - 2-char geog of interest (ex: "NY")
 #' @param version - survey version; 0 (default) = main survey
+#' @param extent - character - extent of data ("local" or national")
+#' @param source - character - source of data ("ascii" or sas")
 #'
 #' @return data frame
 #' @export
@@ -14,10 +16,12 @@
 #'
 #' }
 #'
-brfss_data <- function(year = NULL, geog = NULL, version = 0, extent = "local") {
+brfss_data <- function(year = NULL, geog = NULL, version = 0, extent = NULL, source = NULL) {
 
   year <- get.year(year)
   geog <- get.geog(geog)
+  source <- get.source(source)
+  extent <- get.extent(extent)
 
   if(is.numeric(geog)) geog<-geog_abbs(geog)
 
@@ -68,7 +72,7 @@ binary_yes<-function() {
 #' confidence interval (lower and upper) for either the entire column of interest, or subsets of that column
 #' #'
 #'
-#' @param df0 - data.frame: the survey data
+#' @param df_brfss - data.frame: the survey data
 #' @param year - integer: if missing will calculate from df
 #' @param coi - character: column name of interest
 #' @param num_vals - integer: values from column in the numerator
@@ -84,27 +88,27 @@ binary_yes<-function() {
 #' @examples
 #'
 #'
-survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
+survey_stats_binary<-function(df_brfss,coi, num_vals,den_vals, ...) {
 
   #browser()
-  if(nrow(df0)==0) {
+  if(nrow(df_brfss)==0) {
     ret<-data.frame()
     return (ret)
   }
-  df0<-as.data.frame(df0)
-  df0<-df0[df0[,coi]%in%den_vals,]
+  df_brfss<-as.data.frame(df_brfss)
+  df_brfss<-df_brfss[df_brfss[,coi]%in%den_vals,]
 
 
-  df0$fcoi<-binary_no()
-  df0[df0[,coi]%in%num_vals,"fcoi"]<-binary_yes()
-  #  df0[yn_not_num,coi]<-2
-  df0<-df0[!is.na(df0[coi]),]
-  # df0["fcoi"]<- factor(df0[["fcoi"]],levels = c(-1,-2),
+  df_brfss$fcoi<-binary_no()
+  df_brfss[df_brfss[,coi]%in%num_vals,"fcoi"]<-binary_yes()
+  #  df_brfss[yn_not_num,coi]<-2
+  df_brfss<-df_brfss[!is.na(df_brfss[coi]),]
+  # df_brfss["fcoi"]<- factor(df_brfss[["fcoi"]],levels = c(-1,-2),
   #                      labels = c("Yes", "No"))
-  df0[coi]<-NULL
-  colnames(df0)[colnames(df0)=="fcoi"]<-coi
+  df_brfss[coi]<-NULL
+  colnames(df_brfss)[colnames(df_brfss)=="fcoi"]<-coi
 
-  df<-survey_stats(df0=df0,coi=coi, ...)
+  df<-survey_stats(df_brfss=df_brfss,coi=coi, ...)
   df[order(df[,coi],decreasing = F),]
 }
 
@@ -119,7 +123,7 @@ survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
 #' confidence interval (lower and upper) for either the entire column of interest, or subsets of that column
 #' #'
 #'
-#' @param df0 - data.frame: the survey data
+#' @param df_brfss - data.frame: the survey data
 #' @param coi - character: column of interest name for analysis
 #' @param exclude - integer: values in coi to exclude for analysis purposes
 #' @param subset - character: name of column to subset data by
@@ -131,55 +135,66 @@ survey_stats_binary<-function(df0,coi, num_vals,den_vals, ...) {
 #'
 #' @examples
 #'
-survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, strata=NULL) {
+survey_stats<-function(df_brfss = NULL, year = NULL, geog = NULL, extent = NULL, source = NULL,
+                       coi, exclude = c("Don.*t|Refuse"), subset = NULL,
+                       conf=.95,
+                       weighting = "_LLCPWT",
+                       strata  = "_STSTR") {
 
   require(survey, quietly = T, warn.conflicts = F)
   require(dplyr, quietly = T, warn.conflicts = F)
 
+  # if data frame not provided then get it from
+  if(is.null(df_brfss)) {
+    year <- get.year(year)
+    geog <- get.geog(geog)
+    extent <- get.extent(extent)
+    source <- get.source(source)
 
-  if(!missing(subset)){
-    if(is.null(subset)) {
-      nsubs<-0
-    } else {
-      nsubs<-length(subset)
-    }
-  } else {
-    nsubs<-0
-    subset<-c()
+    df_brfss <- coi_data( coi = coi, year = year, geog= geog, extent = extent,
+                          source = source, subset, weighting ,strata )
   }
 
-
-  #  if(missing(year)) year<-df0$IYEAR[1]
-
-  if(nrow(df0)==0) {
+  if(nrow(df_brfss)==0) {
     ret<-data.frame()
     return (ret)
   }
 
-  #df0<-df0[!is.na(df0[coi]),]
+  if(is.null(subset)) {
+    nsubs<-0
+  } else {
+    nsubs<-length(subset)
+  }
 
-  df0 <- df0 %>% filter(!is.na( {{coi}} ))
+  browser()
+  # only the valid values - remove the excludes
+  df_brfss <- df_brfss %>%
+    mutate({{coi}} := replace({{coi}}, grep(exclude,{{coi}}),NA)) %>%
+    mutate({{coi}} := droplevels({{coi}}))
 
+  #
+  # if(!is.null(exclude)) df_brfss<-as.data.frame(df_brfss[!df_brfss[[coi]]%in%exclude,])
+  #
 
   cols<-coi
   if(nsubs>0) cols<-c(cols,subset)
   if(!is.null(weighting)) {
     cols<-c(cols,weighting)
-    df0<-df0[!is.na(df0[,weighting]),]
+    df_brfss<-df_brfss[!is.na(df_brfss[,weighting]),]
   }
   if(!is.null(strata)) cols<-c(cols,strata)
-  df0<-as.data.frame(df0[,cols])
-  if(ncol(df0)==1) colnames(df0)<-coi
+  df_brfss<-as.data.frame(df_brfss[,cols])
+  if(ncol(df_brfss)==1) colnames(df_brfss)<-coi
 
-  if(!missing(exclude)) df0<-as.data.frame(df0[!df0[[coi]]%in%exclude,])
-  if(ncol(df0)==1) colnames(df0)<-coi
+  if(ncol(df_brfss)==1) colnames(df_brfss)<-coi
 
-  all_vals<-as.vector(unique(df0[coi]))
+  all_vals<-as.vector(unique(df_brfss[coi]))
 
-  df0$fcoi<-df0[,coi]
-  # df0$fcoi<-sample(4,nrow(df0),replace=T)
-  df0$fcoi<- factor(df0$fcoi)
+  # df_brfss$fcoi<-df_brfss[,coi]
+  # df_brfss$fcoi<- factor(df_brfss$fcoi)
 
+  df_brfss <- df_brfss %>%
+    mutate(fcoi = factor(coi))
   #
 
   ##########################
@@ -197,7 +212,7 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
   des<-survey::svydesign(ids = ~1,
                          strata = strata,
                          variables =  frmla,
-                         data = df0,
+                         data = df_brfss,
                          weights = weighting,
                          deff=F)
 
@@ -207,7 +222,7 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
 
     nums<-mysvytotal[1]
     dens<- mysvytotal[1] + mysvytotal[2]
-    tot<-nrow(df0)
+    tot<-nrow(df_brfss)
 
     df_mean<-t(as.data.frame(mysvymean))
     df_se<-t(as.data.frame(df_mean[2,]))
@@ -267,15 +282,15 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
 
   if(nsubs==0) {
     num<-sapply(df_new[,coi],  function(c) {
-      length(which(df0[,coi]==c))
+      length(which(df_brfss[,coi]==c))
     })
 
   } else {
     num<-integer(nrow(df_new))
     for(r in 1:nrow(df_new)){
-      yn<-df0[,coi]==df_new[r,coi]
+      yn<-df_brfss[,coi]==df_new[r,coi]
       for(sub in subset) {
-        yn<-yn & (df0[,sub]==df_new[r,sub])
+        yn<-yn & (df_brfss[,sub]==df_new[r,sub])
       }
       num[r]<-(length(which(yn)))
     }
@@ -303,80 +318,54 @@ survey_stats<-function(df0, coi, exclude, subset, conf=.95, weighting=NULL, stra
 #' @export
 #'
 #' @examples
-simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL,
+simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL, extent = NULL, source = NULL,
                          coi,
-                         wt = "_LLCPWT",
-                         strata  = "_STSTR",
-                         exclude = c("Don.t|Refuse")) {
+                         exclude = c("Don.*t|Refuse")) {
 
   require(dplyr)
   require(magrittr)
   require(survey)
   require(tibble)
 
+  browser()
   # if data frame not provided then get it from
   if(is.null(df_brfss)) {
     year <- get.year(year)
     geog <- get.geog(geog)
-    #df_brfss <- brfss_data(year,geog)
-    df_brfss <- coi_data(coi, year,geog,version = 0)
+    extent <- get.extent(extent)
+    source <- get.source(source)
 
-    invisible(
-      sapply(1:highest_version(year),function(ver) {
-        df_brfss <<- df_brfss %>% bind_rows(coi_data(coi, year,geog,version = ver))
-      })
-    )
+    df_brfss <- coi_data( coi = coi, year = year, geog= geog, extent = extent, source = source,
+                          exclude = exclude)
+
   }
-
-  voi <- df_brfss %>% pull(vers) %>% unique()
-
-  df_resp <- responses_by_geog(year,geog) %>%
-    filter(version %in% voi) %>%
-    mutate(pct = responses/sum(responses))
-
-  df_brfss <- df_brfss %>%
-    left_join(df_resp, by = c("vers" = "version")) %>%
-    mutate(FINAL_WT = `_LLCPWT` * pct) %>%
-    select(coi,FINAL_WT, `_STSTR`)
-
 
   ##
   ## all column names to lower case
   ##
 
-  names(df_brfss) %<>% toupper()
-  coi <- toupper(coi)
-  wt <- toupper(wt)
-  strata <-  toupper(strata)
+  # names(df_brfss) %<>% toupper()
+  # coi <- toupper(coi)
 
+  df_eval <- df_brfss
 
-  df_eval <- df_brfss %>%
-    select({{coi}},{{wt}},{{strata}}) %>%
-    rename(coi = {{coi}})%>%
-    rename(weights = {{wt}}) %>%
-    rename(strata = {{strata}}) %>%
-    mutate(coi = replace(coi,grepl(exclude,coi),NA)) %>%
-    #  {.[grepl(exclude,.$coi),"coi"] <- NA;.} %>%
-    mutate(coi = droplevels(coi))
-
-   df_counts <- df_eval %>%
-     filter(!is.na(coi)) %>%
-     group_by(coi) %>% summarise(n=n(),wt = sum(weights)) %>%
-     mutate(pct = round(n/sum(n)*100,2)) %>%
-     mutate(pct_wt = wt/sum(wt)*100)
+  df_counts <- df_eval %>%
+    group_by_at(coi) %>% summarise(n=n(),wt = sum(FINAL_WT)) %>%
+    mutate(pct = round(n/sum(n)*100,2)) %>%
+    mutate(pct_wt = wt/sum(wt)*100)
 
   options(survey.lonely.psu = "adjust")
 
   # Create survey design
   brfssdsgn <- svydesign(
     id=~1,
-    strata = ~strata,
-    weights = ~weights,
+    strata = ~STRATUM,
+    weights = ~FINAL_WT,
     data = df_eval)
 
-  x <- svymean(~factor(coi),
-          brfssdsgn,
-          na.rm = TRUE) %>%
+  x <- svymean(as.formula(paste0("~factor(",coi,")")),
+               brfssdsgn,
+               na.rm = TRUE) %>%
     as.data.frame() %>%
     mutate(Response = gsub("^factor.*?[)]","",row.names(.))) %>%
     mutate(mean = round(mean*100,2)) %>%
@@ -387,28 +376,77 @@ simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL,
     select(Response, percent, starts_with("CI")) %>%
     remove_rownames()
 
-    x %>% left_join(df_counts %>% select(coi,n), by=c("Response" = "coi")) %>%
-      relocate(n, .after = Response)
+  x %>% left_join(df_counts %>% select({{coi}},n), by=c("Response" = coi)) %>%
+    relocate(n, .after = Response)
 
 }
 
-coi_data <- function(coi, year, geog, version) {
+coi_data_vers<- function(coi=NULL, year = NULL, geog = NULL, extent = NULL,
+                         source = NULL, version = 0) {
 
-  vwt <- ifelse(version>0, paste0("_LCPWTV", version) , "_LLCPWT")
+  year <- get.year(year)
+  geog <- get.geog(geog)
+  extent <- get.extent(extent)
+  source <- get.source(source)
 
-  df <- brfss_data(year,geog,version = version)
+  vwt <- apply.pattern("weight_col",VERS=version)
+  stratum <- apply.pattern("stratum_col")
+
+  df <- brfss_data(year = year, geog= geog, extent = extent, source = source,  version = version)
 
   if(is.null(df)) return(data.frame())
 
-
-  colnames(df)[colnames(df)==vwt] <- "_LLCPWT"
-
   df%>%
-    #    rename( coi = {{coi}}) %>%
-    select({{coi}}, `_LLCPWT`, `_STSTR`) %>%
+    rename(FINAL_WT = {{vwt}}) %>%
+    rename(STRATUM = {{stratum}}) %>%
+    select({{coi}}, FINAL_WT, STRATUM) %>%
     mutate(vers = {{version}}) %>%
     na.exclude()
+
+  # df%>%
+  #   select({{coi}}, `_LLCPWT`, `_STSTR`) %>%
+  #   mutate(vers = {{version}}) %>%
+  #   na.exclude()
   #filter(!is.na(coi))
 
 }
 
+coi_data <- function( coi = NULL, year = NULL, geog = NULL,  extent =  NULL ,
+                      source = NULL, subset = NULL, exclude = NULL) {
+
+  year <- get.year(year)
+  geog <- get.geog(geog)
+  source <- get.source(source)
+  extent <- get.extent(extent)
+
+  #df_brfss <- brfss_data(year,geog)
+  df_brfss <- data.frame() #   coi_data(coi, year,geog,version = 0)
+
+  invisible(
+    sapply(0:highest_version(year),function(ver) {
+      df_brfss <<- df_brfss %>% bind_rows(coi_data_vers(coi = coi, year = year,
+                                                        geog = geog, extent = extent,
+                                                        source = source,
+                                                        version = ver))
+    })
+  )
+
+  voi <- df_brfss %>% pull(vers) %>% unique()
+
+  df_resp <- responses_by_geog(year,geog) %>%
+    filter(version %in% voi) %>%
+    mutate(pct = responses/sum(responses))
+
+  df_brfss <- df_brfss %>%
+    left_join(df_resp, by = c("vers" = "version")) %>%
+    mutate(FINAL_WT = FINAL_WT * pct) %>%
+    select(coi,FINAL_WT, STRATUM)%>%
+    rename(coi = {{coi}})%>%
+    mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
+    na.exclude() %>%
+    mutate(coi = droplevels(coi)) %>%
+    rename({{coi}} := coi)
+
+
+  df_brfss
+}

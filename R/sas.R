@@ -10,6 +10,7 @@ brfss.url.pattern.documentation<-function() {
 }
 
 #https://www.cdc.gov/brfss/annual_data/2016/pdf/2016_calculated_variables_version4.pdf
+
 sas.url.pattern.download.doc<-function() {
   c(
     "codebook[YR]_llcp.pdf"

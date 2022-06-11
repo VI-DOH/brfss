@@ -100,7 +100,7 @@ init.patterns <- function() {
                    desc = "Consistent name for BRFSS data object (data.frame) stored and retrieved") %>%
 
 
-  #############################################################################
+    #############################################################################
   ##
   ##  codebook patterns
 
@@ -184,14 +184,14 @@ init.patterns <- function() {
     append.pattern("ascii_filename_raw",
                    paste0(
                      "([EXT] == 'national';LLCP([VERS] == 0;[YEAR])([VERS] > 0;[YR]V[VERS]).ASC)",
-                     "([EXT] == 'local';[GEOG][YR]COMP.DAT)")) %>%
+                     "([EXT] == 'local';[GEOG][YR]COMP([VERS] > 0;_V[VERS]).DAT)")) %>%
 
     append.pattern("ascii_path_zip","{ascii_raw_data_folder}{ascii_filename_zip}") %>%
 
     append.pattern("ascii_path_raw","{ascii_raw_data_folder}{ascii_filename_raw}") %>%
 
-    append.pattern("ascii_data_folder","{brfss_data_folder}[YEAR]/ascii/") %>%
-    append.pattern("ascii_filename","ascii_[YEAR]([VERS] > 0;_V[VERS]).rda") %>%
+    append.pattern("ascii_data_folder","{brfss_data_folder}[YEAR]/([EXT] == 'local';geog/[GEOG]/)ascii/") %>%
+    append.pattern("ascii_filename","[GEOG]_[YEAR]([VERS] > 0;_V[VERS]).rda") %>%
     append.pattern("ascii_path","{ascii_data_folder}{ascii_filename}") %>%
 
     append.pattern("ascii_df","df_ascii_[YEAR]([VERS] > 0;_V[VERS])") %>%
@@ -243,7 +243,14 @@ init.patterns <- function() {
     append.pattern("merged_layout_file","layout[YR]_mrg.rda") %>%
     append.pattern("merged_layout_path","{codebook_layout_folder}{merged_layout_file}") %>%
     append.pattern("merged_values_file","values[YR]_mrg.rda") %>%
-    append.pattern("merged_values_path","{codebook_layout_folder}{merged_values_file}")
+    append.pattern("merged_values_path","{codebook_layout_folder}{merged_values_file}")  %>%
+
+    ## Miscellaneous
+
+    append.pattern("weight_col","([VERS]==0;_LLCPWT)([VERS]!=0;_LCPWTV[VERS])") %>%
+    append.pattern("stratum_col","_STSTR")
+
+
 
 
   #########################################################################
