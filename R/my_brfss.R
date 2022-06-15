@@ -1,11 +1,7 @@
 
-
-
-
-
 #' BRFSS Geography/Years of Interest
 #'
-#' Set the default geography and year for working with BRFSS data
+#' Set the current default parameters for working with BRFSS data
 #'
 #' @param year int vector of year(s) to set as default
 #' @param geog character vector of geography abbreviations to set as default

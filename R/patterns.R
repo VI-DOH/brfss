@@ -320,7 +320,7 @@ apply.pattern <- function(name,  ...) {
 #'
 patternize<-function(strIn, ...) {
 
-  args <- list(...)
+  args <- unlist(list(...))
 
   ##  remove args with NULL value
 
