@@ -17,8 +17,11 @@ sas.url.pattern.download.doc<-function() {
   )
 }
 
-unzip.all<-function(year,rmzip=TRUE, ...) {
-  folder<-apply.pattern("sas_raw_folder",YEAR =year, ...)
+unzip.all<-function(rmzip=TRUE) {
+
+  params <- my.brfss.patterns()
+
+  folder<-apply.pattern("sas_raw_folder", params)
   files<-list.files(folder,full.names = T)
 
   files<-files[grep("[.]zip$",files)]
@@ -102,29 +105,27 @@ fix.missing.columns<-function(year,year2=year-1) {
 #'
 #' }
 
-sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE,
+sas_process_year <- function(download = FALSE, layout = TRUE,
                              codebook = TRUE, saq = FALSE,
-                             convert = TRUE, split = TRUE,
-                             factorize = TRUE, geog = geog, extent = NULL, verbose=FALSE,
+                             convert = TRUE, split = TRUE, responses = TRUE,
+                             factorize = TRUE, verbose=FALSE,
                              ...)  {
 
-  year <- get.year(year)
-  geog <- get.year(geog)
-  extent <- get.extent(extent)
+
 
   if(download) {
     if(verbose) cat(" ... downloading ... main file ... ")
-    sas_download_metadata(year=year, ...)
-    sas_download_xpt(year=year, ...)
+    sas_download_metadata()
+    sas_download_xpt()
     # if(verbose) cat(" versions ")
     # sas_download_metadata.versions(year=year)
     if(verbose) cat(" \n ... unzipping files\n ")
-    unzip.all(year=year, ...)
+    unzip.all()
   }
 
-  if (layout) save_sas_layout(year = year)
+  if (layout) save_sas_layout()
 
-  if(codebook) process_codebook(year = year, ...)
+  if(codebook) process_codebook()
 
   if(saq) {
     build_saq_layout()
@@ -137,11 +138,11 @@ sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE,
   if(convert) {
     if(verbose) cat(" ... reading main xpt file\n ")
 
-    read.xpt(year=year)
+    read.xpt(version = 0)
 
     ivers<-1
     if(verbose) cat(" ... trying versions\n ")
-    while (read.xpt(year=year,version=ivers,verbose=TRUE)) {
+    while (read.xpt(version=ivers,verbose=TRUE)) {
 
       if(verbose) cat("Read version=",ivers,"\n")
       ivers<-ivers + 1
@@ -149,11 +150,12 @@ sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE,
   }
 
 
-  if(split) split_geogs(year=year, source = 'sas', factorize = factorize,
-                        geog = geog , extent = extent)
+  if(split) split_geogs( factorize = factorize)
 
-  save_response_stats(year = year)
-  save_module_stats(year = year)
+  if(responses) {
+    save_response_stats()
+    save_module_stats()
+  }
 
   invisible()
 }
@@ -173,14 +175,15 @@ sas_process_year <- function(year = NULL, download = FALSE, layout = TRUE,
 sas_download_metadata<-function(year, ...) {
 
   #  files<-sas.url.pattern.downloads.data()
+  params <- my.brfss.patterns()
 
   files<-get.pattern.group("sas_downloads")
-  urlfiles<- apply.pattern("brfss_url_files",YEAR=year)
-  folderout<-apply.pattern("sas_raw_folder",YEAR=year, ...)
+  urlfiles<- apply.pattern("brfss_url_files", params)
+  folderout<-apply.pattern("sas_raw_folder", params)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   sapply(files,function(file) {
-    file<-patternize(strIn = file,YEAR = year)
+    file<-patternize(strIn = file, params)
     url<-paste0(urlfiles,file)
     fileout<-paste0(folderout,file)
 
@@ -211,28 +214,31 @@ sas_download_metadata<-function(year, ...) {
 #'
 #' @export
 #'
-sas_download_xpt<-function(year = NULL, ...) {
+sas_download_xpt<-function() {
 
-  year <- get.year(year)
 
+  params <- my.brfss.patterns()
   #files<-sas.url.pattern.downloads.versions()
   file_pttrn<-get.pattern("xpt_download_zip_file")
 
-  folderout<-apply.pattern("sas_raw_folder",YEAR=year, ...)
+  folderout<-apply.pattern("sas_raw_folder", params)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
-  urlfiles<-apply.pattern("brfss_url_files",YEAR=year)
+  urlfiles<-apply.pattern("brfss_url_files", params)
 
 
   to <- getOption("timeout")
   options(timeout = 180)
 
   ok <- TRUE
-  version = 0
+  version <- 0
 
   while(ok) {
 
-    file<-patternize(strIn = file_pttrn,YEAR = year,VERS = version, ...)
+    brfss.param(version = version)
+    params <- my.brfss.patterns()
+
+    file<-patternize(strIn = file_pttrn, params)
 
     url<-paste0(urlfiles,file)
 
@@ -260,21 +266,26 @@ sas_download_xpt<-function(year = NULL, ...) {
 }
 
 
-sas_download_metadata.versions<-function(year, ...) {
+sas_download_metadata.versions<-function() {
+
+  params <- my.brfss.patterns()
 
   #files<-sas.url.pattern.downloads.versions()
   files<-get.pattern.group("sas_version_downloads")
 
-  folderout<-apply.pattern("sas_raw_folder",YEAR=year, ...)
+  folderout<-apply.pattern("sas_raw_folder",params)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
-  urlfiles<-apply.pattern("brfss_url_files",YEAR=year)
+  urlfiles<-apply.pattern("brfss_url_files",params)
 
   sapply(files,function(file) {
     done <- FALSE
     sapply(1:6,function(version) {
 
-      file<-patternize(strIn = file,YEAR = year,VERS = version )
+      brfss.param(version = version)
+      params <- my.brfss.patterns()
+
+      file<-patternize(strIn = file,params )
       url<-paste0(urlfiles,file)
       if(!done) { #RCurl::url.exists(url)){
         fileout<-paste0(folderout,file)
@@ -318,13 +329,9 @@ sas_download_metadata.versions<-function(year, ...) {
 #'
 #' Creates a data frame from the xpt file provided by CDC. The sasout file is used to provide
 #' some useful attributes for each column.
-#' This function can get the default file names folder location from the naming_patterns data.
+#' This function gets the default file names folder location from the naming_patterns data.
 #'
-#' @param year integer: year of interest
-#' @param version interger: version of interest (default is 0 ... main survey)
-#' @param xpt_file character:  name of xpt file (full path)
-#' @param save_file character: name of .rda file (full_path)
-#' @param sasout_file character: filename of sasout file (full path)
+#' @param version integer: version of interest (default is 0 ... main survey)
 #' @param verbose logical: provide extra information during processing
 #'
 #' @return
@@ -335,21 +342,15 @@ sas_download_metadata.versions<-function(year, ...) {
 #' \dontrun{
 #' df_2021 <- read.xpt(2021)
 #'
-#' df_data <- read.xpt(2020, version= 1,
-#' xpt_folder = "./data_raw/2020/sas/", xpt_file = "LLCP20V1.XPT",
-#' save_folder = "./data/2020/", save_file = "brfss2020.rda",
-#' sasout_folder = "./data_raw/2020/sas/", sasout_file = "SASOUT20_LLCP.SAS")
+#' df_data <- read.xpt(2020, version= 1)
 #' }
 
-read.xpt<-function(year = NULL,version = 0,
-                   xpt_file = NULL,
-                   save_file = NULL,
-                   sasout_file = NULL,
-                   verbose = F) {
+read.xpt<-function(version = 0, verbose = F) {
 
 
-  year <- get.year(year)
-  extent <- get.extent()
+  brfss.param(version = version)
+  params <- my.brfss.patterns()
+
   ########################################################################%%%%%%%%%
   ##
   ##    If file and folder names not supplied, create them from the file patterns
@@ -357,26 +358,21 @@ read.xpt<-function(year = NULL,version = 0,
   ##
   ##    get sasout location
   ##
-
-  if(is.null(sasout_file)) {
-    sasout_file<-apply.pattern("sas_sasout_path",YEAR = year, VERS = version, EXT = extent)
-  }
+    sasout_file<-apply.pattern("sas_sasout_path",params)
 
   ##
   ##    get xpt raw data location
   ##
 
-  if(is.null(xpt_file)) {
-    xpt_file <- apply.pattern("xpt_path",YEAR = year, VERS = version, EXT = extent)
-  }
+    xpt_file <- apply.pattern("xpt_path",params)
+
 
   ##
   ##  get save file (.rdata) location
   ##
 
-  if(is.null(save_file)) {
-    save_file<- apply.pattern("sas_data_path",YEAR = year, VERS = version, EXT = extent)
-  }
+    save_file<- apply.pattern("brfss_annual_data_path",params)
+
 
   ##
   ##    read the xpt files
@@ -395,11 +391,11 @@ read.xpt<-function(year = NULL,version = 0,
     cat("Getting sasout\n")
 
 
-    df_xpt <- df_xpt %>% add_col_attributes( year = year, version = version)
+    df_xpt <- df_xpt %>% add_col_attributes()
 
     if(!dir.exists(dirname(save_file))) dir.create(dirname(save_file),recursive = T)
 
-    fname<-apply.pattern("xpt_df", YEAR = year, VERS = version)
+    fname<-apply.pattern("xpt_df",params)
 
     assign(fname,df_xpt)
     save(list=c(fname),file = save_file)
@@ -410,9 +406,7 @@ read.xpt<-function(year = NULL,version = 0,
   }
 }
 
-add_col_attributes <- function(df_in, year = NULL, version=0, source = NULL) {
-
-  if(is.null(source)) source <- my.source()
+add_col_attributes <- function(df_in) {
 
   df_sasout<- get.layout()
 
@@ -481,7 +475,7 @@ cleave.geogs.sas<-function(year = NULL,
   ver<-integer(0)
   if(main) ver<-0
 
-  vermax <- highest_version(year)
+  vermax <- highest_version()
 
   if(versions) ver<-c(ver,1:vermax)
 
@@ -594,14 +588,17 @@ load.sas<-function(year, rdata_file=NULL, version=0) {
 }
 
 
-read.sas.format<-function(year,folder_pat= NULL, file_pat = NULL) {
+read.sas.format<-function(folder_pat= NULL, file_pat = NULL) {
   require(dplyr)
+
+  params <- my.brfss.patterns()
 
   if(is.null(folder_pat)) folder_pat <- get.pattern("sas_raw_folder") %>% expand.pattern()
   if(is.null(file_pat)) file_pat <- expand.pattern(get.pattern("sas_file_format"))
 
-  folder<-patternize(folder_pat, YEAR = year)
-  file<-patternize(file_pat, YEAR = year)
+
+  folder<-patternize(folder_pat, params)
+  file<-patternize(file_pat, params)
   paste0(folder,file)
 
   lines<-readLines(paste0(folder,file))
@@ -656,25 +653,12 @@ get.sas.labels<-function(df_xpt) {
 #' @export
 #'
 #'
-read_sasout<-function(year = NULL,folder=NULL,file=NULL,version=0) {
+read_sasout<-function() {
 
-  year <- get.year(year)
+  params <- my.brfss.patterns()
 
-  if(is.null(file)) {
-    # if(version>0) {
-    #
-    #   file<-apply.pattern("sas_sasout_version",YEAR = year, VERS = version)
-    # } else {
-    file<-apply.pattern("sas_sasout",YEAR = year, VERS = version)
-    # }
-  }
+  path<-apply.pattern("sas_sasout_path",params)
 
-  if(is.null(folder)) {
-    folder <- apply.pattern("sas_raw_folder",YEAR = year)
-  }
-
-
-  path<-paste0(folder,file)
   if(file.exists(path)){
     lines<-readLines(path)
     lines<-gsub("\f","",lines)
@@ -783,7 +767,7 @@ sasout.add.override<-function(year,column,label) {
   save(df_override,file = file)
 }
 
-sas.build.geogs <- function(year) {
+sas.build.geogs <- function() {
   require(dplyr)
 
   df <- data.frame(Geog = state.name, Abbrev = state.abb) %>%
@@ -791,7 +775,7 @@ sas.build.geogs <- function(year) {
 
 
 
-  geogs <- read.sas.format(year) %>%
+  geogs <- read.sas.format() %>%
     filter(varname == "_STATE") %>%
     rename(Geog = text, Id = value ) %>%
     select(Geog,Id) %>%
@@ -826,18 +810,17 @@ sas.build.geogs <- function(year) {
 #' read_sas_field_ranges(2021)
 #'
 #' }
-read_sas_field_ranges<-function(year) {
+read_sas_field_ranges<-function() {
   require(stringr)
 
-  year <- get.year(year)
-  extent <- get.extent()
-
+  params <- my.brfss.patterns()
 
   # get the filename for the data
   #  name format based on year
+  year <- brfss.param(year)
 
   if(year>2010) {
-    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0, EXT = extent)
+    file<-apply.pattern("sas_sasout_path",params)
 
   } else {
     return(NULL)

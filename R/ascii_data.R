@@ -37,20 +37,15 @@ ascii_data_url<-function(year) {
 #'
 #' }
 
-ascii_process_year <- function(year = NULL, download = TRUE, codebook = TRUE, saq = FALSE,
-                               convert = TRUE, split = TRUE, factorize = TRUE, verbose=FALSE,
-                               geog = NULL, extent = NULL) {
-
-  year <- get.year(year)
-  geog <- get.geog(geog)
-  extent <- get.extent(extent)
-
+ascii_process_year <- function(download = TRUE, codebook = TRUE, saq = FALSE,
+                               convert = TRUE, split = TRUE, factorize = TRUE,
+                               responses = TRUE,verbose=FALSE) {
   if(download) {
     if(verbose) cat(" ... downloading ... main ascii file ... ")
-    ascii.download.data(year=year)
+    ascii.download.data()
   }
 
-  if(codebook) process_codebook(year = year, geog = geog, extent = extent)
+  if(codebook) process_codebook()
 
   if(saq) {
     build_saq_layout()
@@ -63,15 +58,15 @@ ascii_process_year <- function(year = NULL, download = TRUE, codebook = TRUE, sa
   }
 
   if(convert) {
-    convert_ascii(year = year,
-                  geog = geog, extent = extent)
+    convert_ascii(verbose=verbose)
   }
 
-  if(split) split_geogs(year=year, source = 'ascii', factorize = factorize, geog = geog)
+  if(split) split_geogs(factorize = factorize)
 
-  save_response_stats(year = year, verbose = verbose)
-  save_module_stats(year = year, verbose = verbose)
-
+  if(responses) {
+    save_response_stats()
+    save_module_stats()
+  }
   invisible()
 
 }
@@ -96,11 +91,11 @@ ascii_process_year <- function(year = NULL, download = TRUE, codebook = TRUE, sa
 #' }
 #'
 #'
-ascii.download.data<-function(year = NULL, destpath = NULL, unzip=TRUE, rmzip=TRUE) {
+ascii.download.data<-function(destpath = NULL, unzip=TRUE, rmzip=TRUE) {
 
-  year <- get.year(year)
+  params <- my.brfss.patterns()
 
-  if(is.null(destpath)) destpath <- apply.pattern("ascii_raw_data_folder", YEAR = year)
+  if(is.null(destpath)) destpath <- apply.pattern("ascii_raw_data_folder",params)
   destpath <- normalizePath(destpath,winslash = "/",mustWork = FALSE)
   #
   if(!dir.exists(destpath)) dir.create(destpath,recursive = TRUE)
@@ -110,10 +105,12 @@ ascii.download.data<-function(year = NULL, destpath = NULL, unzip=TRUE, rmzip=TR
   cont <- TRUE
   ctr <- 0
   while(cont && ctr<6) {
+    brfss.param(version = version)
     ctr <- ctr + 1
+    params <- my.brfss.patterns()
 
-    url<-apply.pattern("ascii_downloads_url",YEAR =year, VERS =version)
-    destfile<-apply.pattern("ascii_path_zip",YEAR =year, VERS =version)
+    url<-apply.pattern("ascii_downloads_url",params)
+    destfile<-apply.pattern("ascii_path_zip",params)
 
 
     status <- httr::HEAD(url)$status
@@ -170,38 +167,36 @@ ascii.download.data<-function(year = NULL, destpath = NULL, unzip=TRUE, rmzip=TR
 #'}
 #'
 #' @export
-convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE,
-                        versions = TRUE, geog = NULL, extent = NULL, verbose = FALSE) {
+convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
+                        versions = TRUE, verbose = FALSE) {
 
-  year<-get.year(year)
+  params <- my.brfss.patterns()
 
   if(is.null(layout)) {
-    layout <- get.layout(year)
+    layout <- get.layout()
   }
 
   if(is.null(layout)) {
-    return (NA)
+    return (NULL)
   }
 
   if(main) version <- 0 else {
     if(versions) version = 1 else return()
   }
 
-  path <- apply.pattern("ascii_path_raw", YEAR = year, VERS = version,
-                        GEOG = geog, EXT = extent)
+  path_raw <- apply.pattern("ascii_path_raw", params)
+  while (file.exists(path_raw)) {
 
-  while (file.exists(path)) {
-    if(verbose) cat("... reading version [", version, "] : ", path, "\n")
-    df <- read.ascii(filename = path, layout = layout, verbose = verbose)
+    if(verbose) cat("... reading version [", version, "] : ", path_raw, "\n")
+    df <- read.ascii(filename = path_raw, layout = layout, verbose = verbose)
 
-    df <- add_col_attributes(df, year = year, version = version)
+    df <- add_col_attributes(df)
 
-    df_name <- apply.pattern("ascii_df", YEAR = year, VERS = version)
+    df_name <- apply.pattern("ascii_df",params)
 
     assign(df_name, value = df )
 
-    path <- apply.pattern("ascii_path", YEAR = year, VERS = version,
-                          GEOG = geog, EXT = extent)
+    path <- apply.pattern("brfss_annual_data_path",params)
     if(!dir.exists(dirname(path))) dir.create(dirname(path))
 
     if(verbose) cat("... writing ", df_name, "to ", path,"\n")
@@ -209,8 +204,9 @@ convert_ascii<-function(year=NULL,layout = NULL, completes=T, main = TRUE,
     save(list = c(df_name), file = path)
 
     version <- version + 1
-    path <- apply.pattern("ascii_path_raw", YEAR = year, VERS = version,
-                          GEOG = geog, EXT = extent)
+    brfss.param(version = version)
+    params <- my.brfss.patterns()
+    path_raw <- apply.pattern("ascii_path_raw", params)
 
   }
 
@@ -321,7 +317,7 @@ read.ascii<-function(filename=NULL,layout = NULL, completes=T, verbose = FALSE) 
 #'}
 #'
 cleave.geogs.ascii<-function(year = NULL,
-                           main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
+                             main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
 
   if(!(main || versions)) return(NULL)
 
@@ -337,7 +333,7 @@ cleave.geogs.ascii<-function(year = NULL,
   ver<-integer(0)
   if(main) ver<-0
   browser()
-  vermax <- highest_version(year)
+  vermax <- highest_version()
 
   if(versions) ver<-c(ver,1:vermax)
 

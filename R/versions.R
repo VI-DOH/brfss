@@ -17,28 +17,24 @@
 #' maxvers<-highest_version(2018)
 #'}
 #'
-highest_version<-function(year=NULL, ...) {
+highest_version<-function() {
 
-  source <- get.source()
+  params <- my.brfss.patterns()
 
-  if(is.null(source)) source <- "sas"
-
-  year <- get.year(year)
-
-  if(source == "sas") {
-    fldr<-apply.pattern("sas_data_folder",YEAR = year, ...)
+  if(brfss.param(source) == "sas") {
+    fldr<-apply.pattern("sas_data_folder", params)
   } else {
 
-    fldr <- apply.pattern("ascii_data_folder", YEAR = year, ...)
+    fldr <- apply.pattern("ascii_data_folder", params)
   }
 
   files<-list.files(fldr)
 
   if(length(files) == 0) {
-    if(source == "sas") {
-      fldr<-apply.pattern("sas_data_folder",YEAR = year, ...)
+    if(brfss.param(source) == "sas") {
+      fldr<-apply.pattern("sas_data_folder", params)
     } else {
-      fldr <- apply.pattern("ascii_path", YEAR = year, ...)
+      fldr <- apply.pattern("ascii_path", params)
     }
     files<-list.files(fldr)
 
@@ -55,34 +51,39 @@ highest_version<-function(year=NULL, ...) {
   max(vers)
 }
 
-calc_responses <- function(year = NULL, extent = "national", source = NULL, ...) {
+calc_responses <- function() {
 
-  year <- get.year(year)
-  extent <- get.extent(extent)
-  source <- get.source(source)
+  params <- my.brfss.patterns()
 
   df_resp <- data.frame()
-  browser()
-  sapply(0:highest_version(year), function(version){
-    if(extent == "national") {
-      df_brfss_vers <- brfss_data(year = year, geog = "*", extent="national", version = version)
+
+  sapply(0:highest_version(), function(version){
+
+    brfss.param(version = version)
+    params <- my.brfss.patterns()
+
+    if(brfss.param(extent) == "national") {
+      df_brfss_vers <- brfss_data()
 
     } else {
 
-      fldr <- apply.pattern("brfss_geog_folder", YEAR = year)
+      fldr <- apply.pattern("brfss_geog_folder", params)
 
       geogs <- list.files(fldr)
 
       df_brfss_vers <- data.frame()
 
       sapply(geogs, function(geog) {
-        browser()
-        df <- brfss_data(year = year, geog = geog, extent="local", version = version)
+
+        df <- brfss_data()
 
         df_brfss_vers <<- df_brfss_vers %>% bind_rows(df)
       })
 
     }
+
+    year <- brfss.param(year)
+    version <- brfss.param(version)
 
     if(nrow(df_brfss_vers) > 0) {
       df_resp <<- df_resp %>% bind_rows(df_brfss_vers  %>%
@@ -113,9 +114,9 @@ calc_responses <- function(year = NULL, extent = "national", source = NULL, ...)
 #' @examples
 responses_by_geog<-function(year,geog) {
 
-  geog<-geog_abbs(geog)
-
-  orrr::get.rdata(file = apply.pattern("brfss_responses_path",YEAR = year)) %>%
+  params <- my.brfss.patterns()
+  geog <- brfss.param(geog)
+  orrr::get.rdata(file = apply.pattern("brfss_responses_path",params)) %>%
     filter(geog == {{geog}})
 
 }
@@ -134,31 +135,31 @@ responses_by_geog<-function(year,geog) {
 #' \dontrun{
 #' save_response_stats(2018)
 #' }
-save_response_stats<-function(year, ...) {
+save_response_stats<-function() {
   require(dplyr)
 
-  df_responses<-calc_responses(year = year, ...)
-  nm<-paste0("df_responses_",year)
+  params <- my.brfss.patterns()
+
+  df_responses <- calc_responses()
+
+  nm <- apply.pattern("brfss_responses_df", params)
   assign(nm,df_responses)
 
 
-  save(list = c(nm),file = apply.pattern("brfss_responses_path",YEAR = year))
+  save(list = c(nm),file = apply.pattern("brfss_responses_path", params))
 
 }
 
 
-responses<-function(year = NULL,geogs=NULL,versions, reduce=TRUE) {
+responses<-function(versions, reduce=TRUE) {
 
-  year <- get.year(year)
+  params <- my.brfss.patterns()
 
-  df<- orrr::get.rdata(apply.pattern("brfss_responses_path",YEAR = year))
+  year <- brfss.param(year)
+  df<- orrr::get.rdata(apply.pattern("brfss_responses_path",params))
 
-  if(!is.null(geogs)) {
-    if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
-    df<-df[df$geog%in%geogs,]
-  } else {
-    geogs<-geog_abbs()
-  }
+
+  geogs<-geog_abbs()
 
   if(!missing(versions)) {
     df<-df[df$version%in%versions,]

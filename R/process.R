@@ -23,29 +23,13 @@ require(dplyr)
 #'}
 #'
 #'
-split_geogs<-function(year = NULL, source = NULL,
-                      main=TRUE, versions=TRUE, my_geog=NULL,
-                      other_geogs=NULL, factorize = FALSE, verbose=TRUE,
-                      geog = NULL, extent = NULL) {
+split_geogs<-function(main=TRUE, versions=TRUE, factorize = FALSE, verbose=TRUE) {
 
   if(!(main || versions)) return(NULL)
-
-  year <- get.year(year)
-  geog <- get.geog(geog)
-  source <- get.source(source)
-  extent <- get.extent(extent)
-
-  if(is.null(my_geog)) my_geog <- my.geog()
-  if(is.null(other_geogs)) other_geogs <- my.other.geogs()
-
-  if(my_geog=="") my_geog <- character(0)
-
-  geogs <- get.geogs()
-
   ver<-integer(0)
   if(main) ver<-0
 
-  vermax <- highest_version(year)
+  vermax <- highest_version()
   if(vermax == 0) versions = FALSE
 
   if(versions) ver<-c(ver,1:vermax)
@@ -54,22 +38,19 @@ split_geogs<-function(year = NULL, source = NULL,
 
   sapply(ver,function(version) {
 
-    if(source == 'sas') {
+    brfss.param(version = version)
+    params <- my.brfss.patterns()
 
-      rdata_file <- apply.pattern("brfss_annual_data_path", YEAR = year, GEOG = geog,
-                                  VERS = version, EXT = extent, SRC = "sas")
-    } else {
-      rdata_file <- apply.pattern("brfss_annual_data_path", YEAR = year, GEOG = geog,
-                                  VERS = version, EXT = extent, SRC = "ascii")
-    }
+    rdata_file <- apply.pattern("brfss_annual_data_path",params)
 
     df_brfss <- orrr::get.rdata(file = rdata_file)
 
-    if(geogs[1] == '*') {
+    if(brfss.param(geog) == '*') {
       geogs<-unique(df_brfss$`_STATE`)
 
     } else {
 
+      geogs <- c(brfss.param(geog),brfss.param(geogs_other))
       if(is.character(geogs)) {
         geogs<-sapply(geogs,function(state) {
           df_geogs[df_geogs$Abbrev==state,"Id"]
@@ -81,9 +62,14 @@ split_geogs<-function(year = NULL, source = NULL,
 
     add_cols<-character(0)
 
+    geog_save <- brfss.param(geog)
+
     mapply(function(id,nm) {
 
       if(id%in%geogs) {
+
+        brfss.param(geog = nm)
+        params <- my.brfss.patterns()
 
         df_state<-df_brfss[df_brfss$`_STATE`==id,]
 
@@ -94,7 +80,7 @@ split_geogs<-function(year = NULL, source = NULL,
 
             if(!is.null(attrs)){
               sapply(1:length(attrs),function(j) {
-                #browser()
+
                 attr(df_state[[i]],names(attrs[j]))<<-attr(df_brfss[[i]],names(attrs[j]))
               })
             } else {
@@ -107,12 +93,19 @@ split_geogs<-function(year = NULL, source = NULL,
             df_state <- df_state %>% make_factors()
           }
 
-          dfname<-paste0("df_",nm,"_",year)
+          dfname <- apply.pattern("brfss_data_df",params)
+
           if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
 
           assign(dfname,df_state)
 
-          fname <- brfss_data_path(year = year, geog = nm, version = version, extent = 'local', rw = 'w')
+          ext <- brfss.param(extent)
+
+          brfss.param(extent = "local")
+
+          fname <- brfss_data_path( rw = 'w')
+
+          brfss.param(extent = ext)
 
           if(verbose) cat("Going to save :", fname, "\n")
 
@@ -122,7 +115,12 @@ split_geogs<-function(year = NULL, source = NULL,
         }
       }
     },df_geogs$Id,df_geogs$Abbrev)
+
+    brfss.param(geog = geog_save)
+
   })
+
+
   invisible()
 }
 
@@ -147,37 +145,31 @@ split_geogs<-function(year = NULL, source = NULL,
 #' @export
 #'
 
-process_year <- function(year = NULL, source = NULL, download=TRUE,
-                         layout = TRUE, convert=TRUE, codebook = TRUE,
-                         split = TRUE, factorize = TRUE, saq = FALSE,
-                         verbose=FALSE, geog = NULL, extent = NULL, ...) {
+process_year <- function( download=TRUE,
+                          layout = TRUE, convert=TRUE, codebook = TRUE,
+                          split = TRUE, factorize = TRUE, saq = FALSE,
+                          responses = TRUE, verbose=FALSE, ...) {
 
-  source <- get.source(source)
-  source<-match.arg(source,c("sas","ascii"))
-
-  year =  get.year(year)
-  geog =  get.geog(geog)
-  extent = get.extent(extent)
 
   # by definition, state-added- questions are local
 
-  if(extent == 'national' && saq) {
+  if(brfss.param(extent) == 'national' && saq) {
     warning("Data are national, saq = TRUE is incongruous, setting saq to FALSE")
     saq <- FALSE
   }
   # get the path to travel ... sas or ascii
 
-  if(source == 'sas') {
+  if(brfss.param(source) == "sas") {
 
-    sas_process_year(year = year, download=download, layout = layout, convert=convert,
+    sas_process_year(download=download, layout = layout, convert=convert,
                      codebook = codebook, split = split, factorize = factorize,
-                     verbose=verbose, geog = geog, extent = extent)
+                     responses = responses, verbose=verbose)
 
   } else {
 
-    ascii_process_year(year = year, download=download, convert=convert, codebook = codebook,
+    ascii_process_year(download=download, convert=convert, codebook = codebook,
                        split = split, factorize = factorize,  saq = saq,
-                       verbose=verbose, geog = geog, extent = extent)
+                       responses = responses, verbose=verbose)
   }
 
 }

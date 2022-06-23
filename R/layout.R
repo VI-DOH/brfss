@@ -6,17 +6,17 @@
 #' @return
 #' @export
 #'
-save_sas_layout<-function(year = NULL) {
+save_sas_layout<-function() {
   require(stringr)
   require(dplyr)
 
-  year <- get.year(year)
-  extent <- get.extent()
+  params <- my.brfss.patterns()
+  year <- as.integer(brfss.param(year))
+
   # get the filename for the data
   #  name format based on year
   if(year>2010) {
-    file<-apply.pattern("sas_sasout_path",YEAR=year, VERS = 0, EXT = extent)
-
+    file<-apply.pattern("sas_sasout_path", params)
   } else {
     return(NULL)
 
@@ -58,7 +58,7 @@ save_sas_layout<-function(year = NULL) {
   question<-gsub("(.*) = '(.*)'$","\\2",ulines)
 
 
-  df_ranges<-read_sas_field_ranges(year)
+  df_ranges<-read_sas_field_ranges()
 
   df<- dplyr::left_join(df_ranges,data.frame(var=vars,label=question,stringsAsFactors = F),by="var")
 
@@ -75,28 +75,26 @@ save_sas_layout<-function(year = NULL) {
     as.data.frame() %>%
     fill_dummies()
 
-  fldr <- apply.pattern("sas_layout_folder",YEAR = year)
+  fldr <- apply.pattern("layout_folder", params)
   if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
 
-  save(df_layout_sas, file = apply.pattern("sas_layout_path",YEAR = year))
+  save(df_layout_sas, file = apply.pattern("sas_layout_path",params))
   invisible()
 }
 
 #####################################################################################################
-
 #' Get saved BRFSS layout (from SASOUT)
 #'
-#' @param year
 #'
 #' @return
 #' @export
 #'
-sas_layout<-function(year = NULL, ...) {
+sas_layout<-function() {
   require(stringr)
   require(dplyr)
 
-  year <- get.year(year)
-  orrr::get.rdata(file = apply.pattern("sas_layout_path",YEAR = year, ...))
+  params <- my.brfss.patterns()
+  orrr::get.rdata(file = apply.pattern("sas_layout_path",params))
 
 }
 
@@ -118,7 +116,7 @@ get_fw_layout <- function(year = NULL) {
 
   year <- get.year(year)
 
-  layout_fldr <- apply.pattern("sas_layout_folder", YEAR = year)
+  layout_fldr <- apply.pattern("layout_folder", YEAR = year)
 
   list.files(layout_fldr)
 }
@@ -206,14 +204,12 @@ merge_layout<-function(df_quest, year = NULL) {
 #' @export
 #'
 
-get.layout <- function(year = NULL, ...) {
+get.layout <- function() {
 
-  year <- get.year(year)
+  df_layout <- get.merged.layout()
+  if(is.null(df_layout)) df_layout <- get.codebook.layout()
 
-  df_layout <- get.merged.layout(year = year, ...)
-  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year, ...)
-
-  if(is.null(df_layout)) df_layout <- sas_layout(year, ...)
+  if(is.null(df_layout)) df_layout <- sas_layout()
 
   df_layout
 }

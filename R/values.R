@@ -21,14 +21,13 @@ split_it <- function(str, sep = "=") {
 #' @export
 #'
 #' @examples
-save_codebook_values <- function(file = NULL, year = NULL, geog = geog) {
+save_codebook_values <- function(file = NULL) {
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
+  params <- my.brfss.patterns()
 
-  df_values_cb <- parse_codebook_values(file = file, year = year, geog = geog)
+  df_values_cb <- parse_codebook_values(file = file)
 
-  fname <- apply.pattern("codebook_values_path", YEAR=year, GEOG = geog)
+  fname <- apply.pattern("codebook_values_path",params)
 
   save(df_values_cb, file = fname)
 }
@@ -55,7 +54,8 @@ stretch_values <- function(lines) {
 
 
   wtd_lines <- grep("^Weighted.Perc",lines)
-  val_ends <- c(lbl_lines[-1]-1,length(lines))
+#  val_ends <- c(lbl_lines[-1]-1,length(lines))
+  val_ends <- c(label_lines[-1]-1,length(lines))
 
   ##  build the new lines ... all values will be on a single line with their counts and percents
   ##    just like the pdf and rtf file
@@ -95,13 +95,10 @@ stretch_values <- function(lines) {
 #' @export
 #'
 #' @examples
-parse_codebook_values <- function(file=NULL, year = NULL, geog = NULL) {
+parse_codebook_values <- function(file=NULL) {
     require(dplyr)
 
-    year <- get.year(year)
-    geog <- get.geog(geog)
-
-    lines <- read_codebook(file=file, year = year)
+    lines <- read_codebook(file=file)
     if(is.null(lines)) return(NULL)
 
   #############################################################################
@@ -269,12 +266,12 @@ parse_codebook_values <- function(file=NULL, year = NULL, geog = NULL) {
 #' @examples
 values <- function( year = NULL, ...) {
 
-  year <- get.year(year)
+  params <- my.brfss.patterns()
 
-  fname <- apply.pattern("merged_values_path", YEAR=year, ...)
+  fname <- apply.pattern("merged_values_path",params)
 
   if(!file.exists(fname)) {
-    fname <- apply.pattern("codebook_values_path", YEAR=year, ...)
+    fname <- apply.pattern("codebook_values_path",params)
   }
   orrr:::get.rdata(file = fname)
 }
@@ -289,11 +286,11 @@ values <- function( year = NULL, ...) {
 #' @export
 #'
 #' @examples
-codebook_values <- function( year = NULL, ...) {
+codebook_values <- function() {
 
-  year <- get.year(year)
+  params <- my.brfss.patterns()
 
-  fname <- apply.pattern("codebook_values_path", YEAR=year, ...)
+  fname <- apply.pattern("codebook_values_path",params)
 
   orrr:::get.rdata(file = fname)
 }
@@ -381,13 +378,12 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 #' df_brfss <- make_factors(df_brfss = df_brfss, df_layout = df_layout, df_vals = df_vals)
 #' }
 #'
-make_factors <- function(df_brfss = NULL, year = NULL, df_layout = NULL, df_vals = NULL) {
+make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL) {
 
-  #year = get.year(year)
   if(is.null(df_brfss)) df_brfss <- brfss_data()
-  if(is.null(df_vals)) df_vals <- values(year = year)
+  if(is.null(df_vals)) df_vals <- values()
 
-  if(is.null(df_layout)) df_layout <- get.layout(year = year)
+  if(is.null(df_layout)) df_layout <- get.layout()
 
   df_factors <- quest_types(df_layout, df_vals) %>%
     filter(type == "factor")  %>%

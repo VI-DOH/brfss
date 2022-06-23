@@ -135,7 +135,7 @@ init.patterns <- function() {
     append.pattern("codebook_path","{codebook_folder}{codebook_file}.{codebook_ext}",
                    desc = "ext of the annual codebook file (.txt, .rtf, or .pdf") %>%
 
-    append.pattern("codebook_layout_folder","{sas_layout_folder}",
+    append.pattern("codebook_layout_folder","{layout_folder}",
                    desc = "location of the annual codebook layout file") %>%
 
     append.pattern("codebook_layout_file","layout[YR]_CB.rda",
@@ -153,22 +153,27 @@ init.patterns <- function() {
 
     #########################################################################################
 
-  append.pattern("sas_layout_folder","{brfss_annual_data_folder}layout/") %>%
+  append.pattern("layout_folder",
+                "{brfss_data_folder}[YEAR]/layout/") %>%
     append.pattern("sas_layout_file","layout[YR]_sas.rda") %>%
-    append.pattern("sas_layout_path","{sas_layout_folder}{sas_layout_file}") %>%
+    append.pattern("sas_layout_path","{layout_folder}{sas_layout_file}") %>%
 
 
     ##    data file of response totals
 
-    append.pattern("brfss_responses_folder","{brfss_annual_data_folder}") %>%
+    append.pattern("brfss_responses_folder","{brfss_data_folder}[YEAR]/") %>%
     append.pattern("brfss_responses_file","responses_[YEAR].rda") %>%
     append.pattern("brfss_responses_path","{brfss_responses_folder}{brfss_responses_file}") %>%
 
+    append.pattern("brfss_responses_df","df_responses_[YEAR]") %>%
+
     ##    data file of modules
 
-    append.pattern("brfss_modules_folder","{brfss_annual_data_folder}") %>%
+    append.pattern("brfss_modules_folder","{brfss_data_folder}[YEAR]/") %>%
     append.pattern("brfss_modules_file","modules_[YEAR].rda") %>%
     append.pattern("brfss_modules_path","{brfss_modules_folder}{brfss_modules_file}") %>%
+
+    append.pattern("brfss_modules_df","df_modules_[YEAR]") %>%
 
 
     #####################################################################################################
@@ -190,8 +195,10 @@ init.patterns <- function() {
 
     append.pattern("ascii_path_raw","{ascii_raw_data_folder}{ascii_filename_raw}") %>%
 
-    append.pattern("ascii_data_folder","{brfss_data_folder}[YEAR]/([EXT] == 'local';geog/[GEOG]/)ascii/") %>%
-    append.pattern("ascii_filename","[GEOG]_[YEAR]([VERS] > 0;_V[VERS]).rda") %>%
+    append.pattern("ascii_data_folder",
+                   "{brfss_data_folder}[YEAR]/([EXT] == 'local';geog/[GEOG]/)ascii/") %>%
+
+    append.pattern("ascii_filename","([EXT] == 'local';[GEOG]_)[YEAR]([VERS] > 0;_V[VERS]).rda") %>%
     append.pattern("ascii_path","{ascii_data_folder}{ascii_filename}") %>%
 
     append.pattern("ascii_df","df_ascii_[YEAR]([VERS] > 0;_V[VERS])") %>%
@@ -231,7 +238,10 @@ init.patterns <- function() {
     append.pattern("saq_raw_path","{saq_raw_folder}{saq_raw_file}")%>%
     append.pattern("saq_raw_values_path","{saq_raw_folder}{saq_raw_values_file}")%>%
 
-    append.pattern("saq_layout_folder","{sas_layout_folder}") %>%
+    append.pattern("saq_layout_folder",paste0("{brfss_data_folder}[YEAR]/",
+                          "([EXT] == 'local';geog/[GEOG]/saq/([EXT] == 'national';ERROR)"),
+                   desc = "Folder to store the annual processed BRFSS data") %>%
+
     append.pattern("saq_layout_file","layout[YR]_SAQ.rda") %>%
     append.pattern("saq_values_file","values[YR]_SAQ.rda") %>%
     append.pattern("saq_layout_path","{saq_layout_folder}{saq_layout_file}") %>%
@@ -239,11 +249,14 @@ init.patterns <- function() {
 
 
     ##  files from merging the saq data with the national data
+    append.pattern("merged_layout_folder",paste0("{brfss_data_folder}[YEAR]/",
+           "([EXT] == 'local';geog/[GEOG]/layout)",
+           "([EXT] == 'national';ERROR)")) %>%
 
     append.pattern("merged_layout_file","layout[YR]_mrg.rda") %>%
-    append.pattern("merged_layout_path","{codebook_layout_folder}{merged_layout_file}") %>%
+    append.pattern("merged_layout_path","{merged_layout_folder}{merged_layout_file}") %>%
     append.pattern("merged_values_file","values[YR]_mrg.rda") %>%
-    append.pattern("merged_values_path","{codebook_layout_folder}{merged_values_file}")  %>%
+    append.pattern("merged_values_path","{merged_layout_folder}{merged_values_file}")  %>%
 
     ## Miscellaneous
 

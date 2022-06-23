@@ -41,6 +41,8 @@ get_geogs_all <- function() {
 #' }
 geog_name <- function(geogs) {
 
+  geogs <- unlist(geogs)
+
   df_geogs <- get_geogs_all() %>%
     mutate(Id = as.integer(Id))
 

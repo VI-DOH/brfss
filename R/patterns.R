@@ -38,7 +38,7 @@ set.pattern <- function(name, pattern= NULL, group="", desc = "") {
 }
 
 pattern.file.name <- function() {
-  "./data/naming_patterns.rda"
+  orrr::convert.dot("./data/naming_patterns.rda")
 }
 
 append.pattern <- function(df, name , pattern , group = "", desc = "") {
@@ -309,6 +309,7 @@ apply.pattern <- function(name,  ...) {
 #'
 #' @param strIn character - patterns to apply the variables to
 #' @param ... list - variables to insert in form of c(YEAR = xxxx, VERS = 1), etc
+#' @param expand logical - convert . or .. to a normalized path
 #'
 #' @return character vector of modified strings
 #' @export
@@ -318,10 +319,11 @@ apply.pattern <- function(name,  ...) {
 #' geog <- "MT"
 #' patternize("XPT_[GEOG]_[YEAR]", YEAR = year, GEOG = geog)
 #'
-patternize<-function(strIn, ...) {
+patternize<-function(strIn, ..., expand = TRUE) {
 
   args <- unlist(list(...))
 
+  #expand <- as.logical(args["expand"])
   ##  remove args with NULL value
 
   args <- args[!sapply(args,is.null)]
@@ -371,6 +373,7 @@ patternize<-function(strIn, ...) {
                    expr,
                    substring(ret, next_cond$end+1))
   }
+  if(expand && grepl("./",ret, fixed = T)) ret <- orrr::convert.dot(ret)
 
   ret
 }

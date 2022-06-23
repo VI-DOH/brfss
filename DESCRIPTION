@@ -7,7 +7,7 @@ Maintainer: John Orr <John.Orr@doh.vi.gov>
 Description: Functions to read in raw BRFSS data files and output processed data, reports and graphs.
 License: CC0
 LazyData: TRUE
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 Encoding: UTF-8
 Imports: rmarkdown,
         reshape2,

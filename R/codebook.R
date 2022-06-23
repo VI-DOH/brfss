@@ -11,16 +11,14 @@
 #' \dontrun{
 #' process_codebook(2020)
 #' }
-process_codebook <- function(year = NULL, geog = NULL, extent = NULL) {
+process_codebook <- function() {
 
-  year = get.year(year)
-  geog = get.geog(geog)
-  extent = get.extent(extent)
+  params <- my.brfss.patterns()
 
-  if(extent == "national") download_codebook(year = year, geog = geog)
+  if(brfss.param(extent) == "national") download_codebook()
 
-  save_codebook_layout(year = year, geog = geog)
-  save_codebook_values(year = year, geog = geog)
+  save_codebook_layout()
+  save_codebook_values()
 }
 
 #' Download Codebook
@@ -36,13 +34,10 @@ process_codebook <- function(year = NULL, geog = NULL, extent = NULL) {
 #' \dontrun{
 #' download_codebook(2020)
 #' }
-download_codebook <- function(year = NULL, geog = NULL, extent = NULL) {
+download_codebook <- function() {
 
   ## if year is not provided then get the year from the my_brfss object
-  ##    if year is provided (is not null), get.year() will simply return that value
-  year <- get.year(year)
-  geog <- get.geog(geog)
-  extent <- get.extent(extent)
+  params <- my.brfss.patterns()
 
   ##  URL patterns are stored under the group  "codebook_downloads"
 
@@ -52,8 +47,8 @@ download_codebook <- function(year = NULL, geog = NULL, extent = NULL) {
   ##    GEOG is not needed unless the user changes the folder pattern
   ##    but is included here in case
 
-  fldrout <- apply.pattern("codebook_folder",YEAR = year, GEOG = geog, EXT = extent)
-  ext <- apply.pattern("codebook_ext")
+  fldrout <- apply.pattern("codebook_folder",params)
+  ext <- apply.pattern("codebook_ext",params)
 
   ## create the folder/dir if it does not exist
 
@@ -67,11 +62,11 @@ download_codebook <- function(year = NULL, geog = NULL, extent = NULL) {
   invisible(
     sapply(pats,function(pat) {
 
-      url <- apply.pattern(pat, YEAR = year)
+      url <- apply.pattern(pat, params)
 
       ext <- gsub(".*([.].*)", "\\1", url)
 
-      fileout <- apply.pattern("codebook_file",YEAR = year, GEOG = geog, EXT = extent)
+      fileout <- apply.pattern("codebook_file",params)
       fileout <- paste0(fileout,ext)
       destfile <- paste0(fldrout,fileout)
 
@@ -110,22 +105,17 @@ download_codebook <- function(year = NULL, geog = NULL, extent = NULL) {
 #' @export
 #'
 #'
-read_codebook <- function(file=NULL, year = NULL, ...) {
+read_codebook <- function(file=NULL, ...) {
   require(dplyr)
 
   args <- list(...)
 
-  geog <- args$geog
-  extent <- args$extent
-
-  year <- get.year(year)
-  geog <- get.geog(geog)
-  extent <- get.extent(extent)
+  params <- my.brfss.patterns()
 
   if(is.null(file)) {
-    fldr <- apply.pattern("codebook_folder", YEAR = year, GEOG = geog, EXT = extent)
-    fil <- apply.pattern("codebook_file", YEAR = year, GEOG = geog, EXT = extent)
-    ext <- apply.pattern("codebook_ext", YEAR = year, GEOG = geog, EXT = extent)
+    fldr <- apply.pattern("codebook_folder", params)
+    fil <- apply.pattern("codebook_file", params)
+    ext <- apply.pattern("codebook_ext", params)
     file <- paste0(fldr,fil,".",ext)
   }
 
@@ -159,10 +149,17 @@ read_codebook <- function(file=NULL, year = NULL, ...) {
 
   } else if(grepl("[.]html$", file,ignore.case = TRUE)) {
 
-    lines <- readLines(file) %>%
-      htm2txt::htm2txt(file) %>%
-      gsub(" "," ",.) %>%
-      grep("^$", ., invert = T, value = T) %>%
+    lines <- readLines(file)
+    lines <- lines %>%
+      htm2txt::htm2txt(file)
+
+    lines <- lines %>%
+      gsub(" "," ",.)
+
+    lines <- lines %>%
+      grep("^$", ., invert = T, value = T)
+
+    lines <- lines %>%
       grep("^ *$", ., invert = T, value = T)
 
     comments <- rev(grep("<!--",lines))
@@ -225,13 +222,12 @@ set_codebook_ext <- function(ext) {
 ##
 ##    layout from codebook
 ##
-save_codebook_layout <- function(file=NULL, year = NULL, geog = NULL) {
+save_codebook_layout <- function(file=NULL) {
   require(dplyr)
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
+  params <- my.brfss.patterns()
 
-  lines <- read_codebook(file=file, year = year)
+  lines <- read_codebook(file=file)
   if(is.null(lines)) return(NULL)
 
   ##############################################################
@@ -335,8 +331,8 @@ save_codebook_layout <- function(file=NULL, year = NULL, geog = NULL) {
     relocate(field_size, start, end, col_name, sect_type, sect_num, section, label,
            question_num, var_type, question)
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, GEOG = geog)
-  fil <- apply.pattern("codebook_layout_file", YEAR = year, GEOG = geog)
+  fldr <- apply.pattern("codebook_layout_folder",params)
+  fil <- apply.pattern("codebook_layout_file", params)
 
   file <- paste0(fldr,fil)
 
@@ -396,12 +392,12 @@ deduped_layout <- function(df) {
 #' @export
 #'
 
-get.codebook.layout <- function(year = NULL, ...) {
+get.codebook.layout <- function() {
 
-  year <- get.year(year)
+  params <- my.brfss.patterns()
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year)
-  fil <- apply.pattern("codebook_layout_file", YEAR = year)
+  fldr <- apply.pattern("codebook_layout_folder", params)
+  fil <- apply.pattern("codebook_layout_file", params)
 
   file <- paste0(fldr,fil)
 
@@ -422,12 +418,12 @@ get.codebook.layout <- function(year = NULL, ...) {
 #' @export
 #'
 
-get.merged.layout <- function(year = NULL) {
+get.merged.layout <- function() {
 
-  year <- get.year(year)
+  params <- my.brfss.patterns()
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year)
-  fil <- apply.pattern("merged_layout_file", YEAR = year)
+  fldr <- apply.pattern("codebook_layout_folder", params)
+  fil <- apply.pattern("merged_layout_file",params)
 
   file <- paste0(fldr,fil)
 

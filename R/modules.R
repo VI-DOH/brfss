@@ -1,25 +1,22 @@
 
 #' Modules Used by Geography
-#'
-#' @param year integer - year of interest
-#' @param geogs character - geography(s) of interest
-#'
+#'#'
 #' @return data frame of module information
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' modules_used(2020, "MT")
+#' modules_used()
 #' }
 #'
 #'
-modules_used <- function(year = NULL, extent = NULL, source = NULL, ...) {
+modules_used <- function() {
 
   # year = get.year(year)
   # extent = get.extent(extent)
   # source = get.source(source)
 
-  codebook <- get.codebook.layout(year = year, ...)
+  codebook <- get.codebook.layout()
 
   df_modules <- codebook %>%
     filter(sect_type == "Module") %>%
@@ -33,28 +30,35 @@ modules_used <- function(year = NULL, extent = NULL, source = NULL, ...) {
 
   df_final <- data.frame()
 
-  sapply(0:highest_version(year),function(ver){
+  sapply(0:highest_version(),function(ver){
 
-    df_brfss <- brfss_data(year = year, geog = "*", extent = "national", version = ver) %>%
+    brfss.param(version = ver)
+
+    df_brfss <- brfss_data() %>%
       mutate(geog = `_STATE`)
 
     invisible(
       mapply(function(coi, mod_num, module) {
         # if(ver == 1 && mod_num == 2) browser()
+        #cat("coi: ", coi, "\n")
         df <- df_brfss %>%
           rename(coi = {{coi}}) %>%
           select(geog,coi) %>%
           filter(!is.na(coi)) %>%
           select(geog) %>%
           distinct() %>%
-          mutate(year = year, version = ver, mod_num = mod_num, module = module) %>%
+          mutate(year = brfss.param(year), version = brfss.param(version),
+                 mod_num = mod_num, module = module) %>%
           select(year, version, geog, mod_num, module)
+
 
          df_final <<- df_final %>% bind_rows(df)
 
       },df_modules$col_name,df_modules$sect_num, df_modules$section)
     )
+
   })
+
 
   df_final %>% mutate(geog = geog_abb(geog))
 
@@ -157,12 +161,14 @@ modules_used <- function(year = NULL, extent = NULL, source = NULL, ...) {
 # }
 
 
-save_module_stats<-function(year, verbose = FALSE) {
+save_module_stats<-function() {
   require(dplyr)
 
-  df_responses<-responses(year = year)
+  params <- my.brfss.patterns()
 
-  df_mods<-modules_used(year = year, verbose = verbose)
+  df_responses<-responses()
+
+  df_mods<-modules_used()
 
 
   df_modules<-dplyr::left_join(df_mods,df_responses,by = c("year", "geog", "version"))
@@ -175,14 +181,12 @@ save_module_stats<-function(year, verbose = FALSE) {
   colnames(df_modules)<-gsub("[.]y","_total",colnames(df_modules))
 
   df_modules$ratio<-df_modules$responses/df_modules$responses_total
-  # nm<-paste0("df_responses_",year)
-  # assign(nm,df_responses)
-  # save(list = c(nm),file = paste0(apply.pattern("sas_data_folder", YEAR = year),"responses_",year,".RData"))
 
-  nm<-paste0("df_modules_",year)
+
+  nm<- apply.pattern("brfss_modules_df", params)
   assign(nm,df_modules)
 
-  save(list = c(nm),file = apply.pattern("brfss_modules_path",YEAR = year))
+  save(list = c(nm),file = apply.pattern("brfss_modules_path",params))
 
 }
 

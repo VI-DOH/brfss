@@ -172,31 +172,30 @@ brfss_field_values_filename<-function(year) {
 #'
 #' @export
 
-brfss_data_path <- function(year = NULL, geog = NULL, version = 0, extent = NULL, source = NULL, rw = c("r","w")) {
+brfss_data_path <- function(rw = c("r","w")) {
 
   read <- rw == 'r'
   write <- rw == 'w'
 
-  year <- get.year(year)
+  params <- my.brfss.patterns()
 
-  if(geog == "*") {
-    extent <- "national"
-    geog = NULL
-  } else {
-    geog <- get.geog(geog)
-    extent = "local"
-  }
-  source <- get.source(source)
+  # if(geog == "*") {
+  #   extent <- "national"
+  #   geog = NULL
+  # } else {
+  #   geog <- get.geog(geog)
+  #   extent = "local"
+  # }
 
   ## added && FALSE to force all files to be in brfss_geog_folder
 
-    fldr <- apply.pattern("brfss_annual_data_folder",  YEAR = year, GEOG = geog, EXT = extent, SRC = source )
+    fldr <- apply.pattern("brfss_annual_data_folder", params)
 
 
   if(!dir.exists(fldr) && write) dir.create(fldr, recursive = TRUE)
 
 
-    file <- apply.pattern("brfss_annual_data_file",  YEAR = year, GEOG = geog, VERS = version, EXT = extent, SRC = source)
+    file <- apply.pattern("brfss_annual_data_file",  params)
 
   path <- paste0(fldr,file)
 
@@ -206,21 +205,10 @@ brfss_data_path <- function(year = NULL, geog = NULL, version = 0, extent = NULL
 }
 
 
-brfss_version_exists<-function(year = NULL,geog = NULL, source = NULL,version=1) {
-  if(is.numeric(geog)) geog<-geog_abbs(geog)
+brfss_version_exists<-function(version=1) {
 
-  year <- get.year(year)
-
-  if(geog == "*") {
-    extent <- "national"
-    geog = NULL
-  } else {
-    geog <- get.geog(geog)
-    extent = "local"
-  }
-  source <- get.source(source)
-
-  fname<- brfss_data_path(year = year, geog = geog, version = version, source = source, rw = 'r'  )
+  brfss.param(version = version)
+  fname<- brfss_data_path(rw = 'r'  )
 
   ok <- !is.null(fname)
 

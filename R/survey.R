@@ -16,17 +16,11 @@
 #'
 #' }
 #'
-brfss_data <- function(year = NULL, geog = NULL, version = 0, extent = NULL, source = NULL) {
+brfss_data <- function() {
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
-  source <- get.source(source)
-  extent <- get.extent(extent)
+  params <- my.brfss.patterns()
 
-  if(is.numeric(geog)) geog<-geog_abbs(geog)
-
-
-  fname <- brfss_data_path(year,geog,version,rw = 'r')
+  fname <- brfss_data_path(rw = 'r')
 
   if(is.null(fname))  return(NULL)
 
@@ -135,8 +129,7 @@ survey_stats_binary<-function(df_brfss,coi, num_vals,den_vals, ...) {
 #'
 #' @examples
 #'
-survey_stats<-function(df_brfss = NULL, year = NULL, geog = NULL, extent = NULL, source = NULL,
-                       coi, exclude = c("Don.*t|Refuse"), subset = NULL,
+survey_stats<-function(df_brfss = NULL, coi, exclude = c("Don.*t|Refuse"), subset = NULL,
                        conf=.95, weighted = TRUE, pct = FALSE, digits = 99) {
 
   require(survey, quietly = T, warn.conflicts = F)
@@ -144,14 +137,8 @@ survey_stats<-function(df_brfss = NULL, year = NULL, geog = NULL, extent = NULL,
 
   # if data frame not provided then get it from
   if(is.null(df_brfss)) {
-    year <- get.year(year)
-    geog <- get.geog(geog)
-    extent <- get.extent(extent)
-    source <- get.source(source)
 
-    df_brfss <- coi_data( coi = coi, subset = subset, year = year, geog= geog,
-                          extent = extent, source = source,
-                          exclude = exclude)
+    df_brfss <- coi_data( coi = coi, subset = subset, exclude = exclude)
 
   }
 
@@ -456,18 +443,13 @@ simple_stats_SAVE <- function(df_brfss = NULL, year = NULL, geog = NULL, extent 
 
 }
 
-coi_data_vers<- function(coi=NULL, subset = NULL, year = NULL, geog = NULL, extent = NULL,
-                         source = NULL, version = 0) {
-
-  year <- get.year(year)
-  geog <- get.geog(geog)
-  extent <- get.extent(extent)
-  source <- get.source(source)
+coi_data_vers<- function(coi=NULL, subset = NULL, version = NULL) {
 
   vwt <- apply.pattern("weight_col",VERS=version)
   stratum <- apply.pattern("stratum_col")
 
-  df <- brfss_data(year = year, geog= geog, extent = extent, source = source,  version = version)
+  brfss.params(version = version)
+  df <- brfss_data()
 
   if(is.null(df)) return(data.frame())
 
@@ -486,22 +468,15 @@ coi_data_vers<- function(coi=NULL, subset = NULL, year = NULL, geog = NULL, exte
 
 }
 
-coi_data <- function( coi = NULL, year = NULL, geog = NULL,  extent =  NULL ,
-                      source = NULL, subset = NULL, exclude = NULL) {
+coi_data <- function( coi = NULL, subset = NULL, exclude = NULL) {
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
-  source <- get.source(source)
-  extent <- get.extent(extent)
 
   #df_brfss <- brfss_data(year,geog)
   df_brfss <- data.frame() #   coi_data(coi, year,geog,version = 0)
 
   invisible(
-    sapply(0:highest_version(year),function(ver) {
-      df_brfss <<- df_brfss %>% bind_rows(coi_data_vers(coi = coi, subset = subset, year = year,
-                                                        geog = geog, extent = extent,
-                                                        source = source,
+    sapply(0:highest_version(),function(ver) {
+      df_brfss <<- df_brfss %>% bind_rows(coi_data_vers(coi = coi, subset = subset,
                                                         version = ver))
     })
   )
