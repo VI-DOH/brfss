@@ -87,4 +87,41 @@ geog_names<-function(geogs) {
   geogs
 }
 
+split_sentence<-function(x,len, start=0){
+  #
+  # find spaces
+  #
+  lenx<-nchar(x)
+
+  sp_all<-gregexpr(pattern = " ",text = x)
+
+  if(length(sp_all)>0) {
+
+    sp_all<-as.integer(sp_all[[1]])
+
+    # get the spaces after the start of the search (start) and
+    # before the length of interest for each line (start + len)
+    #
+    sp<-sp_all[sp_all<(start+len) & sp_all>start]
+
+    # see if there are any matches
+    if(length(sp)>0 && (start+len)<lenx) {
+
+      # insert new line (\n) at the correct space (largest in this group)
+      #
+      nl<-max(sp)
+
+      #     ptrn<-paste("(.{",nl-1,"}) (.*)",sep="")
+      #     x<-gsub(ptrn,"\\1\n\\2",x)
+      x<-paste(substring(x,1,nl-1),substring(x,nl+1),sep="\n")
+      #
+      # see if there are any more
+      #
+      if(nl<sp_all[length(sp_all)]) {
+        x<-split_sentence(x,len,nl)
+      }
+    }
+  }
+  x
+}
 

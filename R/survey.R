@@ -129,28 +129,26 @@ survey_stats_binary<-function(df_brfss,coi, num_vals,den_vals, ...) {
 #'
 #' @examples
 #'
-survey_stats<-function(df_brfss = NULL, coi, exclude = c("Don.*t|Refuse"), subset = NULL,
+survey_stats<-function(coi, exclude = c("Don.*t|Refuse"), subsets = NULL, subset_by = NULL,
                        conf=.95, weighted = TRUE, pct = FALSE, digits = 99) {
 
   require(survey, quietly = T, warn.conflicts = F)
   require(dplyr, quietly = T, warn.conflicts = F)
 
-  # if data frame not provided then get it from
-  if(is.null(df_brfss)) {
+  if(!brfss_data() %>% pull({{coi}}) %>% is.factor()) return(NULL)
 
-    df_brfss <- coi_data( coi = coi, subset = subset, exclude = exclude)
-
-  }
+  # get data from
+  df_brfss <- coi_data( coi = coi, subsets = subsets, exclude = exclude)
 
   if(nrow(df_brfss)==0) {
     ret<-data.frame()
     return (ret)
   }
 
-  if(is.null(subset)) {
+  if(is.null(subsets)) {
     nsubs<-0
   } else {
-    nsubs<-length(subset)
+    nsubs<-length(subsets)
   }
 
   # only the valid values - remove the excludes
@@ -160,9 +158,6 @@ survey_stats<-function(df_brfss = NULL, coi, exclude = c("Don.*t|Refuse"), subse
   ##  survey package
   ##
   ##
-  cols <- c(coi,subset)  %>% paste0("`",.,"`")
-  frmla<- reformulate(cols)
-
   if(weighted) weighting<-reformulate("FINAL_WT")   else weighting=NULL
   strata<-reformulate("STRATUM")   #else weights=NULL
 
@@ -170,6 +165,7 @@ survey_stats<-function(df_brfss = NULL, coi, exclude = c("Don.*t|Refuse"), subse
 
   options(survey.lonely.psu = "adjust")
 
+  frmla<- reformulate(c(coi) %>% paste0("`",.,"`"))
 
   des<-survey::svydesign(ids = ~1,
                          strata = strata,
@@ -178,101 +174,146 @@ survey_stats<-function(df_brfss = NULL, coi, exclude = c("Don.*t|Refuse"), subse
                          weights = weighting,
                          deff=F)
 
-  if (nsubs==0) {
-    mysvymean<-survey::svymean(frmla,des,na.rm = T,deff = F)
-    mysvytotal<-survey::svytotal(frmla,des,na.rm = T,deff = F)
+  df_stats_main <- stats_no_subs(des, pct = pct, digits = digits)
 
-    nums<-mysvytotal[1]
-    dens<- mysvytotal[1] + mysvytotal[2]
-    tot<-nrow(df_brfss)
+  df_subs <- data.frame()
 
-    df_mean<-t(as.data.frame(mysvymean))
-    df_se<-t(as.data.frame(df_mean[2,]))
+  if (nsubs > 0) {
 
-    colnames(df_se)<-paste("se.fcoi",1:ncol(df_se),sep="")
-    df_stats<-cbind(t(as.data.frame(df_mean[1,])),df_se)
-    rownames(df_stats)<-"1"
-  } else {
 
-    frmla1<- reformulate(c(coi) %>% paste0("`",.,"`"))
-    frmla2<- reformulate(c(subset) %>% paste0("`",.,"`"))
+    invisible(
+      sapply(subsets, function(subset) {
+        cols <- c(coi,subset)  %>% paste0("`",.,"`")
+        frmla<- reformulate(cols)
 
-    mysvymean<-survey::svyby(frmla1,frmla2,des,svymean)
-    mysvytotal<-survey::svyby(frmla1,frmla2,des,svytotal)
-    mysvycounts<-survey::svyby(frmla1,frmla2,des,unwtd.count)
-    nums<-mysvytotal[,nsubs+1]
-    dens<- mysvytotal[,nsubs+1] + mysvytotal[,nsubs+2]
-    tot<-mysvycounts[,nsubs+1]
+        des<-survey::svydesign(ids = ~1,
+                               strata = strata,
+                               variables =  frmla,
+                               data = df_brfss,
+                               weights = weighting,
+                               deff=F)
 
-    df_stats<-data.frame()
-    df_stats<-as.data.frame(mysvymean)
-  }
-  #   mysvystat<-svyby(reformulate(coi),reformulate(subset),des,unwtd.count)
-  df_stats<-as.data.frame(df_stats)
+        df_subs <<- df_subs %>% bind_rows(stats_w_subs(des, pct = pct, digits = digits))
 
-  mean_cols<-grep(paste0("^`{0,1}",coi),colnames(df_stats),value = T)
-  se_cols<-grep("^se[.]",colnames(df_stats),value = T)
-  sub_cols<-colnames(df_stats)[!colnames(df_stats)%in%(c(mean_cols,se_cols))]
-  vals<-gsub(coi,"",mean_cols)
+      })
+    )
 
-  if(nsubs>0)  df_subs<-df_stats[1:nsubs] else df_subs<-data.frame()
-  df_new<-data.frame()
-
-  mapply(function(cmn,cse,val) {
-    df_add<-df_stats[,c(sub_cols,cmn,cse)]
-    df_add$var<-val
-
-    colnames(df_add)<-c(sub_cols,"mean","se",coi)
-    df_new<<-rbind(df_new,df_add)
-  }, mean_cols,se_cols,vals)
-
-  df_new<-df_new[,c(ncol(df_new),1:ncol(df_new)-1)]
-  sd<-qnorm(1-(1-conf)/2)
-
-  df_new$conf<-conf
-  df_new$CI_lower<-df_new$mean-df_new$se*sd
-  df_new$CI_upper<-df_new$mean+df_new$se*sd
-
-  df_new$CI_lower[df_new$CI_lower<0]<-0
-  df_new$CI_upper[df_new$CI_upper>1]<-1
-
-  df_new$total<-tot
-  df_new$measure<-coi
-
-  #####################################################
-  ##
-  ##  add nums
-  ##
-
-  if(nsubs==0) {
-    num<-sapply(df_new[,coi],  function(c) {
-      length(which(df_brfss[,coi]==c))
-    })
-
-  } else {
-    num<-integer(nrow(df_new))
-    for(r in 1:nrow(df_new)){
-      yn<-df_brfss[,coi]==df_new[r,coi]
-      for(sub in subset) {
-        yn<-yn & (df_brfss[,sub]==df_new[r,sub])
-      }
-      num[r]<-(length(which(yn)))
-    }
   }
 
-  df_new %>%
-    mutate(num = {{num}})  %>%
-    mutate(across(c(mean,starts_with("CI")), ~ .*ifelse(pct,100,1)))  %>%
-    mutate(across(c(mean,starts_with("CI")),round,digits))%>%
-    select(-se, -conf) %>%
-    relocate(total, .before = 1)%>%
-    relocate(num, .before = 1)%>%
-    relocate(measure, .before = 1) %>%
-    mutate({{coi}} := gsub("`","",.[[coi]])) %>%
-    relocate(all_of(c(coi,subset)),.after = 1) %>%
-    `rownames<-`( NULL )
+  df <- bind_rows(df_stats_main, df_subs)
+
+  attr(df$response,"coi") <- coi
+
+
+  df
 }
 
+###########################################################
+##
+##    get stats for a coi with subsetting
+
+stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
+
+  mult <- ifelse(pct,100,1)
+
+  coi <- names(des$variables[1])
+  subset <- names(des$variables[2])
+
+  nsubs<-length(subsets)
+
+  frmla1<- reformulate(c(coi) %>% paste0("`",.,"`"))
+  frmla2<- reformulate(c(subset) %>% paste0("`",.,"`"))
+
+  mysvymean<-survey::svyby(frmla1,frmla2,des,svymean)
+  mysvytotal<-survey::svyby(frmla1,frmla2,des,svytotal)
+  mysvycounts<-survey::svyby(frmla1,frmla2,des,unwtd.count)
+
+  df_nums <- data.frame(des$variables[1],des$variables[2],check.names = FALSE) %>%
+    group_by_at(c(coi, subset)) %>%
+    summarise(num=n()) %>%
+    rename(response = {{coi}}, subset = {{subset}})
+
+
+  df_stats <- reshape::melt(as.data.frame(mysvymean), id.vars = subset)
+
+  df_stats <- df_stats %>%
+    filter(!grepl("^se[.]",variable)) %>%
+    rename(percent = value) %>%
+    left_join(
+      df_stats %>%
+        filter(grepl("^se[.]",variable)) %>%
+        mutate(variable = gsub("^se[.]","",variable)) %>%
+        rename(se = value),
+      by = c("variable", subset)
+    ) %>%
+    mutate(variable = gsub(paste0("^",coi),"",variable)) %>%
+    mutate(variable = gsub(paste0("^`",coi,"`"),"",variable)) %>%
+    rename(subset = {{subset}}) %>%
+    rename(response = variable) %>%
+    mutate(subvar = names(des$variables[2])) %>%
+    add_CI(conf) %>%
+    mutate(across(where(is.numeric), ~ . * mult)) %>%
+    mutate(across(where(is.numeric), round, digits)) %>%
+    left_join(df_nums, by = c("subset", "response")) %>%
+    replace(is.na(.), 0) %>%
+    select(subvar, subset, response, num, percent, se, starts_with("CI"))
+
+
+  df_stats
+}
+
+###########################################################
+##
+##    get stats for just a coi
+
+
+stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
+
+  frmla<- reformulate(names(des$variables) %>% paste0("`",.,"`"))
+  mult <- ifelse(pct,100,1)
+
+  mysvymean<-survey::svymean(frmla,des,na.rm = T,deff = F)
+  mysvytotal<-survey::svytotal(frmla,des,na.rm = T,deff = F)
+  mysvycounts<-survey::svyby(formula = frmla, by = frmla, design = des, FUN = unwtd.count)
+
+  coi <- as.character(frmla)[2]
+  names(mysvymean) <- gsub(coi,"",names(mysvymean))
+
+  df_stats <- as.data.frame(mysvymean) %>%
+    rename(se = SE) %>%
+    rename(percent = mean) %>%
+    add_CI(conf) %>%
+    mutate(across(where(is.numeric), ~ . * mult)) %>%
+    mutate(across(where(is.numeric), round, digits)) %>%
+    mutate(num = as.integer(mysvycounts$counts)) %>%
+    mutate(response = rownames(.)) %>%
+    relocate(response, .before = 1) %>%
+    mutate(subvar = "") %>%
+    mutate(subset = "") %>%
+    select(subvar, subset, response, num, percent, se, starts_with("CI"))
+
+  rownames(df_stats)<- NULL
+
+
+  df_stats
+}
+
+add_CI <- function(df, conf) {
+  #########################################################
+  ##
+  ##    calculate confidence interval
+
+  sd<-qnorm(1-(1-conf)/2)
+
+  df <- df %>%
+    mutate(CI_lower = percent - se * sd) %>%
+    mutate(CI_upper = percent + se * sd) %>%
+    mutate(CI_lower = ifelse(CI_lower <0 ,0,CI_lower)) %>%
+    mutate(CI_upper = ifelse(CI_upper>1,1,CI_upper))
+
+
+  df
+}
 #################################################################################
 #################################################################################
 ##
@@ -361,89 +402,8 @@ simple_stats <- function(df_brfss = NULL, year = NULL, geog = NULL, extent = NUL
 
 }
 
-#' Simple Percents and Confidence Intervals
-#'
-#' Get the percent and CI for a column of data
-#'
-#' @param df_brfss data.frame: the data frame with the columns nedded
-#' @param year integer: year of interest
-#' @param geog character: geography of interest
-#' @param coi character: column of interest
-#' @param wt character: column name of weights
-#' @param strata character: column name of strata
-#' @param exclude character: pattern for excludes
-#'
-#' @return Object of class "svystat"
-#' @export
-#'
-#' @examples
-simple_stats_SAVE <- function(df_brfss = NULL, year = NULL, geog = NULL, extent = NULL, source = NULL,
-                         coi, subset = NULL,
-                         exclude = c("Don.*t|Refuse")) {
 
-  require(dplyr)
-  require(magrittr)
-  require(survey)
-  require(tibble)
-
-  # if data frame not provided then get it from
-  if(is.null(df_brfss)) {
-    year <- get.year(year)
-    geog <- get.geog(geog)
-    extent <- get.extent(extent)
-    source <- get.source(source)
-
-    df_brfss <- coi_data( coi = coi, subset = subset, year = year, geog= geog,
-                          extent = extent, source = source,
-                          exclude = exclude)
-
-  }
-
-  ##
-  ## calc numbef of subsets
-  ##
-
-  if(is.null(subset)) {
-    nsubs<-0
-  } else {
-    nsubs<-length(subset)
-  }
-
-  df_counts <- df_brfss %>%
-    group_by_at(coi) %>% summarise(n=n(),wt = sum(FINAL_WT)) %>%
-    mutate(pct = round(n/sum(n)*100,2)) %>%
-    mutate(pct_wt = wt/sum(wt)*100)
-
-  options(survey.lonely.psu = "adjust")
-
-  # Create survey design
-  brfssdsgn <- svydesign(
-    id=~1,
-    strata = ~STRATUM,
-    weights = ~FINAL_WT,
-    data = df_brfss)
-
-  frmla1<- as.formula(paste0("~factor(",coi,")"))
-
-  x <- svymean(frmla1,
-               brfssdsgn,
-               na.rm = TRUE) %>%
-    as.data.frame() %>%
-    mutate(Response = gsub("^factor.*?[)]","",row.names(.))) %>%
-    mutate(mean = round(mean*100,2)) %>%
-    mutate(SE = round(SE*100,3)) %>%
-    mutate(CI_L = round(mean - 1.96*SE,2)) %>%
-    mutate(CI_U = round(mean + 1.96*SE,2)) %>%
-    rename(percent = mean) %>%
-    select(Response, percent, starts_with("CI")) %>%
-    remove_rownames()
-
-  x %>% left_join(df_counts %>% select({{coi}},n), by=c("Response" = coi)) %>%
-    relocate(n, .after = Response)
-
-}
-
-coi_data_vers<- function(coi=NULL, subset = NULL, version = NULL) {
+coi_data_vers<- function(coi=NULL, subsets = NULL, version = NULL) {
 
   vwt <- apply.pattern("weight_col",VERS=version)
   stratum <- apply.pattern("stratum_col")
@@ -456,7 +416,7 @@ coi_data_vers<- function(coi=NULL, subset = NULL, version = NULL) {
   df%>%
     rename(FINAL_WT = {{vwt}}) %>%
     rename(STRATUM = {{stratum}}) %>%
-    select({{coi}}, FINAL_WT, STRATUM, all_of(subset)) %>%
+    select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
     mutate(vers = {{version}}) %>%
     na.exclude()
 
@@ -468,7 +428,7 @@ coi_data_vers<- function(coi=NULL, subset = NULL, version = NULL) {
 
 }
 
-coi_data <- function( coi = NULL, subset = NULL, exclude = NULL) {
+coi_data <- function( coi = NULL, subsets = NULL, exclude = NULL) {
 
 
   #df_brfss <- brfss_data(year,geog)
@@ -476,7 +436,7 @@ coi_data <- function( coi = NULL, subset = NULL, exclude = NULL) {
 
   invisible(
     sapply(0:highest_version(),function(ver) {
-      df_brfss <<- df_brfss %>% bind_rows(coi_data_vers(coi = coi, subset = subset,
+      df_brfss <<- df_brfss %>% bind_rows(coi_data_vers(coi = coi, subsets = subsets,
                                                         version = ver))
     })
   )
@@ -490,7 +450,7 @@ coi_data <- function( coi = NULL, subset = NULL, exclude = NULL) {
   df_brfss <- df_brfss %>%
     left_join(df_resp, by = c("vers" = "version")) %>%
     mutate(FINAL_WT = FINAL_WT * pct) %>%
-    select(coi,FINAL_WT, STRATUM, all_of(subset))%>%
+    select(coi,FINAL_WT, STRATUM, all_of(subsets))%>%
     rename(coi = {{coi}})%>%
     mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
     na.exclude() %>%
@@ -500,3 +460,119 @@ coi_data <- function( coi = NULL, subset = NULL, exclude = NULL) {
 
   df_brfss
 }
+#
+# stats_no_subs <- function(frmla,des) {
+#
+#   mysvymean<-survey::svymean(frmla,des,na.rm = T,deff = F)
+#   mysvytotal<-survey::svytotal(frmla,des,na.rm = T,deff = F)
+#
+#   # coi <- as.character(frmla)[2]
+#   # names(mysvymean) <- gsub(coi,"",names(mysvymean))
+#
+#   browser()
+#
+#   df_mean <- t(as.data.frame(mysvymean))
+#   df_se <- t(as.data.frame(df_mean[2,]))
+#   #df_cnts <- t(as.data.frame(mysvycounts$counts))
+#
+#   colnames(df_se)<-paste("se.fcoi",1:ncol(df_se),sep="")
+#   #colnames(df_cnts)<-paste("num.fcoi",1:ncol(df_cnts),sep="")
+#
+#   df_stats<-cbind(t(as.data.frame(df_mean[1,])),df_se) # ,df_cnts)
+#   rownames(df_stats)<- NULL
+#
+#
+#   df_stats
+# }
+
+#' Stretch Stats Table
+#'
+#' Stretch (cast) the stats table horizontally such that measure values become the
+#' column names. They are actually spanner values with the stat name (pct, etc.) as the
+#' column label
+#'
+#' @param df_stats - data.frame
+#'
+#' @return
+#' @export
+#'
+#' @examples
+stats_wide <- function(df_stats) {
+  require(gt)
+
+  coi <-attr(df_stats$response,"coi")
+
+  df_stats <- df_stats %>%
+    mutate(CI = paste0(CI_lower, " - ", CI_upper))
+
+  df_stats_wide <- df_stats %>%
+
+    # stretch measure horizontally with variable mean
+    reshape2::dcast(subvar + subset ~ response, value.var = c("num")) %>%
+
+    # add CI_lower to right end
+    left_join(df_stats %>%
+                reshape2::dcast(subvar + subset ~ response, value.var = c("percent")),
+              by = c("subset", "subvar"))  %>%
+
+    rename_with(~ gsub(".x", ".num",.x, fixed = TRUE)) %>%
+    rename_with(~ gsub(".y", "",.x, fixed = TRUE))%>%
+
+    left_join(df_stats %>%
+                reshape2::dcast(subvar + subset ~ response, value.var = c("CI")),
+              by = c("subset", "subvar"))  %>%
+
+    rename_with(~ gsub(".x", ".percent",.x, fixed = TRUE)) %>%
+    rename_with(~ gsub(".y", ".CI",.x, fixed = TRUE))
+
+  fctrs <- levels(brfss_data() %>% pull({{coi}}) %>% droplevels() )
+  stats <- c("num", "percent", "CI") #,"CI_lower","CI_upper")
+
+  df_col_order <- data.frame(name = colnames(df_stats_wide)) %>%
+    mutate(is_meas = grepl(".",name, fixed=TRUE)) %>%
+    mutate(var = gsub("(.*)\\.(.*)","\\1",name))%>%
+    mutate(stat = gsub("(.*)\\.(.*)","\\2",name)) %>%
+    mutate(varpos = ifelse(is_meas,match(var,fctrs),0)) %>%
+    mutate(statpos = ifelse(is_meas,match(stat,stats),0)) %>%
+    arrange(varpos,statpos)
+
+  col_order <- df_col_order %>%
+    pull(name)
+
+  n_non <- df_col_order %>% filter(varpos == 0) %>% nrow
+
+  df_spanners <- df_col_order %>%
+    filter(is_meas) %>%
+    group_by(var,varpos) %>%
+    summarize(tot = max(statpos)) %>%
+    arrange(varpos)
+
+
+  df_stats_wide <- df_stats_wide  %>% select(all_of(col_order))
+
+
+  lbls <- as.list(mapply(function(nm,val) {
+    x <- val
+    x
+  }, df_col_order$name, df_col_order$stat))
+
+  lbls[lbls=="percent"] <- "%"
+
+
+  gt_stats <- gt::gt(df_stats_wide,
+                     groupname_col= "subvar") %>%
+    cols_label( .list =lbls)
+
+  sapply(1:max(df_col_order$varpos), function(i) {
+
+    gt_stats <<- gt_stats %>%
+
+      tab_spanner(label = df_spanners[i,"var"],
+                  columns = df_col_order %>% filter(varpos == i) %>% pull(name) )
+
+  })
+
+  gt_stats
+}
+
+

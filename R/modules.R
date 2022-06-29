@@ -17,6 +17,9 @@ modules_used <- function() {
   # source = get.source(source)
 
   codebook <- get.codebook.layout()
+  df_brfss <- brfss_data()
+
+  if(is.null(codebook) || is.null(df_brfss)) return(NULL)
 
   df_modules <- codebook %>%
     filter(sect_type == "Module") %>%
@@ -34,7 +37,7 @@ modules_used <- function() {
 
     brfss.param(version = ver)
 
-    df_brfss <- brfss_data() %>%
+    df_brfss <- df_brfss %>%
       mutate(geog = `_STATE`)
 
     invisible(
