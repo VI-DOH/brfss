@@ -11,13 +11,18 @@
 #' \dontrun{
 #' process_codebook(2020)
 #' }
-process_codebook <- function() {
+process_codebook <- function(progress = NULL) {
 
   params <- my.brfss.patterns()
 
-  if(brfss.param(extent) == "national") download_codebook()
+  show_progress(progress,
+                message = "Codebook ... saving layout")
 
   save_codebook_layout()
+
+  show_progress(progress,
+                message = "Codebook ... saving values ")
+
   save_codebook_values()
 }
 
@@ -34,7 +39,14 @@ process_codebook <- function() {
 #' \dontrun{
 #' download_codebook(2020)
 #' }
-download_codebook <- function() {
+download_codebook <- function(progress = NULL) {
+
+  show_progress(progress,
+                message = "Codebook ... downloading ")
+
+  if(brfss.param(extent) != "national") {
+    return()
+  }
 
   ## if year is not provided then get the year from the my_brfss object
   params <- my.brfss.patterns()
@@ -339,7 +351,7 @@ save_codebook_layout <- function(file=NULL) {
   if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
 
 
-  save(df_layout_cb, file = file)
+  saveRDS(df_layout_cb, file = file)
 
   invisible()
 
@@ -404,7 +416,7 @@ get.codebook.layout <- function() {
   if(!file.exists(file)) return(NULL)
 
 
-  orrr::get.rdata(file = file)
+  readRDS(file = file)
 
 }
 
@@ -430,7 +442,7 @@ get.merged.layout <- function() {
   if(!file.exists(file)) return(NULL)
 
 
-  orrr::get.rdata(file = file)
+  readRDS(file = file)
 
 }
 

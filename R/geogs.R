@@ -18,7 +18,18 @@ save.geogs <- function(geogs) {
 #' }
 get_geogs_all <- function() {
 
-  data("geogs", package="brfss")
+  pttrns <- my.brfss.patterns()
+
+  geogs_path <- apply.pattern("geogs_path", pttrns)
+
+  if(!file.exists(geogs_path)) {
+    data("geogs", package="brfss")
+    saveRDS(geogs, file = geogs_path)
+  } else {
+
+    geogs <- readRDS(geogs_path)
+  }
+
   geogs
 }
 
@@ -46,8 +57,8 @@ geog_name <- function(geogs) {
   df_geogs <- get_geogs_all() %>%
     mutate(Id = as.integer(Id))
 
-  if(is.factor(geogs)) {
-    geogs <- as.character(geogs)
+  if(is.factor(geogs) | is.character(geogs) ) {
+    geogs <- tolower(as.character(geogs))
   } else  if(orrr::is.integer_like(geogs)) {
     geogs <- as.integer(geogs)
   }
@@ -56,11 +67,14 @@ geog_name <- function(geogs) {
   df <- data.frame(geog = geogs)
 
 
-  if(is.character(geogs[1]) && nchar(geogs[1])==2) {
-    geogs <- df %>%
-      left_join(df_geogs, by=c("geog" = "Abbrev")) %>%
-      pull(Geog)
-
+  if(is.character(geogs[1])) {
+    if(nchar(geogs[1])==2) {
+      geogs <- df %>%
+        left_join(df_geogs %>% mutate(Abbrev = tolower(Abbrev)), by=c("geog" = "Abbrev")) %>%
+        pull(Geog)
+    } else {
+      geogs <- stringr::str_to_title(geogs) %>% gsub(" Of ", " of ", .)
+    }
   } else if(is.numeric(geogs[1])) {
     geogs <- df %>%
       left_join(df_geogs, by=c("geog" = "Id")) %>%
@@ -91,12 +105,13 @@ geog_name <- function(geogs) {
 #' }
 #'
 geog_abb <- function(geogs) {
+  require(dplyr)
 
   df_geogs <- get_geogs_all() %>%
     mutate(Id = as.integer(Id))
 
-  if(is.factor(geogs)) {
-    geogs <- as.character(geogs)
+  if(is.factor(geogs) | is.character(geogs) ) {
+    geogs <- tolower(as.character(geogs))
   } else  if(orrr::is.integer_like(geogs)) {
     geogs <- as.integer(geogs)
   }
@@ -106,7 +121,7 @@ geog_abb <- function(geogs) {
 
   if(is.character(geogs[1]) && nchar(geogs[1])!=2) {
     geogs <- df %>%
-      left_join(df_geogs, by=c("geog" = "Geog")) %>%
+      left_join(df_geogs %>% mutate(Geog = tolower(Geog)), by=c("geog" = "Geog")) %>%
       pull(Abbrev)
 
   } else if(is.numeric(geogs[1])) {
@@ -116,7 +131,7 @@ geog_abb <- function(geogs) {
 
   }
 
-  geogs
+  toupper(geogs)
 
 
 }
@@ -143,9 +158,11 @@ geog_id <- function(geogs) {
   df_geogs <- get_geogs_all() %>%
     mutate(Id = as.integer(Id))
 
-  if(is.factor(geogs)) {
-    geogs <- as.character(geogs)
-  } else  if(orrr::is.integer_like(geogs)) {
+  if(is.factor(geogs) | is.character(geogs) ) {
+    geogs <- tolower(as.character(geogs))
+
+  } else  if(orrr::is.integer_like(geogs))
+  {
     geogs <- as.integer(geogs)
   }
 
@@ -155,12 +172,12 @@ geog_id <- function(geogs) {
 
   if(is.character(geogs[1]) && nchar(geogs[1])!=2) {
     geogs <- df %>%
-      left_join(df_geogs, by=c("geog" = "Geog")) %>%
+      left_join(df_geogs %>% mutate(Geog = tolower(Geog)), by=c("geog" = "Geog")) %>%
       pull(Id)
 
   } else if(is.character(geogs[1])) {
     geogs <- df %>%
-      left_join(df_geogs, by=c("geog" = "Abbrev")) %>%
+      left_join(df_geogs %>% mutate(Abbrev = tolower(Abbrev)), by=c("geog" = "Abbrev")) %>%
       pull(Id)
 
   }

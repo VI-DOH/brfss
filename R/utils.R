@@ -1,4 +1,8 @@
 
+show_progress <- function(progress, message) {
+
+  if(!is.null(progress)) progress$set(message = message, value = NULL)
+}
 
 
 str_something <- function(string) {
@@ -12,7 +16,7 @@ geog_ids<-function(geogs) {
 
   ##  get data.frame of geogs
 
-  df_geogs<- orrr::get.rdata(paste0(orrr::dir.project("data"),"geogs.RData"))
+  df_geogs<- readRDS(paste0(orrr::dir.project("data"),"geogs.rds"))
 
   if(is.character(geogs)) {
 
@@ -37,7 +41,7 @@ geog_abbs<-function(geogs) {
 
   ##  get data.frame of geogs
 
-  df_geogs<- orrr::get.rdata(paste0(orrr::dir.project("data"),"geogs.rda"))
+  df_geogs<- readRDS(paste0(orrr::dir.project("data"),"geogs.rds"))
 
   if(missing(geogs)) {
     geogs<-df_geogs$Abbrev
@@ -67,7 +71,7 @@ geog_names<-function(geogs) {
 
   ##  get data.frame of geogs
 
-  df_geogs<- orrr::get.rdata(paste0(orrr::dir.project("data"),"geogs.RData"))
+  df_geogs<- readRDS(paste0(orrr::dir.project("data"),"geogs.rds"))
 
   if(is.character(geogs)) {
 

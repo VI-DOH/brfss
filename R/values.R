@@ -29,7 +29,7 @@ save_codebook_values <- function(file = NULL) {
 
   fname <- apply.pattern("codebook_values_path",params)
 
-  save(df_values_cb, file = fname)
+  saveRDS(df_values_cb, file = fname)
 }
 
 stretch_values <- function(lines) {
@@ -218,7 +218,7 @@ parse_codebook_values <- function(file=NULL) {
     mutate(text = gsub("(^.*?) {8,}.*","\\1",text))  %>%
 
     ## Get rid of 'go to somewhere' text in line
-    mutate(text = gsub("[—]*Go to .*","",text))  %>%
+    mutate(text = gsub("[—]*Go to.*","",text))  %>%
     mutate(text = gsub("[—]*Code=.*","",text))  %>%
     mutate(text = gsub("If .* is .* go to.*","",text))  %>%
 
@@ -273,7 +273,7 @@ values <- function( year = NULL, ...) {
   if(!file.exists(fname)) {
     fname <- apply.pattern("codebook_values_path",params)
   }
-  orrr:::get.rdata(file = fname)
+  readRDS(file = fname)
 }
 
 #' Get Codebook Values
@@ -292,7 +292,7 @@ codebook_values <- function() {
 
   fname <- apply.pattern("codebook_values_path",params)
 
-  orrr:::get.rdata(file = fname)
+  readRDS(file = fname)
 }
 
 #' Calculates the Type of BRFSS Questions
@@ -353,7 +353,8 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
     }
   }, col_names, is.calc, is.wt)
 
-  df <- data.frame(col_name = col_names, type = types, calc = is.calc, wt = is.wt, row.names = NULL)
+  df <- data.frame(col_name = col_names, type = types,
+                   calc = is.calc, wt = is.wt, row.names = NULL)
   df
 }
 

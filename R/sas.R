@@ -76,7 +76,7 @@ fix.missing.columns<-function(year,year2=year-1) {
   df<-rbind(df,df_fix,df1)
 
   assign(ls(e),df)
-  save(list=ls(e),file =fname )
+  saveRDS(df,file =fname )
 
 }
 
@@ -105,23 +105,37 @@ fix.missing.columns<-function(year,year2=year-1) {
 #'
 #' }
 
-sas_process_year <- function(download = FALSE, layout = TRUE,
+sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
+                             dl_data = FALSE, layout = TRUE,
                              codebook = TRUE, saq = FALSE,
                              convert = TRUE, split = TRUE, responses = TRUE,
-                             factorize = TRUE, verbose=FALSE,
+                             factorize = TRUE, verbose=FALSE, progress = NULL,
                              ...)  {
 
 
 
-  if(download) {
-    if(verbose) cat(" ... downloading ... main file ... ")
+  if(dl_metadata) {
+    if(verbose) cat(" ... downloading ... metadata ... ")
     sas_download_metadata()
-    sas_download_xpt()
-    # if(verbose) cat(" versions ")
-    # sas_download_metadata.versions(year=year)
-    if(verbose) cat(" \n ... unzipping files\n ")
-    unzip.all()
   }
+
+  if(dl_codebook) {
+    if(verbose) cat(" ... downloading ... codebook ... ")
+
+    download_codebook(progress = progress)
+  }
+
+  if(dl_data) {
+    if(verbose) cat(" ... downloading ... metadata ... ")
+
+    sas_download_xpt()
+  }
+
+  browser()
+  # if(verbose) cat(" versions ")
+  # sas_download_metadata.versions(year=year)
+  if(verbose) cat(" \n ... unzipping files\n ")
+  unzip.all()
 
   if (layout) save_sas_layout()
 
@@ -160,50 +174,55 @@ sas_process_year <- function(download = FALSE, layout = TRUE,
   invisible()
 }
 
-# sas.save.sasout<-function(year) {
-#
-#   fname<-paste0("df_columns_",year)
-#   assign(fname,read_sasout(year))
-#   file <- apply.pattern("brfss_columns_path", YEAR=year)
-#
-#   if(!dir.exists(dirname(file))) dir.create(dirname(file))
-#
-#   save(list=fname,file = file)
-# }
-#
 
 sas_download_metadata<-function(year, ...) {
-
   #  files<-sas.url.pattern.downloads.data()
   params <- my.brfss.patterns()
 
-  files<-get.pattern.group("sas_downloads")
+  pttrns<-get.pattern.group("sas_downloads")
   urlfiles<- apply.pattern("brfss_url_files", params)
   folderout<-apply.pattern("sas_raw_folder", params)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
-  sapply(files,function(file) {
-    file<-patternize(strIn = file, params)
-    url<-paste0(urlfiles,file)
-    fileout<-paste0(folderout,file)
+  to <- getOption("timeout")
+  options(timeout = 180)
 
-    #
-    # download will fail on lager files if time to download is > 60 secs
-    #   set time to 3 minutes and then restore when done
 
-    to <- getOption("timeout")
-    options(timeout = 180)
+  sapply(pttrns,function(pttrn) {
 
-    download.file(url = url,destfile = fileout,
-                  method = "libcurl")
+    has_vers <- grepl("[VERS]", pttrn, fixed = TRUE)
+    cont <- TRUE
+    version <- 0
+    params["VERS"] <- 0
 
-    options(timeout = to)
+    while(cont) {
+      filename<-patternize(strIn = pttrn, params)
+      url<-paste0(urlfiles,filename)
+      fileout<-paste0(folderout,filename)
 
-    if(grepl("[.]zip$",fileout)) {
-      unzip(fileout,exdir = normalizePath(folderout))
-      file.remove(fileout)
+      #
+      # download will fail on lager files if time to download is > 60 secs
+      #   set time to 3 minutes and then restore when done
+
+
+      cont <- RCurl::url.exists(url)
+
+      if(cont) {
+        download.file(url = url,destfile = fileout,
+                      method = "libcurl")
+        if(grepl("[.]zip$",fileout)) {
+          unzip(fileout,exdir = normalizePath(folderout))
+          file.remove(fileout)
+        }
+
+        version <- version + 1
+        params["VERS"] <- version
+      }
+      cont <- has_vers && cont
     }
   })
+
+  options(timeout = to)
 
 }
 
@@ -241,7 +260,6 @@ sas_download_xpt<-function() {
     file<-patternize(strIn = file_pttrn, params)
 
     url<-paste0(urlfiles,file)
-
     status <- httr::HEAD(url)$status
     if(status==200) {
 
@@ -358,20 +376,20 @@ read.xpt<-function(version = 0, verbose = F) {
   ##
   ##    get sasout location
   ##
-    sasout_file<-apply.pattern("sas_sasout_path",params)
+  sasout_file<-apply.pattern("sas_sasout_path",params)
 
   ##
   ##    get xpt raw data location
   ##
 
-    xpt_file <- apply.pattern("xpt_path",params)
+  xpt_file <- apply.pattern("xpt_path",params)
 
 
   ##
   ##  get save file (.rdata) location
   ##
 
-    save_file<- apply.pattern("brfss_annual_data_path",params)
+  save_file<- apply.pattern("brfss_annual_data_path",params)
 
 
   ##
@@ -395,10 +413,8 @@ read.xpt<-function(version = 0, verbose = F) {
 
     if(!dir.exists(dirname(save_file))) dir.create(dirname(save_file),recursive = T)
 
-    fname<-apply.pattern("xpt_df",params)
+    saveRDS(df_xpt,file = save_file)
 
-    assign(fname,df_xpt)
-    save(list=c(fname),file = save_file)
     return(TRUE)
   } else {
     if(verbose) cat(xpt_file," doesn't exist\n")
@@ -536,7 +552,7 @@ cleave.geogs.sas<-function(year = NULL,
 
           if(verbose) cat("Going to save :", fname, "\n")
 
-          save(list = c(dfname),file = fname)
+          saveRDS(df_state,file = fname)
 
           #columns.add(year,add_cols)
         }
@@ -563,7 +579,7 @@ columns.add<-function(year,cols2add){
     df<-rbind(df,df_new)
     assign(ls(e),df)
 
-    save(list=ls(e),file =fname )
+    saveRDS(df,file = fname )
   }
 }
 
@@ -750,7 +766,7 @@ sasout.override.file<-function() {
 sasout.overrides<-function() {
   file<-sasout.override.file()
   if(file.exists(file)) {
-    df_override<- orrr::get.rdata(file)
+    df_override<- readRDS(file)
   } else {
     df_override<- data.frame()
   }
@@ -764,7 +780,7 @@ sasout.add.override<-function(year,column,label) {
   df_override<-df_override[df_override$year!=year & df_override$column!=column,]
 
   df_override<-rbind(df_override,data.frame(year,column,label))
-  save(df_override,file = file)
+  saveRDS(df_override,file = file)
 }
 
 sas.build.geogs <- function() {

@@ -17,6 +17,8 @@ modules_used <- function() {
   # source = get.source(source)
 
   codebook <- get.codebook.layout()
+
+  brfss.param(version = 0)
   df_brfss <- brfss_data()
 
   if(is.null(codebook) || is.null(df_brfss)) return(NULL)
@@ -36,6 +38,7 @@ modules_used <- function() {
   sapply(0:highest_version(),function(ver){
 
     brfss.param(version = ver)
+    df_brfss <- brfss_data()
 
     df_brfss <- df_brfss %>%
       mutate(geog = `_STATE`)
@@ -67,103 +70,6 @@ modules_used <- function() {
 
 }
 
-# modules_used<-function(year = NULL, geogs = NULL, verbose = FALSE) {
-#
-#   year <- get.year(year)
-#
-#   vers_max<-highest_version(year)
-#
-#   if(is.null(geogs)) geogs<-get_geogs_all() %>% pull(Abbrev)
-#
-#   df<-data.frame()
-#
-#
-#   sapply(geogs, function(geog){
-#     sapply(0:vers_max,function(ver){
-#       if(verbose) cat(paste0(" modules ... trying ", geog, "_V",ver,"\n"))
-#       df<<-rbind(df,calc_modules_by_geog(year,geog,version = ver))
-#     })
-#   })
-#
-#   df
-#
-# }
-
-# calc_modules_by_geog<-function(year,geog,version=0) {
-#
-#   ##
-#   ##    change numeric geog (fips) to abbrev
-#
-#   if(is.numeric(geog)) geog<-geog_abbs(geog)
-#
-#   ##
-#   ##    if the version exists for that geog
-#
-#   if(brfss_version_exists(year,geog,version)) {
-#
-#     ##
-#     ##    get the data for that year/geog/version
-#
-#     id <- geog_id(geog)
-#
-#     df0<-brfss_data(year,geog,version) %>%
-#       filter(`_STATE` == id)
-#
-#     if(nrow(df0)>0) {
-#
-#
-#       df_columns<-data.frame()
-#       invisible(
-#         sapply(colnames(df0), function(col) {
-#           ##
-#           ##    get the attributes
-#
-#           att<-attributes(df0[[col]])
-#
-#           if(length(att)==6) {
-#             section_type<-att["section_type"]
-#             section_num<-att["section_num"]
-#             section_index<-att["section_index"]
-#             section_name<-att["section_name"]
-#             label<-att["label"]
-#
-#             df<-data.frame(column=col,
-#                            section_type,
-#                            section_num,
-#                            section_index,
-#                            section_name,
-#                            label)
-#
-#             df_columns<<-rbind(df_columns,df)
-#           }
-#         })
-#       )
-#
-#       df_module_chkr<-df_columns[grepl("Mod",df_columns$section_type) &
-#                                    df_columns$section_index==1 &
-#                                    !grepl("^Calc",df_columns$section_name)&
-#                                    !grepl("^Questionnaire",df_columns$section_name),
-#                                  c("column","section_num", "section_index","section_name")]
-#
-#       df_module_chkr$used<-sapply(df_module_chkr$column,function(col) {
-#         nrow(table(df0[[col]]))>0
-#       })
-#
-#       df_module_chkr$geog<-geog
-#       df_module_chkr$year<-year
-#       df_module_chkr$version<-version
-#
-#       return(df_module_chkr[df_module_chkr$used,c("year","version","geog","section_num","section_name")])
-#     }
-#   }
-#   return(data.frame(year=integer(0),
-#                     version=integer(0),
-#                     geog=character(0),
-#                     section_num=character(0),
-#                     section_name=character(0)))
-# }
-
-
 save_module_stats<-function() {
   require(dplyr)
 
@@ -185,11 +91,7 @@ save_module_stats<-function() {
 
   df_modules$ratio<-df_modules$responses/df_modules$responses_total
 
-
-  nm<- apply.pattern("brfss_modules_df", params)
-  assign(nm,df_modules)
-
-  save(list = c(nm),file = apply.pattern("brfss_modules_path",params))
+  saveRDS(df_modules, file = apply.pattern("brfss_modules_path",params))
 
 }
 
@@ -225,7 +127,8 @@ geog_modules<-function(year = NULL,geogs = NULL, versions=FALSE,reduce=TRUE) {
   df<- module_data(year)
 
   if(!is.null(geogs)) {
-    if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
+ #   if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
+    if(is.numeric(geogs)) geogs<-geog_abb(geogs)
     df<-df[df$geog%in%geogs,]
   } else {
     geogs<-geog_abbs()
@@ -288,5 +191,5 @@ module_geogs<-function(year = NULL,modules,versions=FALSE,reduce=TRUE) {
 #' }
 module_data<-function(year) {
 
-  orrr::get.rdata(orrr::dir.project(c("data",year,paste0("modules_",year,".rda")),slash = F))
+  readRDS(orrr::dir.project(c("data",year,paste0("modules_",year,".rda")),slash = F))
 }

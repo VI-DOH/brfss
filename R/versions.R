@@ -32,7 +32,7 @@ highest_version<-function() {
 
   if(length(files) == 0) {
     if(brfss.param(source) == "sas") {
-      fldr<-apply.pattern("sas_data_folder", params)
+      fldr<-apply.pattern("sas_raw_folder", params)
     } else {
       fldr <- apply.pattern("ascii_path", params)
     }
@@ -43,8 +43,8 @@ highest_version<-function() {
   vers <- 0
   if(length(files) > 0) {
 
-    files<-files[grep("_V[0-9][.]",files)]
-    vers<-as.integer(gsub(".*_V([0-9]*)[.].*","\\1",files))
+    files<-files[grep("V[0-9][.]",files)]
+    vers<-as.integer(gsub(".*V([0-9]*)[.].*","\\1",files))
     if(length(vers)==0) vers <- 0
   }
 
@@ -116,7 +116,7 @@ responses_by_geog<-function(year,geog) {
 
   params <- my.brfss.patterns()
   geog <- brfss.param(geog)
-  orrr::get.rdata(file = apply.pattern("brfss_responses_path",params)) %>%
+  readRDS(file = apply.pattern("brfss_responses_path",params)) %>%
     filter(geog == {{geog}})
 
 }
@@ -146,7 +146,7 @@ save_response_stats<-function() {
   assign(nm,df_responses)
 
 
-  save(list = c(nm),file = apply.pattern("brfss_responses_path", params))
+  saveRDS(df_responses, file = apply.pattern("brfss_responses_path", params))
 
 }
 
@@ -156,7 +156,7 @@ responses<-function(versions, reduce=TRUE) {
   params <- my.brfss.patterns()
 
   year <- brfss.param(year)
-  df<- orrr::get.rdata(apply.pattern("brfss_responses_path",params))
+  df<- readRDS(apply.pattern("brfss_responses_path",params))
 
 
   geogs<-geog_abbs()

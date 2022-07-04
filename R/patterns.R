@@ -38,15 +38,15 @@ set.pattern <- function(name, pattern= NULL, group="", desc = "") {
 }
 
 pattern.file.name <- function() {
-  orrr::convert.dot("./data/naming_patterns.rda")
+  orrr::convert.dot("./data/naming_patterns.rds")
 }
 
-append.pattern <- function(df, name , pattern , group = "", desc = "") {
+append.pattern <- function(df, name , pattern , type = "", group = "", desc = "") {
 
   #df0 <- data.frame(name  , pattern , group, desc)
 
   df %>%
-    tibble::add_row( name, pattern , group, desc)
+    tibble::add_row( name, pattern , type, group, desc)
 }
 
 #' Move/Rename File to Standard Location
@@ -138,7 +138,7 @@ refresh.patterns <- function() {
 #'
 get.patterns <- function(names = ".*") {
 
-  naming_patterns <- orrr::get.rdata(pattern.file.name())
+  naming_patterns <- readRDS(pattern.file.name())
   if(is.null(naming_patterns)) {
     env <- new.env()
     data("naming_patterns", package = getPackageName(), envir = env )
@@ -153,9 +153,11 @@ get.patterns <- function(names = ".*") {
 
 save.patterns <- function(naming_patterns) {
 
-  suppressMessages(
-    usethis::use_data(naming_patterns, overwrite = TRUE)
-  )
+  suppressMessages({
+    #usethis::use_data(naming_patterns, overwrite = TRUE)
+    file <- paste0(rstudioapi::getActiveProject(),"/data/naming_patterns.rds")
+    saveRDS(naming_patterns, file = file)
+  })
 
 }
 
@@ -433,7 +435,10 @@ try.patterns <- function(names = ".*", ...) {
 
   pats <- sapply(pat_names, function(nm) {
 
-    apply.pattern(nm, ...)
+     pat<-apply.pattern(nm, ...)
+
+     pat
+
   })
 
 
@@ -447,7 +452,7 @@ try.patterns <- function(names = ".*", ...) {
 #' Pattern Requirements
 #'
 #' Get the parameter requirements for naming pattern(s).
-#' @param pattern
+#' @param names
 #'
 #' @return data frame - pattern name and arguments required for the named patterns
 #' @export
@@ -457,17 +462,20 @@ try.patterns <- function(names = ".*", ...) {
 #' pattern.requirements("codebook")
 #' }
 #'
-pattern.requirements <- function(pattern = ".*") {
-  df_pats<- get.patterns(pattern)
+pattern.requirements <- function(names = ".*") {
+  df_pats<- get.patterns(names)
 
   df <- data.frame()
 
   invisible(
     mapply(function(nm,pat) {
 
+      pat <-expand.pattern(pat)
+
+      pat0 <- unname(pat)
+
       params <- character(0)
 
-      pat0 <- pat
       while(grepl("\\[", pat0)) {
         x <- gsub(".*?\\[(.*?)\\].*","\\1",pat0)
         params <- c(params,x)
@@ -484,3 +492,24 @@ pattern.requirements <- function(pattern = ".*") {
   df
 }
 
+#' Is Parameter Required?
+#'
+#' @param name character - name of the pattern
+#' @param param character - parameter to test
+#'
+#' @return logical - TRUE if the parameter is required for the named pattern
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' pat_name <- "sasout_download_file"
+#' param <- "YEAR"
+#' if (pattern.requires(pat_name. param) && is.null(param))
+#'   warning(paste0("Parameter [", param, "] is required"))
+#' }
+pattern.requires <- function(name,param) {
+
+  df_pats <- pattern.requirements(name)
+
+  df_pats %>% pull(params) %>% {param %in% .}
+}

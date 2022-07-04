@@ -214,6 +214,7 @@ brfss.params <- function(... , val_only = TRUE) {
 
       #my_brfss[[nm]]$value<<-arg
     },args,names(args))
+    my_brfss <- my.brfss.env()
 
   } else {
     # return the (possibly updated) list of params
@@ -223,6 +224,7 @@ brfss.params <- function(... , val_only = TRUE) {
         myb$value
       })
     }
+
     return(my_brfss)
   }
 }
@@ -232,7 +234,7 @@ my.brfss.save <- function(my_brfss) {
   path <- my.brfss.path()
 
   if(file.exists(path)) {
-    save(my_brfss,file = path)
+    saveRDS(my_brfss,file = path)
     return(TRUE)
   } else NULL
 
@@ -242,7 +244,7 @@ my.brfss.env <- function() {
   path <- my.brfss.path()
 
   if(file.exists(path)) {
-    orrr::get.rdata(file = path)
+    readRDS(file = path)
   } else NULL
 
 }
@@ -262,7 +264,7 @@ default.brfss.env <- function() {
 
 my.brfss.path <- function() {
   folder <- orrr::convert.dot(apply.pattern("brfss_data_folder"))
-  paste0(folder, "my_brfss.rda")
+  paste0(folder, "my_brfss.rds")
 }
 
 
@@ -277,7 +279,8 @@ my.brfss.path <- function() {
 #'  \item{year}{ - the year of interest}
 #'  \item{geog}{ - the geography of interest}
 #'  \item{version}{ - the version of interest}
-#'  \item{extent}{ - the extent of the raw data file ... local (one geog) or national (all geographies)}
+#'  \item{extent}{ - the extent of the raw data file ... local (one geog) or
+#'  national (all geographies)}
 #'  \item{source}{ - the file type source of the raw data ... ascii or sas}
 #'}
 #' @return nothing
@@ -352,7 +355,7 @@ my.brfss.init <- function() {
   my_brfss$version$value <- 0
   my_brfss$version$pattern <- "VERS"
 
-  save(my_brfss, file = path)
+  saveRDS(my_brfss, file = path)
 
 }
 

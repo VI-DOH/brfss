@@ -78,7 +78,7 @@ save_sas_layout<-function() {
   fldr <- apply.pattern("layout_folder", params)
   if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
 
-  save(df_layout_sas, file = apply.pattern("sas_layout_path",params))
+  saveRDS(df_layout_sas, file = apply.pattern("sas_layout_path",params))
   invisible()
 }
 
@@ -94,8 +94,13 @@ sas_layout<-function() {
   require(dplyr)
 
   params <- my.brfss.patterns()
-  orrr::get.rdata(file = apply.pattern("sas_layout_path",params))
 
+  file  <-  apply.pattern("sas_layout_path",params)
+
+  if(file.exists(file)) {
+    readRDS(file = apply.pattern("sas_layout_path",params))
+  } else
+    return(NULL)
 }
 
 #' Get BRFSS Fixed Width Layout

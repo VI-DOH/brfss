@@ -44,7 +44,7 @@ my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL, source = NULL, e
   }
   my_brfss <- list(year=year, geog = geog, other_geogs = other_geogs, source = source, extent = extent)
 
-  save(my_brfss,file = path)
+  saveRDS(my_brfss,file = path)
   my_brfss
 }
 

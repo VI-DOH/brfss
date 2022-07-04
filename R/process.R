@@ -23,7 +23,8 @@ require(dplyr)
 #'}
 #'
 #'
-split_geogs<-function(main=TRUE, versions=TRUE, factorize = FALSE, verbose=TRUE) {
+split_geogs<-function(main=TRUE, versions=TRUE,
+                      factorize = FALSE, verbose=TRUE, progress = NULL) {
 
   if(!(main || versions)) return(NULL)
   ver<-integer(0)
@@ -43,7 +44,10 @@ split_geogs<-function(main=TRUE, versions=TRUE, factorize = FALSE, verbose=TRUE)
 
     rdata_file <- apply.pattern("brfss_annual_data_path",params)
 
-    df_brfss <- orrr::get.rdata(file = rdata_file)
+    show_progress(progress,
+                  message = paste0("Splitting ... trying version [", version, "]"))
+
+    df_brfss <- readRDS(file = rdata_file)
 
     if(brfss.param(geog) == '*') {
       geogs<-unique(df_brfss$`_STATE`)
@@ -75,6 +79,12 @@ split_geogs<-function(main=TRUE, versions=TRUE, factorize = FALSE, verbose=TRUE)
 
         if(nrow(df_state)>0) {
           if(verbose) cat("Saving ",nm,"V",version,"\n")
+
+          show_progress(progress,
+                        message = paste0("Splitting ... ", nm, "V", version))
+
+          ##   for now, have to save and (re-)attach the attributes for the columns
+
           sapply(1:ncol(df_brfss),function(i) {
             attrs<-attributes(df_brfss[[i]])
 
@@ -90,14 +100,13 @@ split_geogs<-function(main=TRUE, versions=TRUE, factorize = FALSE, verbose=TRUE)
           })
 
           if(factorize) {
+
+            show_progress(progress,
+                          message = paste0("Splitting ... ", nm, "V",
+                                           version, " ... adding factors"))
+
             df_state <- df_state %>% make_factors()
           }
-
-          dfname <- apply.pattern("brfss_data_df",params)
-
-          if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
-
-          assign(dfname,df_state)
 
           ext <- brfss.param(extent)
 
@@ -109,9 +118,11 @@ split_geogs<-function(main=TRUE, versions=TRUE, factorize = FALSE, verbose=TRUE)
 
           if(verbose) cat("Going to save :", fname, "\n")
 
-          save(list = c(dfname),file = fname)
+          show_progress(progress,
+                        message = paste0("Splitting ... saving ", fname))
 
-          #columns.add(year,add_cols)
+          saveRDS(df_state,file = fname)
+
         }
       }
     },df_geogs$Id,df_geogs$Abbrev)
@@ -145,10 +156,11 @@ split_geogs<-function(main=TRUE, versions=TRUE, factorize = FALSE, verbose=TRUE)
 #' @export
 #'
 
-process_year <- function( download=TRUE,
+process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
+                          dl_data = FALSE,
                           layout = TRUE, convert=TRUE, codebook = TRUE,
                           split = TRUE, factorize = TRUE, saq = FALSE,
-                          responses = TRUE, verbose=FALSE, ...) {
+                          responses = TRUE, verbose=FALSE, progress = NULL, ...) {
 
 
   # by definition, state-added- questions are local
@@ -161,15 +173,17 @@ process_year <- function( download=TRUE,
 
   if(brfss.param(source) == "sas") {
 
-    sas_process_year(download=download, layout = layout, convert=convert,
+    sas_process_year(dl_metadata = dl_metadata, dl_codebook = dl_codebook,
+                     dl_data = dl_data, layout = layout, convert=convert, saq = saq,
                      codebook = codebook, split = split, factorize = factorize,
-                     responses = responses, verbose=verbose)
+                     responses = responses, verbose=verbose, progress = progress)
 
   } else {
 
-    ascii_process_year(download=download, convert=convert, codebook = codebook,
+    ascii_process_year(dl_metadata = FALSE, dl_codebook = FALSE,
+                       dl_data = FALSE, convert=convert, codebook = codebook,
                        split = split, factorize = factorize,  saq = saq,
-                       responses = responses, verbose=verbose)
+                       responses = responses, verbose=verbose, progress)
   }
 
 }
@@ -194,13 +208,9 @@ save_brfss <- function(df, year= NULL, geog = NULL, version = 0) {
   year <- get.year(year)
   geog <- get.geog(geog)
 
-  dfname<-apply.pattern("brfss_data_df", YEAR= year, GEOG = geog, VERS = version)
-
-  assign(dfname,df)
-
   fname <- brfss_data_path(year = year, geog = geog, version = version, rw = 'w')
 
-  save(list = c(dfname),file = fname)
+  saveRDS(df,file = fname)
 
 }
 

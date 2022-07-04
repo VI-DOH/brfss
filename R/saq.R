@@ -26,7 +26,7 @@ build_saq_layout<-function(year=NULL, geog=NULL) {
 
   df_layout_saq<-read.csv(saq_filename_csv)
 
-  save(df_layout_saq,file = saq_layout)
+  saveRDS(df_layout_saq,file = saq_layout)
 
 }
 
@@ -48,7 +48,7 @@ saq_layout<-function(year = NULL, geog = NULL){
   geog <- get.geog(geog)
 
   saq_layout <- apply.pattern("saq_layout_path", YEAR = year, GEOG = geog)
-  orrr::get.rdata(saq_layout)
+  readRDS(saq_layout)
 }
 
 
@@ -107,7 +107,7 @@ merge_saq_layout <- function(year = NULL, geog = NULL, df_layout = NULL, df_saq_
   if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
 
 
-  save(df_layout, file = file)
+  saveRDS(df_layout, file = file)
 
   invisible()
 
@@ -138,7 +138,7 @@ build_saq_values<-function(year=NULL, geog=NULL) {
   df_values_saq<-read.csv(saq_filename_csv, check.names = FALSE, fileEncoding="UTF-8-BOM") %>%
     mutate(value = as.character(value))
 
-  save(df_values_saq,file = saq_values_path)
+  saveRDS(df_values_saq,file = saq_values_path)
 
 }
 
@@ -180,7 +180,7 @@ merge_saq_values <- function(year = NULL, geog = NULL, df_values = NULL, df_saq_
   if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
 
 
-  save(df_values_mrg, file = file)
+  saveRDS(df_values_mrg, file = file)
 
   invisible()
 
@@ -204,6 +204,6 @@ saq_values<-function(year = NULL, geog = NULL){
   geog <- get.geog(geog)
 
   saq_values <- apply.pattern("saq_values_path", YEAR = year, GEOG = geog)
-  orrr::get.rdata(saq_values)
+  readRDS(saq_values)
 }
 
