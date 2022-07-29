@@ -7,22 +7,18 @@
 #'
 #' Read in .csv file and save as .rda file
 #'
-#' @param year integer year of interest
-#' @param geog character geog of interest (or none, the default geography)
-#'
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' build_saq_layout(2021)
 #' }
-build_saq_layout<-function(year=NULL, geog=NULL) {
+build_saq_layout<-function() {
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
+  params <- my.brfss.patterns()
 
-  saq_filename_csv <- apply.pattern("saq_raw_path", YEAR = year, GEOG = geog, EXT = "local")
-  saq_layout <- apply.pattern("saq_layout_path", YEAR = year, GEOG = geog, EXT = "local")
+  saq_filename_csv <- apply.pattern("saq_raw_path", params)
+  saq_layout <- apply.pattern("saq_layout_path", params)
 
   df_layout_saq<-read.csv(saq_filename_csv)
 
@@ -32,8 +28,6 @@ build_saq_layout<-function(year=NULL, geog=NULL) {
 
 #' Get State-Added-Questions Layout
 #'
-#' @param year integer year of interest
-#' @param geog character geog of interest (or none, the default geography)
 #'
 #' @return data frame
 #' @export
@@ -42,12 +36,11 @@ build_saq_layout<-function(year=NULL, geog=NULL) {
 #' \dontrun{
 #' df_saq_layout <- saq_layout(2021)
 #' }
-saq_layout<-function(year = NULL, geog = NULL){
+saq_layout<-function(){
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
+  params <- my.brfss.patterns()
 
-  saq_layout <- apply.pattern("saq_layout_path", YEAR = year, GEOG = geog)
+  saq_layout <- apply.pattern("saq_layout_path", params)
   readRDS(saq_layout)
 }
 
@@ -55,8 +48,6 @@ saq_layout<-function(year = NULL, geog = NULL){
 
 #' Merge State Specific Questions with Standard Layout
 #'
-#' @param year
-#' @param geog
 #' @param df_layout
 #' @param df_saq_layout
 #'
@@ -64,18 +55,17 @@ saq_layout<-function(year = NULL, geog = NULL){
 #' @export
 #'
 #' @examples
-merge_saq_layout <- function(year = NULL, geog = NULL, df_layout = NULL, df_saq_layout = NULL) {
+merge_saq_layout <- function(df_layout = NULL, df_saq_layout = NULL) {
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
+  params <- my.brfss.patterns()
 
   if(is.null(df_layout)) {
-    df_layout <- get.codebook.layout(year)
-    if(is.null(df_layout)) df_layout <- get.sas.layout(year)
+    df_layout <- get.codebook.layout()
+    if(is.null(df_layout)) df_layout <- get.sas.layout()
   }
 
   if(is.null(df_saq_layout)) {
-    df_saq_layout <- saq_layout(year)
+    df_saq_layout <- saq_layout()
   }
 
   if(!is.null(df_saq_layout)) {
@@ -99,8 +89,8 @@ merge_saq_layout <- function(year = NULL, geog = NULL, df_layout = NULL, df_saq_
       bind_rows(df_saq_layout, saq_dummy, keep1)
   }
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, GEOG = geog)
-  fil <- apply.pattern("merged_layout_file", YEAR = year, GEOG = geog)
+  fldr <- apply.pattern("codebook_layout_folder",params)
+  fil <- apply.pattern("merged_layout_file", params)
 
   file <- paste0(fldr,fil)
 
@@ -118,22 +108,18 @@ merge_saq_layout <- function(year = NULL, geog = NULL, df_layout = NULL, df_saq_
 #'
 #' Read in .csv file and save as .rda file
 #'
-#' @param year integer year of interest
-#' @param geog character geog of interest (or none, the default geography)
-#'
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' build_saq_values(2021)
 #' }
-build_saq_values<-function(year=NULL, geog=NULL) {
+build_saq_values<-function() {
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
+  params <- my.brfss.patterns()
 
-  saq_filename_csv <- apply.pattern("saq_raw_values_path", YEAR = year, GEOG = geog, EXT = "local")
-  saq_values_path <- apply.pattern("saq_values_path", YEAR = year, GEOG = geog, EXT = "local")
+  saq_filename_csv <- apply.pattern("saq_raw_values_path", params)
+  saq_values_path <- apply.pattern("saq_values_path", params)
 
   df_values_saq<-read.csv(saq_filename_csv, check.names = FALSE, fileEncoding="UTF-8-BOM") %>%
     mutate(value = as.character(value))
@@ -144,8 +130,6 @@ build_saq_values<-function(year=NULL, geog=NULL) {
 
 #' Merge State Specific Question Values with Standard Question Values
 #'
-#' @param year
-#' @param geog
 #' @param df_values
 #' @param df_saq_values
 #'
@@ -155,15 +139,14 @@ build_saq_values<-function(year=NULL, geog=NULL) {
 #' @examples
 merge_saq_values <- function(year = NULL, geog = NULL, df_values = NULL, df_saq_values = NULL) {
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
+  params <- my.brfss.patterns()
 
   if(is.null(df_values)) {
-    df_values <- codebook_values(year)
+    df_values <- codebook_values()
   }
 
   if(is.null(df_saq_values)) {
-    df_saq_values <- saq_values(year)
+    df_saq_values <- saq_values()
   }
 
   if(!is.null(df_saq_values)) {
@@ -172,8 +155,8 @@ merge_saq_values <- function(year = NULL, geog = NULL, df_values = NULL, df_saq_
       bind_rows(df_saq_values)
   }
 
-  fldr <- apply.pattern("codebook_layout_folder", YEAR = year, GEOG = geog)
-  fil <- apply.pattern("merged_values_file", YEAR = year, GEOG = geog)
+  fldr <- apply.pattern("codebook_layout_folder",params)
+  fil <- apply.pattern("merged_values_file", params)
 
   file <- paste0(fldr,fil)
 
@@ -188,8 +171,6 @@ merge_saq_values <- function(year = NULL, geog = NULL, df_values = NULL, df_saq_
 
 #' Get State-Added-Question Values
 #'
-#' @param year integer year of interest
-#' @param geog character geog of interest (or none, the default geography)
 #'
 #' @return data frame
 #' @export
@@ -198,12 +179,11 @@ merge_saq_values <- function(year = NULL, geog = NULL, df_values = NULL, df_saq_
 #' \dontrun{
 #' df_saq_values <- saq_values(2021)
 #' }
-saq_values<-function(year = NULL, geog = NULL){
+saq_values<-function(){
 
-  year <- get.year(year)
-  geog <- get.geog(geog)
+  params <- my.brfss.patterns()
 
-  saq_values <- apply.pattern("saq_values_path", YEAR = year, GEOG = geog)
+  saq_values <- apply.pattern("saq_values_path",params)
   readRDS(saq_values)
 }
 

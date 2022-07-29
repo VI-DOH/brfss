@@ -317,7 +317,6 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
   is.calc <- grepl("^Calc",df_layout$section)
   is.wt <- grepl("[Ww]eighting.V",df_layout$section)
 
-  #browser()
   col_names <- df_layout %>% pull(col_name)
   #  df <- data.frame(col_name = col_names)
 
@@ -346,15 +345,18 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
       } else if(!wt){ #&& !calc && !wt){
         return ("factor")
       }else {
-        return (NA)
+        return ("unknown")
       }
     } else {
-      return(NA)
+      return("unknown")
     }
   }, col_names, is.calc, is.wt)
 
+  types[grepl("_STSTR",col_names)] <- "stratum"
+
   df <- data.frame(col_name = col_names, type = types,
-                   calc = is.calc, wt = is.wt, row.names = NULL)
+                   calc = is.calc, wt = is.wt,
+                   row.names = NULL)
   df
 }
 
@@ -386,6 +388,7 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL) {
 
   if(is.null(df_layout)) df_layout <- get.layout()
 
+  browser()
   df_factors <- quest_types(df_layout, df_vals) %>%
     filter(type == "factor")  %>%
     {row.names(.)<-NULL;.}

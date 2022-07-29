@@ -25,10 +25,10 @@ my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL, source = NULL, e
   if(!is.null(extent)) extent<-match.arg(extent,c("local","national"))
 
   folder <- apply.pattern("brfss_data_folder")
-  path <- paste0(folder, "my_brfss.rda")
+  path <- paste0(folder, "my_brfss.rds")
 
   if(file.exists(path)) {
-    load(file = path)
+    readRDS(file = path)
     if(is.null(extent)) extent <- my_brfss$extent
     if(is.null(source)) source <- my_brfss$source
     if(is.null(geog)) geog <- my_brfss$geog

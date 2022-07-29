@@ -98,6 +98,26 @@ download_codebook <- function(progress = NULL) {
     })
   )
 }
+
+codebook_file <- function() {
+
+  exts <- c("pdf", "txt", "rtf")
+
+  params <- my.brfss.patterns()
+
+  fldr <- apply.pattern("codebook_folder", params)
+  fil <- apply.pattern("codebook_file", params)
+
+  ret <- NULL
+
+  found <- sapply(exts, function(ext) {
+    file <- paste0(fldr,fil,".",ext)
+    if(file.exists(file)) ret <<-  file
+  })
+
+  return(ret)
+
+}
 #############################################################
 ##
 ##    Read Lines from Codebook
@@ -121,14 +141,12 @@ read_codebook <- function(file=NULL, ...) {
   require(dplyr)
 
   args <- list(...)
-
-  params <- my.brfss.patterns()
+#
+#   params <- my.brfss.patterns()
 
   if(is.null(file)) {
-    fldr <- apply.pattern("codebook_folder", params)
-    fil <- apply.pattern("codebook_file", params)
-    ext <- apply.pattern("codebook_ext", params)
-    file <- paste0(fldr,fil,".",ext)
+
+    file <- codebook_file()
   }
 
   if(!file.exists(file)) {
@@ -341,7 +359,7 @@ save_codebook_layout <- function(file=NULL) {
     mutate(var_type = ifelse(var_type == "Num","integer",var_type)) %>%
     mutate(var_type = ifelse(var_type == "Char","character",var_type)) %>%
     relocate(field_size, start, end, col_name, sect_type, sect_num, section, label,
-           question_num, var_type, question)
+             question_num, var_type, question)
 
   fldr <- apply.pattern("codebook_layout_folder",params)
   fil <- apply.pattern("codebook_layout_file", params)

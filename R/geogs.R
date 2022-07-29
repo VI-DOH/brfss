@@ -18,9 +18,9 @@ save.geogs <- function(geogs) {
 #' }
 get_geogs_all <- function() {
 
-  pttrns <- my.brfss.patterns()
 
-  geogs_path <- apply.pattern("geogs_path", pttrns)
+
+  geogs_path <- apply.pattern("geogs_path")
 
   if(!file.exists(geogs_path)) {
     data("geogs", package="brfss")

@@ -46,7 +46,7 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
   if(dl_metadata) {
     if(verbose) cat(" ... downloading ... metadata ... ")
-    sas_download_metadata()
+    sas_download_metadata(progress = progress)
   }
 
   if(dl_codebook) {
@@ -57,15 +57,15 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
   if(dl_data) {
     if(verbose) cat(" ... downloading ... ascii data ... ")
-    ascii.download.data(progress)
+    ascii.download.data(progress = progress)
   }
 
   if(codebook) {
-
     process_codebook(progress = progress)
   }
 
   if(saq) {
+    browser()
     build_saq_layout()
     merge_saq_layout()
 

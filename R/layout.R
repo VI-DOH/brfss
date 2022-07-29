@@ -6,79 +6,98 @@
 #' @return
 #' @export
 #'
-save_sas_layout<-function() {
+save_sas_layout<-function(progress = NULL) {
   require(stringr)
   require(dplyr)
 
-  params <- my.brfss.patterns()
+  show_progress(progress,
+                message = "Layout ... saving ")
+
   year <- as.integer(brfss.param(year))
 
   # get the filename for the data
   #  name format based on year
-  if(year>2010) {
-    file<-apply.pattern("sas_sasout_path", params)
-  } else {
+  if(year<2011) {
     return(NULL)
+  }
+
+  version <- 0
+  brfss.params(version=version)
+  params <- my.brfss.patterns()
+
+  file<-apply.pattern("sas_sasout_path", params)
+
+
+  while(file.exists(file)) {
+
+    #  read the sasout file
+
+    lines<-readLines(file, warn = F, encoding = "latin1")
+
+    lines <- gsub("—", "-",lines)
+
+    # get the start point of interest and remove everything before
+
+    start<-as.integer(grep("^Label$",lines)) + 1
+    if (length(start)==0) start<-grep("\\* ASSIGN ",lines)
+    lines<-lines[start:length(lines)]
+
+    # get the end point of interest (; by itself on a line) and remove everything after
+    #   including that end line
+
+    lines<-lines[1:(grep("^;$",lines)-1) ]
+
+    #####################################
+    ##
+    ##  put together broken lines
+
+    varlines<-grep(" = '", lines)
+    vline2<-c(varlines[2:length(varlines)]-1,length(lines))
+
+    ulines<-as.character(mapply(function(l0,l1) {
+      paste(lines[l0:l1],collapse="")
+
+    },varlines,vline2))
+
+    vars<-gsub("(.*) =.*","\\1",ulines)
+    vars<-str_trim(vars)
+    #vars<-gsub("^_","X_",vars)
+
+    question<-gsub("(.*) = '(.*)'$","\\2",ulines)
+
+
+    df_ranges<-read_sas_field_ranges()
+
+    df<- dplyr::left_join(df_ranges,
+                          data.frame(var=vars,label=question,stringsAsFactors = F),
+                          by="var")
+
+    df <- df %>% deduped_layout()
+
+    colnames(df)[colnames(df)=="var"]<-"col_name"
+    df$field_size<-as.integer(df$end)-as.integer(df$start)+1
+
+    df_layout_sas <- df %>% select(field_size,start,end,col_name,  sect_type, sect_num,
+                                   section, label) %>%
+      group_by(section) %>%
+      mutate(question_num = row_number()) %>%
+      relocate(question_num,.before = label) %>%
+      as.data.frame() %>%
+      fill_dummies()
+
+    fldr <- apply.pattern("layout_folder", params)
+    if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
+
+    saveRDS(df_layout_sas, file = apply.pattern("sas_layout_path",params))
+
+    version <- version+1
+    brfss.params(version=version)
+    params <- my.brfss.patterns()
+
+    file<-apply.pattern("sas_sasout_path", params)
 
   }
 
-  #  read the sasout file
-
-  lines<-readLines(file, warn = F, encoding = "latin1")
-
-  lines <- gsub("—", "-",lines)
-
-  # get the start point of interest and remove everything before
-
-  start<-as.integer(grep("^Label$",lines)) + 1
-  if (length(start)==0) start<-grep("\\* ASSIGN ",lines)
-  lines<-lines[start:length(lines)]
-
-  # get the end point of interest (; by itself on a line) and remove everything after
-  #   including that end line
-
-  lines<-lines[1:(grep("^;$",lines)-1) ]
-
-  #####################################
-  ##
-  ##  put together broken lines
-
-  varlines<-grep(" = '", lines)
-  vline2<-c(varlines[2:length(varlines)]-1,length(lines))
-
-  ulines<-as.character(mapply(function(l0,l1) {
-    paste(lines[l0:l1],collapse="")
-
-  },varlines,vline2))
-
-  vars<-gsub("(.*) =.*","\\1",ulines)
-  vars<-str_trim(vars)
-  #vars<-gsub("^_","X_",vars)
-
-  question<-gsub("(.*) = '(.*)'$","\\2",ulines)
-
-
-  df_ranges<-read_sas_field_ranges()
-
-  df<- dplyr::left_join(df_ranges,data.frame(var=vars,label=question,stringsAsFactors = F),by="var")
-
-  df <- df %>% deduped_layout()
-
-  colnames(df)[colnames(df)=="var"]<-"col_name"
-  df$field_size<-as.integer(df$end)-as.integer(df$start)+1
-
-  df_layout_sas <- df %>% select(field_size,start,end,col_name,  sect_type, sect_num,
-                                 section, label) %>%
-    group_by(section) %>%
-    mutate(question_num = row_number()) %>%
-    relocate(question_num,.before = label) %>%
-    as.data.frame() %>%
-    fill_dummies()
-
-  fldr <- apply.pattern("layout_folder", params)
-  if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
-
-  saveRDS(df_layout_sas, file = apply.pattern("sas_layout_path",params))
   invisible()
 }
 
@@ -98,9 +117,11 @@ sas_layout<-function() {
   file  <-  apply.pattern("sas_layout_path",params)
 
   if(file.exists(file)) {
-    readRDS(file = apply.pattern("sas_layout_path",params))
+    df_layout =readRDS(file = file)
   } else
     return(NULL)
+
+  df_layout
 }
 
 #' Get BRFSS Fixed Width Layout
@@ -211,8 +232,10 @@ merge_layout<-function(df_quest, year = NULL) {
 
 get.layout <- function() {
 
+  version <- brfss.param(version)
+
   df_layout <- get.merged.layout()
-  if(is.null(df_layout)) df_layout <- get.codebook.layout()
+  if(is.null(df_layout) && version == 0) df_layout <- get.codebook.layout()
 
   if(is.null(df_layout)) df_layout <- sas_layout()
 

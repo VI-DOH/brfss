@@ -1,6 +1,59 @@
 require(dplyr)
 
 
+#' Process BRFSS Annual Data Files
+#'
+#'
+#' Use this function to process a single year of BRFSS data. This function sill download, unzip,
+#' and create a data frame with all data from the XPT file, as well as any other versions of the survey.
+#'
+#' @param year - int - year of interest
+#' @param source character - data source ('sas' or 'ascii')
+#' @param download - logical - download the data? Useful (set = FALSE) if you already have the downloaded files
+#' @param convert - logical - read the downloaded files into data_frames and save?
+#' Useful (set = FALSE) if you already have the downloaded files processed
+#' @param codebook - logical - download and process the annual codebook
+#' @param split - logical - split the processed data file by state/geography
+#' @param factorize - logical - convert columns to factors where appropriate
+#' @param ... other params
+#'
+#' @return invisible()
+#' @export
+#'
+
+process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
+                          dl_data = FALSE,
+                          layout = TRUE, convert=TRUE, codebook = TRUE,
+                          split = TRUE, factorize = TRUE, saq = FALSE,
+                          responses = TRUE, verbose=FALSE, progress = NULL, ...) {
+
+
+  # by definition, state-added- questions are local
+
+  if(brfss.param(extent) == 'national' && saq) {
+    warning("Data are national, saq = TRUE is incongruous, setting saq to FALSE")
+    saq <- FALSE
+  }
+  # get the path to travel ... sas or ascii
+
+  if(brfss.param(source) == "sas") {
+
+    sas_process_year(dl_metadata = dl_metadata, dl_codebook = dl_codebook,
+                     dl_data = dl_data, layout = layout, convert=convert, saq = saq,
+                     codebook = codebook, split = split, factorize = factorize,
+                     responses = responses, verbose=verbose, progress = progress)
+
+  } else {
+
+    ascii_process_year(dl_metadata = FALSE, dl_codebook = FALSE,
+                       dl_data = FALSE, convert=convert, codebook = codebook,
+                       split = split, factorize = factorize,  saq = saq,
+                       responses = responses, verbose=verbose, progress)
+  }
+
+}
+
+
 #' Split BRFSS Data by Geography
 #'
 #' The main BRFSS data file that is created when the downloaded file from the public CDC website
@@ -135,58 +188,6 @@ split_geogs<-function(main=TRUE, versions=TRUE,
   invisible()
 }
 
-
-#' Process BRFSS Annual Data Files
-#'
-#'
-#' Use this function to process a single year of BRFSS data. This function sill download, unzip,
-#' and create a data frame with all data from the XPT file, as well as any other versions of the survey.
-#'
-#' @param year - int - year of interest
-#' @param source character - data source ('sas' or 'ascii')
-#' @param download - logical - download the data? Useful (set = FALSE) if you already have the downloaded files
-#' @param convert - logical - read the downloaded files into data_frames and save?
-#' Useful (set = FALSE) if you already have the downloaded files processed
-#' @param codebook - logical - download and process the annual codebook
-#' @param split - logical - split the processed data file by state/geography
-#' @param factorize - logical - convert columns to factors where appropriate
-#' @param ... other params
-#'
-#' @return invisible()
-#' @export
-#'
-
-process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
-                          dl_data = FALSE,
-                          layout = TRUE, convert=TRUE, codebook = TRUE,
-                          split = TRUE, factorize = TRUE, saq = FALSE,
-                          responses = TRUE, verbose=FALSE, progress = NULL, ...) {
-
-
-  # by definition, state-added- questions are local
-
-  if(brfss.param(extent) == 'national' && saq) {
-    warning("Data are national, saq = TRUE is incongruous, setting saq to FALSE")
-    saq <- FALSE
-  }
-  # get the path to travel ... sas or ascii
-
-  if(brfss.param(source) == "sas") {
-
-    sas_process_year(dl_metadata = dl_metadata, dl_codebook = dl_codebook,
-                     dl_data = dl_data, layout = layout, convert=convert, saq = saq,
-                     codebook = codebook, split = split, factorize = factorize,
-                     responses = responses, verbose=verbose, progress = progress)
-
-  } else {
-
-    ascii_process_year(dl_metadata = FALSE, dl_codebook = FALSE,
-                       dl_data = FALSE, convert=convert, codebook = codebook,
-                       split = split, factorize = factorize,  saq = saq,
-                       responses = responses, verbose=verbose, progress)
-  }
-
-}
 
 #' Save BRFSS Data
 #'

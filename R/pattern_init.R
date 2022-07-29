@@ -188,10 +188,14 @@ init.patterns <- function() {
     #########################################################################################
 
   append.pattern("layout_folder",
-                 "{brfss_data_folder}[YEAR]/layout/",
+                 paste0("{brfss_data_folder}[YEAR]/",
+                        "([EXT] == 'local';geog/[GEOG]/layout/)",
+                        "([EXT] == 'national';layout/)"),
                  type = "folder") %>%
-    append.pattern("sas_layout_file","layout[YR]_sas.rds",
+
+    append.pattern("sas_layout_file","layout[YR]([VERS] > 0;_V[VERS])_sas.rds",
                    type = "file") %>%
+
     append.pattern("sas_layout_path","{layout_folder}{sas_layout_file}",
                    type = "path") %>%
 
@@ -293,8 +297,9 @@ init.patterns <- function() {
     append.pattern("sas_data_path","{sas_data_folder}{sas_data_file}",
                    type = "path") %>%
 
+
     append.pattern("sas_sasout_file",
-                   "SASOUT[YR]_([EXT] == 'local';STATES)([EXT] == 'national';LLCP).SAS",
+                   "SASOUT[YR]_([EXT] == 'local';STATES)([EXT] == 'national';LLCP)([VERS]>0;_V[VERS]).SAS",
                    type = "file") %>%
 
     append.pattern("sas_sasout_path", "{sas_raw_folder}{sas_sasout_file}",
@@ -306,26 +311,33 @@ init.patterns <- function() {
 
   append.pattern("saq_raw_folder","{brfss_annual_raw_data_folder}saq/",
                  type = "folder") %>%
+
     append.pattern("saq_raw_file","[GEOG][YR]_layout_SAQ.csv",
                    type = "file")  %>%
+
     append.pattern("saq_raw_values_file","[GEOG][YR]_values_SAQ.csv",
                    type = "file")  %>%
+
     append.pattern("saq_raw_path","{saq_raw_folder}{saq_raw_file}",
                    type = "path")%>%
+
     append.pattern("saq_raw_values_path","{saq_raw_folder}{saq_raw_values_file}",
                    type = "path")%>%
 
     append.pattern("saq_layout_folder",paste0("{brfss_data_folder}[YEAR]/",
-                                              "([EXT] == 'local';geog/[GEOG]/saq/([EXT] == 'national';ERROR)"),
+                                              "([EXT] == 'local';geog/[GEOG]/saq/)([EXT] == 'national';ERROR)"),
                    type = "folder",
                    desc = "Folder to store the annual processed BRFSS data") %>%
 
     append.pattern("saq_layout_file","layout[YR]_SAQ.rds",
                    type = "file") %>%
+
     append.pattern("saq_values_file","values[YR]_SAQ.rds",
                    type = "file") %>%
+
     append.pattern("saq_layout_path","{saq_layout_folder}{saq_layout_file}",
                    type = "path") %>%
+
     append.pattern("saq_values_path","{saq_layout_folder}{saq_values_file}",
                    type = "path") %>%
 
@@ -338,19 +350,27 @@ init.patterns <- function() {
 
     append.pattern("merged_layout_file","layout[YR]_mrg.rds",
                    type = "file") %>%
+
     append.pattern("merged_layout_path","{merged_layout_folder}{merged_layout_file}",
                    type = "path") %>%
+
     append.pattern("merged_values_file","values[YR]_mrg.rds",
                    type = "file") %>%
+
     append.pattern("merged_values_path","{merged_layout_folder}{merged_values_file}",
                    type = "path")  %>%
 
     ## Miscellaneous
 
+    append.pattern("aliases_path","{data_folder}aliases.rds",
+                   type = "path") %>%
+
     append.pattern("geogs_path","{data_folder}geogs.rds",
                    type = "path") %>%
+
     append.pattern("weight_col","([VERS]==0;_LLCPWT)([VERS]!=0;_LCPWTV[VERS])",
                    type = "column") %>%
+
     append.pattern("stratum_col","_STSTR",
                    type = "column")
 

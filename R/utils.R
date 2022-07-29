@@ -4,7 +4,6 @@ show_progress <- function(progress, message) {
   if(!is.null(progress)) progress$set(message = message, value = NULL)
 }
 
-
 str_something <- function(string) {
 
   ok <- !is.na(string) && !is.null(string) && length(string)>0 && nchar(string)>0
@@ -127,5 +126,34 @@ split_sentence<-function(x,len, start=0){
     }
   }
   x
+}
+
+brfss_web_files <- function(year) {
+
+  require(rvest)
+  require(dplyr)
+
+  myurl <- paste0('https://www.cdc.gov/brfss/annual_data/annual_',year,'.html')
+
+  status <- httr::HEAD(myurl)$status
+  if(status==200) {
+    page  <- read_html(myurl)
+    hrefs <- as.character(html_nodes(page, "a") %>% grep("href", ., value = TRUE))
+
+    rm(page)
+
+    hrefs <- hrefs[nchar(hrefs) < 400]
+
+    hrefs <- hrefs %>% grep("pdf",.,value = T)
+
+    url <- gsub(".*href=.*?\"(.*?)\".*","\\1",hrefs)
+
+    txt <- gsub(".*href=.*?\".*?\">(.*?)<.*","\\1",hrefs)
+
+    df <- data.frame(url = url, txt = txt)
+  } else {
+    df <- data.frame()
+  }
+  df
 }
 

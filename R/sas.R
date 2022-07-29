@@ -116,7 +116,7 @@ sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
   if(dl_metadata) {
     if(verbose) cat(" ... downloading ... metadata ... ")
-    sas_download_metadata()
+    sas_download_metadata(progress = progress)
   }
 
   if(dl_codebook) {
@@ -128,18 +128,17 @@ sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
   if(dl_data) {
     if(verbose) cat(" ... downloading ... metadata ... ")
 
-    sas_download_xpt()
+    sas_download_xpt(progress = progress)
   }
 
-  browser()
   # if(verbose) cat(" versions ")
   # sas_download_metadata.versions(year=year)
   if(verbose) cat(" \n ... unzipping files\n ")
   unzip.all()
 
-  if (layout) save_sas_layout()
+  if (layout) save_sas_layout(progress = progress)
 
-  if(codebook) process_codebook()
+  if(codebook) process_codebook(progress = progress)
 
   if(saq) {
     build_saq_layout()
@@ -151,16 +150,9 @@ sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
   if(convert) {
     if(verbose) cat(" ... reading main xpt file\n ")
+    convert_sas(verbose = verbose, progress = progress)
 
-    read.xpt(version = 0)
 
-    ivers<-1
-    if(verbose) cat(" ... trying versions\n ")
-    while (read.xpt(version=ivers,verbose=TRUE)) {
-
-      if(verbose) cat("Read version=",ivers,"\n")
-      ivers<-ivers + 1
-    }
   }
 
 
@@ -174,10 +166,36 @@ sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
   invisible()
 }
 
+convert_sas <- function(verbose = FALSE, progress = NULL) {
 
-sas_download_metadata<-function(year, ...) {
+  show_progress(progress,
+                message = paste0("Survey Data ... converting .xpt main file"))
+
+  read.xpt(version = 0)
+
+  cont <- TRUE
+
+  ivers<-1
+  if(verbose) cat(" ... trying versions\n ")
+  while (cont) {
+
+   if(verbose) cat("Converting version=",ivers,"\n")
+   show_progress(progress,
+                  message = paste0("Survey Data ... converting version ", ivers))
+
+    cont <- read.xpt(version=ivers,verbose=TRUE)
+
+
+    ivers<-ivers + 1
+  }
+}
+
+sas_download_metadata<-function(year, progress = NULL, ...) {
   #  files<-sas.url.pattern.downloads.data()
   params <- my.brfss.patterns()
+
+  show_progress(progress,
+                message = "Metadata ... downloading")
 
   pttrns<-get.pattern.group("sas_downloads")
   urlfiles<- apply.pattern("brfss_url_files", params)
@@ -204,12 +222,15 @@ sas_download_metadata<-function(year, ...) {
       # download will fail on lager files if time to download is > 60 secs
       #   set time to 3 minutes and then restore when done
 
-
-      cont <- RCurl::url.exists(url)
-
+      x <- httr::GET(url = url)
+      cont <- x$status_code == 200
       if(cont) {
+        show_progress(progress,
+                      message = paste0("Metadata ... downloading ", filename))
+
         download.file(url = url,destfile = fileout,
-                      method = "libcurl")
+                      method = "libcurl",quiet = !is.null(progress))
+
         if(grepl("[.]zip$",fileout)) {
           unzip(fileout,exdir = normalizePath(folderout))
           file.remove(fileout)
@@ -233,8 +254,11 @@ sas_download_metadata<-function(year, ...) {
 #'
 #' @export
 #'
-sas_download_xpt<-function() {
+sas_download_xpt<-function(progress = NULL) {
 
+
+  show_progress(progress,
+                message = "XPT files ... downloading ... ")
 
   params <- my.brfss.patterns()
   #files<-sas.url.pattern.downloads.versions()
@@ -265,8 +289,11 @@ sas_download_xpt<-function() {
 
       fileout<-paste0(folderout,file)
 
+      show_progress(progress,
+                    message = paste0("XPT files ... downloading ... ", url))
+
       download.file(url = url,destfile = fileout,
-                    method = "libcurl")
+                    method = "libcurl", quiet = TRUE)
 
       if(grepl("[.]zip$",fileout)) {
         unzip(fileout,exdir = normalizePath(folderout))

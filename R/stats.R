@@ -82,7 +82,9 @@ survey_stats<-function(coi, exclude = c("Don.*t|Refuse"), subsets = NULL,
 
   df_brfss <- coi_data( coi = coi, subsets = subsets, exclude = exclude)
 
-  if(!df_brfss %>% pull({{coi}}) %>% is.factor()) return(NULL)
+  test <- df_brfss %>% pull({{coi}})
+
+  if(!(is.factor(test) && length(levels(test))>1) ) return(NULL)
 
   # get data from
 
@@ -345,4 +347,52 @@ simple_stats <- function(df_brfss = NULL, year = NULL,
     relocate(n, .after = Response)
 
 }
+
+RSE <- function(pct,se) {
+  se/pct*100
+}
+
+#' Add Relative Standard Error
+#'
+#' Add the relative standard error (RSE) to a data frame that contains the standard error and percent
+#'
+#' @param df  data frame with columns containing both standard error and percent
+#'
+#' @return
+#' @export
+#'
+#' @examples
+add_RSE <- function(df, se_col = "se", pct_col = "percent") {
+
+
+  df %>% mutate(RSE = !!sym(se_col) / !!sym(pct_col) * 100)
+}
+
+
+# BRFSS_SignificanceFunc()
+# Creates subsets of descriptive statistics data set
+# Performs pairwise comparisons of 95% CI
+# Produces modifiable .doc file
+# Non-overlapping 95% CI (prevalence and adult values)
+# Suppressed data (default: RSE > 30, n < 50)
+# Data visualizations (optional)
+#
+# Health Outcome: Respondent did not have a personal health care provider
+# Idaho BRFSS 2020 (proc descript: 393 rows)
+# Demographic/crossing variables
+# District, Physical/Mental Health, Sex, Age, Sex by Age, Depression Diagnosis, Education, Employment, Ethnicity, Income, Marital Status, Nicotine Use, Veteran Status
+
+sig_diffs <- function(df) {
+
+  #xing_vars <- Physical/Mental Health, Sex, Age, Sex by Age, Depression Diagnosis, Education, Employment, Ethnicity, Income, Marital Status, Nicotine Use, Veteran Status
+
+  xing_vars <- c("SEX","EDUCATION", "MARITAL","VETERAN","AGE")
+
+
+  fctrs <- df %>% Filter(is.factor,.) %>% names()
+
+
+
+}
+
 

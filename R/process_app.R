@@ -105,9 +105,11 @@ process_app <- function() {
         bs_clr(bs = "extent_national", bg = "white", fg = "#0044ff"),
         bs_clr(bs = "brfss_on", bg = "#ffff44aa", fg = "white"),
 
-                tags$head(tags$style(paste0(".shiny-notification ",
-                                    "{position: fixed; top: 30% ; left: 50%;",
-                                    "color: blue; font-size: 20px; font-style: italic;"))),
+        tags$head(tags$style(paste0(".shiny-notification ",
+                                    "{position: fixed; top: calc(50%); left: calc(50%);",
+                                    "color: #222222; background-color: #ffffff;",
+                                    "border-radius: 25px;  text-align: center;",
+                                    "font-size: 20px;"))),
 
         fluidRow(style = "background-color: #DCDFFD; padding: 4px; margin: 4px",
                  column(width=3, style = "color:blue; padding_left: 5px",
@@ -235,7 +237,7 @@ process_app <- function() {
                                  ),
                                  materialSwitch(
                                    inputId = "convert_id",
-                                   label = "Survey",
+                                   label = "Survey Data",
                                    status = "success",
                                    right = TRUE
                                  ),
@@ -362,7 +364,7 @@ process_app <- function() {
 
                        ),
 
-                       #
+
                        mainPanel(
                          fluidRow(
                            column(width = 6,
@@ -377,6 +379,17 @@ process_app <- function() {
 
                        )
                      )
+                   )
+          ),
+          tabPanel("Downloads",
+                   fluidPage(
+                     selectInput(inputId = "other_downloads_id",label = "Download:",
+                                 choices = LETTERS[1:13],size = 10, selectize = FALSE, width = "800px")
+                   )
+          ),
+          tabPanel("Aliases",
+                   fluidPage(
+
                    )
           )
         )
@@ -427,6 +440,7 @@ process_app <- function() {
                      convert = input$convert_id,
                      codebook = input$codebook_id,
                      split = input$split_id,
+                     saq = input$saq_id,
                      factorize = input$factorize_id,
                      responses = input$response_id,
                      progress = progress)
@@ -460,7 +474,13 @@ process_app <- function() {
         year <- input$year_id
 
         brfss.param(year = year)
+
+        df<- brfss_web_files(year)
+
+        updateSelectInput(session = session, inputId = "other_downloads_id", choices = df$txt)
       })
+
+
 
       #####################################################
       ##
@@ -490,10 +510,13 @@ process_app <- function() {
                           input$split_id, input$codebook_id,
                           input$response_id)
 
-        cat("proc_state = ", proc_state,"\n")
-        rvals$proc_changed <- TRUE
+        rvals$proc_changed <- proc_state != input$process_id
         rvals$process_changed <- FALSE
-        updateSwitchInput(session = session,                                                            "process_id", value = proc_state)
+
+
+        if(proc_state != input$process_id) {
+          updateSwitchInput(session = session,                                                            "process_id", value = proc_state)
+        }
 
       })
 
@@ -531,6 +554,14 @@ process_app <- function() {
 
       observeEvent(dlChanged(), {
 
+        cat("--------------------------------------\n",
+            format(Sys.time(), "%H:%M:%S"),"\n",
+            "dl_changed() ... \n",
+            "\nIn:\n",
+            "rvals$download_changed = ",rvals$download_changed,"\n",
+            "rvals$dl_changed = ",rvals$dl_changed,"\n")
+
+
         if(rvals$dl_init) {
           rvals$dl_init <- FALSE
           return()
@@ -538,19 +569,39 @@ process_app <- function() {
 
         if(rvals$download_changed) {
           rvals$download_changed <- FALSE
+          rvals$dl_changed <- FALSE
+
+          cat("\nOut:\n",
+              "rvals$download_changed = ",rvals$download_changed,"\n",
+              "rvals$dl_changed = ",rvals$dl_changed,"\n")
 
           return()
         }
 
         dl_state <- all(input$dl_codebook_id,input$dl_metadata_id, input$dl_data_id)
 
-        rvals$dl_changed <- TRUE
+        rvals$dl_changed <- dl_state != input$download_id
         rvals$download_changed <- FALSE
-        updateSwitchInput(session = session,                                                            "download_id", value = dl_state)
 
+        if(dl_state != input$download_id) {
+          updateSwitchInput(session = session,"download_id", value = dl_state)
+        }
+
+        cat("\nOut:\n",
+            "rvals$download_changed = ",rvals$download_changed,"\n",
+            "rvals$dl_changed = ",rvals$dl_changed,"\n")
       })
 
       observeEvent(input$download_id, {
+
+
+        cat("//////////////////////////////////////////////////////// \n",
+            format(Sys.time(), "%H:%M:%S"),"\n",
+            "download_changed() ... ",
+            ifelse(rvals$dl_changed," by other buttons","pressed"),"\n",
+            "\nIn:\n",
+            "rvals$download_changed = ",rvals$download_changed,"\n",
+            "rvals$dl_changed = ",rvals$dl_changed,"\n")
 
         if(rvals$download_init) {
           rvals$download_init <- FALSE
@@ -558,12 +609,17 @@ process_app <- function() {
         }
 
         rvals$download_changed <- !rvals$dl_changed
+
         if(!rvals$dl_changed ) {
           updateSwitchInput(session = session, "dl_metadata_id", value = input$download_id)
           updateSwitchInput(session = session, "dl_codebook_id", value = input$download_id)
           updateSwitchInput(session = session, "dl_data_id", value = input$download_id)
+          cat("   ... All are now ", ifelse(input$download_id," ON","OFF"), "\n")
         }
         rvals$dl_changed <- FALSE
+        cat("\nOut:\n",
+            "rvals$download_changed = ",rvals$download_changed,"\n",
+            "rvals$dl_changed = ",rvals$dl_changed,"\n")
       })
 
       #####################################################
@@ -624,6 +680,12 @@ process_app <- function() {
           asis = FALSE
         )
       }
+
+      observeEvent(input$other_downloads_id, {
+
+        cat(" ... " , input$other_downloads_id, "\n")
+
+      })
 
       disable_me <- function(input_id) {
         shinyjs::disable(input_id)
@@ -998,6 +1060,10 @@ process_app <- function() {
       output$map_raw_htm_fm <- renderUI(HTML(tree_htm_raw()))
 
       output$map_htm_fm <- renderUI(HTML(tree_htm()))
+
+
+
+
 
     }
   )
