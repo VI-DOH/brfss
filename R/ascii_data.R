@@ -79,7 +79,9 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
     convert_ascii(verbose=verbose, progress = progress)
   }
 
-  if(split) split_geogs(factorize = factorize, progress = progress)
+  if(split) split_geogs(progress = progress)
+
+  if(factorize) factorize( progress = progress)
 
   if(responses) {
     save_response_stats()

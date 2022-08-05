@@ -121,7 +121,7 @@ build_saq_values<-function() {
   saq_filename_csv <- apply.pattern("saq_raw_values_path", params)
   saq_values_path <- apply.pattern("saq_values_path", params)
 
-  df_values_saq<-read.csv(saq_filename_csv, check.names = FALSE, fileEncoding="UTF-8-BOM") %>%
+  df_values_saq<-read.csv(saq_filename_csv, check.names = FALSE) %>%
     mutate(value = as.character(value))
 
   saveRDS(df_values_saq,file = saq_values_path)

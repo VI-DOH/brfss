@@ -253,6 +253,30 @@ parse_codebook_values <- function(file=NULL) {
   df_final
 
 }
+
+
+#' Get Merged Values
+#'
+#' Get values created from merging national values with state-added questions
+#'
+#' @return data frame with values data
+#' @export
+#'
+
+get.merged.values <- function() {
+
+  params <- my.brfss.patterns()
+
+  file <- apply.pattern("merged_values_path",params)
+
+  if(!file.exists(file)) return(NULL)
+
+
+  readRDS(file = file)
+
+}
+
+
 #' Get Values
 #'
 #' The annual codebook is parsed for possible values for each variable and saved. If SAQ Values are available,
@@ -266,14 +290,20 @@ parse_codebook_values <- function(file=NULL) {
 #' @examples
 values <- function( year = NULL, ...) {
 
-  params <- my.brfss.patterns()
+  df_values <-  get.merged.values()
 
-  fname <- apply.pattern("merged_values_path",params)
+  if(is.null(df_values)) {
+    params <- my.brfss.patterns()
+
+    fname <- apply.pattern("merged_values_path",params)
 
   if(!file.exists(fname)) {
     fname <- apply.pattern("codebook_values_path",params)
   }
-  readRDS(file = fname)
+    df_values <- readRDS(file = fname)
+  }
+
+  df_values
 }
 
 #' Get Codebook Values
@@ -384,11 +414,12 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL) {
 
   if(is.null(df_brfss)) df_brfss <- brfss_data()
+
   if(is.null(df_vals)) df_vals <- values()
 
   if(is.null(df_layout)) df_layout <- get.layout()
 
-  browser()
+
   df_factors <- quest_types(df_layout, df_vals) %>%
     filter(type == "factor")  %>%
     {row.names(.)<-NULL;.}

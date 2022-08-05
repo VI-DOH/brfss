@@ -344,7 +344,7 @@ init.patterns <- function() {
 
     ##  files from merging the saq data with the national data
     append.pattern("merged_layout_folder",paste0("{brfss_data_folder}[YEAR]/",
-                                                 "([EXT] == 'local';geog/[GEOG]/layout)",
+                                                 "([EXT] == 'local';geog/[GEOG]/layout/)",
                                                  "([EXT] == 'national';ERROR)"),
                    type = "folder") %>%
 

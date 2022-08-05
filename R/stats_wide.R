@@ -89,7 +89,7 @@ stats_wide <- function(df_stats) {
   gt_stats <- gt::gt(df_stats_wide,
                      groupname_col= "subvar",
                      rowname_col="subset") %>%
-    gt::tab_header(title = html(paste0(geog_name(params["geog"]), " BRFSS<br>",
+    gt::tab_header(title = htmltools::HTML(paste0(geog_name(params["geog"]), " BRFSS<br>",
                                        params["year"])),
                    subtitle = paste0("Variable: ", coi)) %>%
 

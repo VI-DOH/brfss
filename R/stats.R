@@ -176,8 +176,10 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
   df_nums <- data.frame(des$variables[1],des$variables[2],check.names = FALSE) %>%
     group_by_at(c(coi, subset)) %>%
     summarise(num=n()) %>%
-    rename(response = {{coi}}, subset = {{subset}})
-
+    rename(response = {{coi}}, subset = {{subset}}) %>%
+    left_join(
+      mysvycounts %>% select(-se) %>% rename( den = counts), by = c("subset" = subset)) %>%
+    relocate(den, .after = subset)
 
   df_stats <- reshape::melt(as.data.frame(mysvymean), id.vars = subset)
 
@@ -201,7 +203,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(across(where(is.numeric), round, digits)) %>%
     left_join(df_nums, by = c("subset", "response")) %>%
     replace(is.na(.), 0) %>%
-    select(subvar, subset, response, num, percent, se, starts_with("CI"))
+    select(subvar, subset, response, den, num, percent, se, starts_with("CI"))
 
 
   df_stats
@@ -232,10 +234,12 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(across(where(is.numeric), round, digits)) %>%
     mutate(num = as.integer(mysvycounts$counts)) %>%
     mutate(response = rownames(.)) %>%
+    mutate(den = sum(num)) %>%
     relocate(response, .before = 1) %>%
+    relocate(den, .after = 1) %>%
     mutate(subvar = "") %>%
     mutate(subset = "All Respondents") %>%
-    select(subvar, subset, response, num, percent, se, starts_with("CI"))
+    select(subvar, subset, response, den, num, percent, se, starts_with("CI"))
 
   rownames(df_stats)<- NULL
 

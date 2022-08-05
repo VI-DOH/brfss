@@ -79,6 +79,8 @@ process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
 split_geogs<-function(main=TRUE, versions=TRUE,
                       factorize = FALSE, verbose=TRUE, progress = NULL) {
 
+  # make sure some version will be split
+
   if(!(main || versions)) return(NULL)
   ver<-integer(0)
   if(main) ver<-0
@@ -128,6 +130,8 @@ split_geogs<-function(main=TRUE, versions=TRUE,
         brfss.param(geog = nm)
         params <- my.brfss.patterns()
 
+        # get data for the state of interest and make sure there is data
+
         df_state<-df_brfss[df_brfss$`_STATE`==id,]
 
         if(nrow(df_state)>0) {
@@ -151,15 +155,24 @@ split_geogs<-function(main=TRUE, versions=TRUE,
             }
 
           })
+          ##################################################
+          ##################################################
+          #
+          # moved this to a separate function
 
-          if(factorize) {
+          # if(factorize) {
+          #
+          #   show_progress(progress,
+          #                 message = paste0("Splitting ... ", nm, "V",
+          #                                  version, " ... adding factors"))
+          #
+          #   df_state <- df_state %>% make_factors()
+          # }
+          #
 
-            show_progress(progress,
-                          message = paste0("Splitting ... ", nm, "V",
-                                           version, " ... adding factors"))
 
-            df_state <- df_state %>% make_factors()
-          }
+          # make sure, even if temporarily, extent param is set to local
+          #     to make sure we are saving the data under the geog folder
 
           ext <- brfss.param(extent)
 
