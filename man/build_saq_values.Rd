@@ -4,12 +4,7 @@
 \alias{build_saq_values}
 \title{Build State-Added-Questions Values File}
 \usage{
-build_saq_values(year = NULL, geog = NULL)
-}
-\arguments{
-\item{year}{integer year of interest}
-
-\item{geog}{character geog of interest (or none, the default geography)}
+build_saq_values()
 }
 \description{
 Read in .csv file and save as .rda file

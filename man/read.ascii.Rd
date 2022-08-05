@@ -21,6 +21,3 @@ data frame containing survey data
 \description{
 Read BRFSS raw ASCII data file and save as data frame in .RData file
 }
-\examples{
-
-}

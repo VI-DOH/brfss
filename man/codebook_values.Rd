@@ -4,7 +4,7 @@
 \alias{codebook_values}
 \title{Get Codebook Values}
 \usage{
-codebook_values(year = NULL, ...)
+codebook_values()
 }
 \arguments{
 \item{year}{integer - year of interest for codebook}

@@ -11,9 +11,6 @@ try.patterns(names = ".*", ...)
 
 \item{...}{arguments to be passed to apply.pattern()}
 }
-\value{
-
-}
 \description{
 View all patterns with a given set of arguments. Useful for pattern naming testing.
 }

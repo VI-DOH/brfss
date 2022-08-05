@@ -9,9 +9,6 @@ ascii_data_url(year)
 \arguments{
 \item{year}{}
 }
-\value{
-
-}
 \description{
 URL of BRFSS ASCII data
 }

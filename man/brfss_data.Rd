@@ -4,7 +4,7 @@
 \alias{brfss_data}
 \title{Get BRFSS Survey Data}
 \usage{
-brfss_data(year = NULL, geog = NULL, version = 0, extent = "local")
+brfss_data()
 }
 \arguments{
 \item{year}{- int - year of interest}
@@ -12,6 +12,10 @@ brfss_data(year = NULL, geog = NULL, version = 0, extent = "local")
 \item{geog}{- character - 2-char geog of interest (ex: "NY")}
 
 \item{version}{- survey version; 0 (default) = main survey}
+
+\item{extent}{- character - extent of data ("local" or national")}
+
+\item{source}{- character - source of data ("ascii" or sas")}
 }
 \value{
 data frame

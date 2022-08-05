@@ -4,16 +4,11 @@
 \alias{brfss_data_path}
 \title{Get BRFSS data file path}
 \usage{
-brfss_data_path(
-  year = NULL,
-  geog = NULL,
-  version = 0,
-  extent = NULL,
-  source = NULL,
-  rw = c("r", "w")
-)
+brfss_data_path(rw = c("r", "w"))
 }
 \arguments{
+\item{rw}{character - read/write}
+
 \item{year}{integer - year of interest}
 
 \item{geog}{character - geography of interest}
@@ -23,11 +18,6 @@ brfss_data_path(
 \item{extent}{character -'local' or 'national'}
 
 \item{source}{character - data source ('ascii' or 'sas')}
-
-\item{rw}{character - read/write}
-}
-\value{
-
 }
 \description{
 This is used in two ways based on the `rw` variable.

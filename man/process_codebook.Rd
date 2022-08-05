@@ -4,7 +4,7 @@
 \alias{process_codebook}
 \title{Download Codebook and Extract the Layout}
 \usage{
-process_codebook(year = NULL, ...)
+process_codebook(progress = NULL)
 }
 \arguments{
 \item{year}{integer - year of interest}

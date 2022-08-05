@@ -15,9 +15,6 @@ module_geogs(year = NULL, modules, versions = FALSE, reduce = TRUE)
 
 \item{reduce}{- logical - reduce to a vector if appropriate}
 }
-\value{
-
-}
 \description{
 Returns  a data frame that has the year, the version (if requested), the geog (2-char), and the module used or returns a
 vector of modules if appropriate

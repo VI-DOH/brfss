@@ -4,43 +4,22 @@
 \alias{read.xpt}
 \title{Read BRFSS Data from SAS XPT File}
 \usage{
-read.xpt(
-  year = NULL,
-  version = 0,
-  xpt_file = NULL,
-  save_file = NULL,
-  sasout_file = NULL,
-  verbose = F
-)
+read.xpt(version = 0, verbose = F)
 }
 \arguments{
-\item{year}{integer: year of interest}
-
-\item{version}{interger: version of interest (default is 0 ... main survey)}
-
-\item{xpt_file}{character:  name of xpt file (full path)}
-
-\item{save_file}{character: name of .rda file (full_path)}
-
-\item{sasout_file}{character: filename of sasout file (full path)}
+\item{version}{integer: version of interest (default is 0 ... main survey)}
 
 \item{verbose}{logical: provide extra information during processing}
-}
-\value{
-
 }
 \description{
 Creates a data frame from the xpt file provided by CDC. The sasout file is used to provide
 some useful attributes for each column.
-This function can get the default file names folder location from the naming_patterns data.
+This function gets the default file names folder location from the naming_patterns data.
 }
 \examples{
 \dontrun{
 df_2021 <- read.xpt(2021)
 
-df_data <- read.xpt(2020, version= 1,
-xpt_folder = "./data_raw/2020/sas/", xpt_file = "LLCP20V1.XPT",
-save_folder = "./data/2020/", save_file = "brfss2020.rda",
-sasout_folder = "./data_raw/2020/sas/", sasout_file = "SASOUT20_LLCP.SAS")
+df_data <- read.xpt(2020, version= 1)
 }
 }

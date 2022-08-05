@@ -2,16 +2,15 @@
 % Please edit documentation in R/table_output.R
 \name{get_vertical_table}
 \alias{get_vertical_table}
-\title{Title}
+\title{Get Vertical Table}
 \usage{
 get_vertical_table(
-  df,
   coi,
-  binary,
+  binary = FALSE,
   num_vals,
   den_vals,
-  exclude,
-  weighting,
+  exclude = c("Don.*t|Refuse"),
+  weighted,
   min_num = 0,
   subsets,
   ques = "",
@@ -19,11 +18,9 @@ get_vertical_table(
 )
 }
 \arguments{
-\item{df}{data.frame data of interest}
-
 \item{coi}{character - column of interest}
 
-\item{binary}{logical - only Yes/No}
+\item{binary}{logical - only Yes/No values}
 
 \item{num_vals}{integer: values from column in the numerator}
 
@@ -32,13 +29,9 @@ get_vertical_table(
 \item{subsets}{character: names of column to subset data by}
 
 \item{...}{}
-}
-\value{
 
+\item{df}{data.frame data of interest}
 }
 \description{
-Title
-}
-\examples{
-
+Get Vertical Table
 }

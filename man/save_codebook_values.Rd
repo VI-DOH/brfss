@@ -4,7 +4,7 @@
 \alias{save_codebook_values}
 \title{Save Codebook Values}
 \usage{
-save_codebook_values(file = NULL, year = NULL, ...)
+save_codebook_values(file = NULL)
 }
 \arguments{
 \item{file}{character - filename of layout file}

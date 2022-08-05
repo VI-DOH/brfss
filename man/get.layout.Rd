@@ -4,7 +4,7 @@
 \alias{get.layout}
 \title{Get Layout}
 \usage{
-get.layout(year = NULL, ...)
+get.layout()
 }
 \arguments{
 \item{...}{other arguments to be passed to apply.pattern()}

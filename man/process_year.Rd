@@ -5,28 +5,22 @@
 \title{Process BRFSS Annual Data Files}
 \usage{
 process_year(
-  year = NULL,
-  source = NULL,
-  download = TRUE,
+  dl_metadata = FALSE,
+  dl_codebook = FALSE,
+  dl_data = FALSE,
   layout = TRUE,
   convert = TRUE,
   codebook = TRUE,
   split = TRUE,
   factorize = TRUE,
   saq = FALSE,
+  responses = TRUE,
   verbose = FALSE,
-  geog = NULL,
-  extent = NULL,
+  progress = NULL,
   ...
 )
 }
 \arguments{
-\item{year}{- int - year of interest}
-
-\item{source}{character - data source ('sas' or 'ascii')}
-
-\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
-
 \item{convert}{- logical - read the downloaded files into data_frames and save?
 Useful (set = FALSE) if you already have the downloaded files processed}
 
@@ -37,6 +31,12 @@ Useful (set = FALSE) if you already have the downloaded files processed}
 \item{factorize}{- logical - convert columns to factors where appropriate}
 
 \item{...}{other params}
+
+\item{year}{- int - year of interest}
+
+\item{source}{character - data source ('sas' or 'ascii')}
+
+\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
 }
 \value{
 invisible()

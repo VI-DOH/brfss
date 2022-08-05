@@ -4,12 +4,7 @@
 \alias{saq_values}
 \title{Get State-Added-Question Values}
 \usage{
-saq_values(year = NULL, geog = NULL)
-}
-\arguments{
-\item{year}{integer year of interest}
-
-\item{geog}{character geog of interest (or none, the default geography)}
+saq_values()
 }
 \value{
 data frame

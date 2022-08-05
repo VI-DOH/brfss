@@ -14,9 +14,6 @@ merge_saq_values(
 \arguments{
 \item{df_saq_values}{}
 }
-\value{
-
-}
 \description{
 Merge State Specific Question Values with Standard Question Values
 }

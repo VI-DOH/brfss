@@ -7,23 +7,22 @@ Use this function to process a single year of BRFSS data. This function sill dow
 and create a data frame with all data from the XPT file, as well as any other versions of the survey.}
 \usage{
 sas_process_year(
-  year = NULL,
-  download = FALSE,
+  dl_metadata = FALSE,
+  dl_codebook = FALSE,
+  dl_data = FALSE,
   layout = TRUE,
   codebook = TRUE,
   saq = FALSE,
   convert = TRUE,
   split = TRUE,
+  responses = TRUE,
   factorize = TRUE,
   verbose = FALSE,
+  progress = NULL,
   ...
 )
 }
 \arguments{
-\item{year}{- int - year of interest}
-
-\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
-
 \item{layout}{- logical - save sas layout}
 
 \item{codebook}{- logical - download and process the annual codebook}
@@ -38,6 +37,12 @@ if you already have the xpt files processed}
 \item{factorize}{- logical - add values as factors to columns}
 
 \item{...}{further arguments passed to other methods}
+
+\item{year}{- int - year of interest}
+
+\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
+
+\item{geog}{- character - geography of interest}
 }
 \value{
 invisible()

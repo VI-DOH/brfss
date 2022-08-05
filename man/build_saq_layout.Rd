@@ -4,12 +4,7 @@
 \alias{build_saq_layout}
 \title{Build State-Added-Questions Layout File}
 \usage{
-build_saq_layout(year = NULL, geog = NULL)
-}
-\arguments{
-\item{year}{integer year of interest}
-
-\item{geog}{character geog of interest (or none, the default geography)}
+build_saq_layout()
 }
 \description{
 Read in .csv file and save as .rda file

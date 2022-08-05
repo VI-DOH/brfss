@@ -4,7 +4,7 @@
 \alias{read_codebook}
 \title{Read the CDC Provided Codebook File}
 \usage{
-read_codebook(file = NULL, year = NULL, ...)
+read_codebook(file = NULL, ...)
 }
 \arguments{
 \item{file}{character name of layout file}

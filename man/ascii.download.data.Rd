@@ -4,19 +4,21 @@
 \alias{ascii.download.data}
 \title{Download ASCII BRFSS data}
 \usage{
-ascii.download.data(year = NULL, destpath = NULL, unzip = TRUE, rmzip = TRUE)
+ascii.download.data(
+  destpath = NULL,
+  unzip = TRUE,
+  rmzip = TRUE,
+  progress = NULL
+)
 }
 \arguments{
-\item{year}{integer - year of data file}
-
 \item{destpath}{character - location to store file - will be created if it does not exist - default is the data_raw folder in the project root folder}
 
 \item{unzip}{logical - unzip file?}
 
 \item{rmzip}{logical - remove the zip file?}
-}
-\value{
 
+\item{year}{integer - year of data file}
 }
 \description{
 Download the annual ASCII BRFSS data files, all versions

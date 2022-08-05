@@ -4,7 +4,7 @@
 \alias{get.merged.layout}
 \title{Get Merged Layout}
 \usage{
-get.merged.layout(year = NULL)
+get.merged.layout()
 }
 \arguments{
 \item{year}{integer - year of interest}

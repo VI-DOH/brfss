@@ -4,7 +4,7 @@
 \alias{download_codebook}
 \title{Download Codebook}
 \usage{
-download_codebook(year = NULL, ...)
+download_codebook(progress = NULL)
 }
 \arguments{
 \item{year}{integer - year of interest}

@@ -4,7 +4,7 @@
 \alias{save_response_stats}
 \title{Save Response Statistics}
 \usage{
-save_response_stats(year, ...)
+save_response_stats()
 }
 \arguments{
 \item{year}{integer - year of interest}

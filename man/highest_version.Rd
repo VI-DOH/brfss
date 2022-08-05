@@ -4,7 +4,7 @@
 \alias{highest_version}
 \title{Get Highest Version of Survey for a Year}
 \usage{
-highest_version(year = NULL, ...)
+highest_version()
 }
 \arguments{
 \item{year}{- the 4-digit year of interest}

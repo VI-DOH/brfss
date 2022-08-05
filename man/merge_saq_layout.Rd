@@ -4,18 +4,10 @@
 \alias{merge_saq_layout}
 \title{Merge State Specific Questions with Standard Layout}
 \usage{
-merge_saq_layout(
-  year = NULL,
-  geog = NULL,
-  df_layout = NULL,
-  df_saq_layout = NULL
-)
+merge_saq_layout(df_layout = NULL, df_saq_layout = NULL)
 }
 \arguments{
 \item{df_saq_layout}{}
-}
-\value{
-
 }
 \description{
 Merge State Specific Questions with Standard Layout

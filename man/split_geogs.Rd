@@ -5,31 +5,27 @@
 \title{Split BRFSS Data by Geography}
 \usage{
 split_geogs(
-  year = NULL,
-  source = NULL,
   main = TRUE,
   versions = TRUE,
-  my_geog = NULL,
-  other_geogs = NULL,
   factorize = FALSE,
   verbose = TRUE,
-  ...
+  progress = NULL
 )
 }
 \arguments{
-\item{year}{integer - year of interest}
-
-\item{source}{character - data source ('sas' or 'ascii')}
-
 \item{main}{logical - process main XPT file}
 
 \item{versions}{logical - process all versioned XPT/ASC files}
 
+\item{verbose}{logical - provide details during processing}
+
+\item{year}{integer - year of interest}
+
+\item{source}{character - data source ('sas' or 'ascii')}
+
 \item{my_geog}{character - abbreviation for primary state/geography of interest (e. "MT")}
 
 \item{other_geogs}{character - abbreviations for other states/geographies of interest (e. c("ID","WY"))}
-
-\item{verbose}{logical - provide details during processing}
 }
 \description{
 The main BRFSS data file that is created when the downloaded file from the public CDC website

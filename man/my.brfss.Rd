@@ -27,7 +27,7 @@ my.brfss(
 list with year, geography and other geographies (year, geog, other_geogs)
 }
 \description{
-Set the default geography and year for working with BRFSS data
+Set the current default parameters for working with BRFSS data
 }
 \examples{
 \dontrun{

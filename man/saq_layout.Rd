@@ -4,12 +4,7 @@
 \alias{saq_layout}
 \title{Get State-Added-Questions Layout}
 \usage{
-saq_layout(year = NULL, geog = NULL)
-}
-\arguments{
-\item{year}{integer year of interest}
-
-\item{geog}{character geog of interest (or none, the default geography)}
+saq_layout()
 }
 \value{
 data frame

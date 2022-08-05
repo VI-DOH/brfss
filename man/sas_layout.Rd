@@ -4,13 +4,7 @@
 \alias{sas_layout}
 \title{Get saved BRFSS layout (from SASOUT)}
 \usage{
-sas_layout(year = NULL, ...)
-}
-\arguments{
-\item{year}{}
-}
-\value{
-
+sas_layout()
 }
 \description{
 Get saved BRFSS layout (from SASOUT)

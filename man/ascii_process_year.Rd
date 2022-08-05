@@ -7,22 +7,20 @@ Use this function to process a single year of BRFSS data. This function sill dow
 and create a data frame with all data from the ASCII .DAT file, as well as any other versions of the survey.}
 \usage{
 ascii_process_year(
-  year = NULL,
-  download = TRUE,
+  dl_metadata = FALSE,
+  dl_codebook = FALSE,
+  dl_data = FALSE,
   codebook = TRUE,
   saq = FALSE,
   convert = TRUE,
   split = TRUE,
   factorize = TRUE,
+  responses = TRUE,
   verbose = FALSE,
-  ...
+  progress = NULL
 )
 }
 \arguments{
-\item{year}{- int - year of interest}
-
-\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
-
 \item{codebook}{- logical - download and process the annual codebook}
 
 \item{saq}{- logical - are there state-added questions for processing}
@@ -33,6 +31,12 @@ if you already have the xpt files processed}
 \item{split}{- logical - split the xpt file by state/geography}
 
 \item{factorize}{- logical - add values as factors to columns}
+
+\item{year}{- int - year of interest}
+
+\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
+
+\item{geog}{- character - geography of interest}
 
 \item{...}{further arguments passed to other methods}
 }

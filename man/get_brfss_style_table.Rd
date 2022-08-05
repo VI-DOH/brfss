@@ -5,13 +5,12 @@
 \title{Print BRFSS Data in CDC Format}
 \usage{
 get_brfss_style_table(
-  df,
   coi,
   binary,
   num_vals,
   den_vals,
-  exclude,
-  weighting,
+  exclude = c("Don.*t|Refuse"),
+  weighted = TRUE,
   min_num = 0,
   subsets,
   ques = "",
@@ -19,8 +18,6 @@ get_brfss_style_table(
 )
 }
 \arguments{
-\item{df}{[data.frame] BRFSS data}
-
 \item{coi}{[character] column of interest}
 
 \item{binary}{[logical] is this a simple yes/no}
@@ -31,7 +28,7 @@ get_brfss_style_table(
 
 \item{exclude}{[integer] if binary=F, values in the coi to exclude (usually representing [Don't know/Not sure] and [Refused])}
 
-\item{weighting}{[character] column containing weight value}
+\item{weighted}{[character] column containing weight value}
 
 \item{min_num}{[integer] minimun number in denominator for printing}
 
@@ -40,9 +37,8 @@ get_brfss_style_table(
 \item{ques}{[character] text of the survey question}
 
 \item{...}{arguments to pass to other functions}
-}
-\value{
 
+\item{df}{[data.frame] BRFSS data}
 }
 \description{
 Print summary of results for a column using the style reported by CDC in their final report.

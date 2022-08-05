@@ -4,16 +4,16 @@
 \alias{make_factors}
 \title{Convert BRFSS Columns to Factor}
 \usage{
-make_factors(df_brfss = NULL, year = NULL, df_layout = NULL, df_vals = NULL)
+make_factors(df_brfss = NULL, df_layout = NULL, df_vals = NULL)
 }
 \arguments{
 \item{df_brfss}{data.frame BRFSS data file}
 
-\item{year}{integer - year of interest}
-
 \item{df_layout}{- layout data for the year}
 
 \item{df_vals}{- value data for the year}
+
+\item{year}{integer - year of interest}
 }
 \value{
 data.frame of BRFSS data with factored columns

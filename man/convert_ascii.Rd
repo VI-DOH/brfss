@@ -5,17 +5,15 @@
 \title{Convert BRFSS raw ASCII data files}
 \usage{
 convert_ascii(
-  year = NULL,
   layout = NULL,
   completes = T,
   main = TRUE,
   versions = TRUE,
-  verbose = FALSE
+  verbose = FALSE,
+  progress = NULL
 )
 }
 \arguments{
-\item{year}{integer year of interest}
-
 \item{layout}{character name of the file containing the layout or data.frame containing the layout}
 
 \item{completes}{logical whether or not to include only complete interviews (default = TRUE)}
@@ -25,6 +23,8 @@ convert_ascii(
 \item{versions}{logical include ascii file versions (default = TRUE)}
 
 \item{verbose}{logical print some extra information during processing (default = FALSE)}
+
+\item{year}{integer year of interest}
 }
 \value{
 data frame containing survey data

@@ -4,10 +4,10 @@
 \alias{pattern.requirements}
 \title{Pattern Requirements}
 \usage{
-pattern.requirements(pattern = ".*")
+pattern.requirements(names = ".*")
 }
 \arguments{
-\item{pattern}{}
+\item{names}{}
 }
 \value{
 data frame - pattern name and arguments required for the named patterns

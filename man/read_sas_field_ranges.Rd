@@ -4,7 +4,7 @@
 \alias{read_sas_field_ranges}
 \title{Read Data Element Ranges from SASOUT file}
 \usage{
-read_sas_field_ranges(year)
+read_sas_field_ranges()
 }
 \arguments{
 \item{year}{integer: year of interest}

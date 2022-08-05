@@ -4,7 +4,7 @@
 \alias{save_codebook_layout}
 \title{Build the Layout from CDC Provided Codebook}
 \usage{
-save_codebook_layout(file = NULL, year = NULL, ...)
+save_codebook_layout(file = NULL)
 }
 \arguments{
 \item{file}{character name of layout file}

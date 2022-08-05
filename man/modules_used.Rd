@@ -2,24 +2,21 @@
 % Please edit documentation in R/modules.R
 \name{modules_used}
 \alias{modules_used}
-\title{Modules Used by Geography}
+\title{Modules Used by Geography
+#'}
 \usage{
-modules_used(year = NULL, extent = NULL, source = NULL, ...)
-}
-\arguments{
-\item{year}{integer - year of interest}
-
-\item{geogs}{character - geography(s) of interest}
+modules_used()
 }
 \value{
 data frame of module information
 }
 \description{
 Modules Used by Geography
+#'
 }
 \examples{
 \dontrun{
-modules_used(2020, "MT")
+modules_used()
 }
 
 

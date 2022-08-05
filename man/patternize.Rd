@@ -4,12 +4,14 @@
 \alias{patternize}
 \title{Substitute Variables in Pattern}
 \usage{
-patternize(strIn, ...)
+patternize(strIn, ..., expand = TRUE)
 }
 \arguments{
 \item{strIn}{character - patterns to apply the variables to}
 
 \item{...}{list - variables to insert in form of c(YEAR = xxxx, VERS = 1), etc}
+
+\item{expand}{logical - convert . or .. to a normalized path}
 }
 \value{
 character vector of modified strings

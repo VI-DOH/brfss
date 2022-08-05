@@ -4,7 +4,7 @@
 \alias{read_sasout}
 \title{Read BRFSS SASOUT file produced by CDC}
 \usage{
-read_sasout(year = NULL, folder = NULL, file = NULL, version = 0)
+read_sasout()
 }
 \arguments{
 \item{year}{integer: year of interest}
