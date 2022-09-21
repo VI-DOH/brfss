@@ -58,13 +58,12 @@ modules_used <- function() {
           select(year, version, geog, mod_num, module)
 
 
-         df_final <<- df_final %>% bind_rows(df)
+        df_final <<- df_final %>% bind_rows(df)
 
       },df_modules$col_name,df_modules$sect_num, df_modules$section)
     )
 
   })
-
 
   df_final %>% mutate(geog = geog_abb(geog))
 
@@ -118,20 +117,22 @@ save_module_stats<-function() {
 
 geog_modules<-function(year = NULL,geogs = NULL, versions=FALSE,reduce=TRUE) {
 
-  year <- get.year(year = year)
+  my_brf <- brfss.params()
+
+  if(is.null(year)) year <- my_brf["year"]
 
   if(is.null(geogs)) {
-    geogs <- c(my.geog(), my.other.geogs())
+    geogs <- unique(c(my_brf["geog"], my_brf["geogs_other"]))
   }
 
   df<- module_data(year)
 
   if(!is.null(geogs)) {
- #   if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
+    #   if(is.numeric(geogs)) geogs<-geog_abbs(geogs)
     if(is.numeric(geogs)) geogs<-geog_abb(geogs)
     df<-df[df$geog%in%geogs,]
   } else {
-    geogs<-geog_abbs()
+    geogs<-geog_abbs(geogs)
   }
 
   if(reduce && length(geogs)==1 && !versions) {

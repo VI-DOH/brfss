@@ -13,8 +13,11 @@ require(dplyr)
 #' @param convert - logical - read the downloaded files into data_frames and save?
 #' Useful (set = FALSE) if you already have the downloaded files processed
 #' @param codebook - logical - download and process the annual codebook
+#' @param attribs - logical - add attributes to each column describing the column's data
 #' @param split - logical - split the processed data file by state/geography
 #' @param factorize - logical - convert columns to factors where appropriate
+#' @param saq - logical - add state-added questions
+#' @param progress - function - progress function to pass progress info to
 #' @param ... other params
 #'
 #' @return invisible()
@@ -23,10 +26,9 @@ require(dplyr)
 
 process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
                           dl_data = FALSE,
-                          layout = TRUE, convert=TRUE, codebook = TRUE,
+                          layout = TRUE, convert=TRUE, codebook = TRUE, attribs = TRUE,
                           split = TRUE, factorize = TRUE, saq = FALSE,
                           responses = TRUE, verbose=FALSE, progress = NULL, ...) {
-
 
   # by definition, state-added- questions are local
 
@@ -36,19 +38,21 @@ process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
   }
   # get the path to travel ... sas or ascii
 
-  if(brfss.param(source) == "sas") {
+    if(brfss.param(source) == "sas") {
 
     sas_process_year(dl_metadata = dl_metadata, dl_codebook = dl_codebook,
                      dl_data = dl_data, layout = layout, convert=convert, saq = saq,
-                     codebook = codebook, split = split, factorize = factorize,
+                     codebook = codebook, attribs = attribs,
+                     split = split, factorize = factorize,
                      responses = responses, verbose=verbose, progress = progress)
 
   } else {
 
-    ascii_process_year(dl_metadata = FALSE, dl_codebook = FALSE,
-                       dl_data = FALSE, convert=convert, codebook = codebook,
-                       split = split, factorize = factorize,  saq = saq,
-                       responses = responses, verbose=verbose, progress)
+    ascii_process_year(dl_metadata = dl_metadata, dl_codebook = dl_codebook,
+                       dl_data = dl_data, convert=convert, codebook = codebook,
+                       layout = layout,
+                       attribs = attribs, split = split, factorize = factorize,
+                       saq = saq, responses = responses, verbose=verbose, progress)
   }
 
 }

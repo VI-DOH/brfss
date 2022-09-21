@@ -234,15 +234,39 @@ get.layout <- function() {
 
   version <- brfss.param(version)
 
-  df_layout <- get.merged.layout()
-  if(is.null(df_layout) && version == 0) df_layout <- get.codebook.layout()
+  ext <- brfss.param(extent)
 
-  if(is.null(df_layout)) df_layout <- sas_layout()
+  df_layout <- get.layout.ext(ext)
+
+  if(is.null(df_layout)) {
+    ext <- ifelse(ext=="local","national","local")
+    df_layout <- get.layout.ext(ext)
+  }
+  # df_layout <- get.merged.layout()
+  #
+  # if(is.null(df_layout) && version == 0) df_layout <- get.codebook.layout()
+  #
+  # if(is.null(df_layout)) df_layout <- sas_layout()
 
   df_layout
 }
 
+get.layout.ext <- function(extent) {
 
+  version <- brfss.param(version)
+  ext_in <- brfss.param(extent)
+  brfss.params(extent = extent)
+
+  df_layout <- get.merged.layout()
+
+  if(is.null(df_layout) && version == 0) df_layout <- get.codebook.layout()
+
+  if(is.null(df_layout)) df_layout <- sas_layout()
+
+  brfss.params(extent = ext_in)
+
+  df_layout
+}
 #'  Section of BRFSS Column
 #'
 #'  Gets the section for a BRFSS column from the layout. Useful for figuring out if a
@@ -295,5 +319,36 @@ is_module <- function(year = NULL,col) {
   typ <- section_type(year,col)
 
   (typ == "Module") && (length(typ) == 1)
+}
+
+
+#' Get Column Label
+#'
+#' @param coi character- column of interest
+#'
+#' @return character - label for the column
+#' @export
+#'
+#' @examples
+column_label <- function(coi) {
+
+  get.layout() %>%
+    filter(col_name == {{coi}}) %>%
+    pull(label)
+}
+
+#' Get Column Question
+#'
+#' @param coi character- column of interest
+#'
+#' @return character - question for the column
+#' @export
+#'
+#' @examples
+column_question <- function(coi) {
+
+  get.layout() %>%
+    filter(col_name == {{coi}}) %>%
+    pull(question)
 }
 

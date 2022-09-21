@@ -60,7 +60,6 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
     geog_save <- brfss.param(geog)
 
     mapply(function(id,nm) {
-
       if(id%in%geogs) {
 
         brfss.param(geog = nm)

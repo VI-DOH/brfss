@@ -426,13 +426,19 @@ get.codebook.layout <- function() {
 
   params <- my.brfss.patterns()
 
-  fldr <- apply.pattern("codebook_layout_folder", params)
-  fil <- apply.pattern("codebook_layout_file", params)
+  # fldr <- apply.pattern("codebook_layout_folder", params)
+  # fil <- apply.pattern("codebook_layout_file", params)
+  # file <- paste0(fldr,fil)
 
-  file <- paste0(fldr,fil)
+  file <- apply.pattern("codebook_layout_path", params)
 
-  if(!file.exists(file)) return(NULL)
+  if(!file.exists(file)) {
 
+    params["EXT"] <- "national"
+    file <- apply.pattern("codebook_layout_path", params)
+
+    if(!file.exists(file)) return(NULL)
+}
 
   readRDS(file = file)
 

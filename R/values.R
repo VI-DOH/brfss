@@ -54,7 +54,7 @@ stretch_values <- function(lines) {
 
 
   wtd_lines <- grep("^Weighted.Perc",lines)
-#  val_ends <- c(lbl_lines[-1]-1,length(lines))
+  #  val_ends <- c(lbl_lines[-1]-1,length(lines))
   val_ends <- c(label_lines[-1]-1,length(lines))
 
   ##  build the new lines ... all values will be on a single line with their counts and percents
@@ -96,10 +96,12 @@ stretch_values <- function(lines) {
 #'
 #' @examples
 parse_codebook_values <- function(file=NULL) {
-    require(dplyr)
+  require(dplyr)
 
-    lines <- read_codebook(file=file)
-    if(is.null(lines)) return(NULL)
+  year <- brfss.param(year)
+
+  lines <- read_codebook(file=file)
+  if(is.null(lines)) return(NULL)
 
   #############################################################################
 
@@ -140,7 +142,7 @@ parse_codebook_values <- function(file=NULL) {
     warning("Number of col_names differs from number of value sections")
   }
 
-     #######################################################################
+  #######################################################################
   ##
   ##  remove the beginning junk
 
@@ -213,7 +215,6 @@ parse_codebook_values <- function(file=NULL) {
     filter(!grepl("^Notes:",.$text)) %>%
     mutate(text = stringr::str_trim(text))
 
-
   df_final <- df0 %>%
     mutate(text = gsub("(^.*?) {8,}.*","\\1",text))  %>%
 
@@ -233,6 +234,12 @@ parse_codebook_values <- function(file=NULL) {
     # special case IDAY ... no need for 31 lines ... make range 1 to 31
     filter(col_name != "IDAY" | value == "1") %>%
     mutate(maxval = ifelse(col_name == "IDAY","31", maxval)) %>%
+
+    # special case IYEAR ... usually just survey year and some follring year in January
+    #    mutate(text = ifelse(col_name == "IYEAR",gsub("^(.*?) .*","\\1",text), text)) %>%
+    filter(col_name != "IYEAR" | grepl("Interview",text)) %>%
+    mutate(value = ifelse(col_name == "IYEAR",year, value)) %>%
+    mutate(maxval = ifelse(col_name == "IYEAR",year+1, maxval)) %>%
 
     # special case REPDEPTH ... no need for 30 lines ... make range 1 to 30
     filter(col_name != "REPDEPTH" | value == "1") %>%
@@ -290,16 +297,34 @@ get.merged.values <- function() {
 #' @examples
 values <- function( year = NULL, ...) {
 
+  ## see if merged
   df_values <-  get.merged.values()
 
   if(is.null(df_values)) {
+    # no merged values saved
+    #    merged values contain state-added-question metadata
+
     params <- my.brfss.patterns()
 
-    fname <- apply.pattern("merged_values_path",params)
+    # check on codebook-generated values
 
-  if(!file.exists(fname)) {
     fname <- apply.pattern("codebook_values_path",params)
-  }
+
+    if(!file.exists(fname)) {
+
+      # no codebook-generated values - check on national values
+
+      params["EXT"] = "national"
+      fname <- apply.pattern("codebook_values_path",params)
+      if(!file.exists(fname)) {
+        warning("You are missing a values table ... did you import and process the codebook?")
+        return(NULL)
+      }
+    }
+
+
+
+
     df_values <- readRDS(file = fname)
   }
 
@@ -547,8 +572,8 @@ simple_counts <- function(df_brfss, coi, na.rm = TRUE, valid = FALSE, total = TR
   # label<-att["label"]
 
   title <- paste0(attributes(df_brfss[[coi]])$section_type, " ",
-                 attributes(df_brfss[[coi]])$section_num, ": ",
-                 attributes(df_brfss[[coi]])$section_name)
+                  attributes(df_brfss[[coi]])$section_num, ": ",
+                  attributes(df_brfss[[coi]])$section_name)
 
   title <- c(title,attributes(df_brfss[[coi]])$label)
 

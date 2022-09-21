@@ -11,32 +11,39 @@
 #' @export
 #'
 #' @examples
-stats_wide <- function(df_stats) {
-  require(gt)
 
-  params <- brfss.params()
+############################################################################
+##
+##      widen_stats
+##
 
-  coi <-attr(df_stats$response,"coi")
+widen_stats <- function(df_stats, stats = c("num", "percent", "CI")){
+
+  coi <-attr(df_stats,"coi")
 
   df_stats <- df_stats %>%
-    mutate(CI = paste0(CI_lower, " - ", CI_upper))
+    mutate(CI = paste0(CI_lower, " - ", CI_upper)) %>%
+    select(-starts_with("CI_"))
+
+  stat_cols <- colnames(df_stats)[(df_stats %>% colnames() %>% grep("den",.)):ncol(df_stats)]
+  rem_cols <- stat_cols[!stat_cols%in%stats]
 
   df_stats_wide <- df_stats %>%
 
     # stretch measure horizontally with variable mean
-    reshape2::dcast(subvar + subset ~ response, value.var = c("num")) %>%
+    reshape2::dcast(subvar + subset + den ~ response, value.var = c("num")) %>%
 
     # add CI_lower to right end
     left_join(df_stats %>%
-                reshape2::dcast(subvar + subset ~ response, value.var = c("percent")),
-              by = c("subset", "subvar"))  %>%
+                reshape2::dcast(subvar + subset + den ~ response, value.var = c("percent")),
+              by = c("subset", "subvar", "den"))  %>%
 
     rename_with(~ gsub(".x", ".num",.x, fixed = TRUE)) %>%
     rename_with(~ gsub(".y", "",.x, fixed = TRUE))%>%
 
     left_join(df_stats %>%
-                reshape2::dcast(subvar + subset ~ response, value.var = c("CI")),
-              by = c("subset", "subvar"))  %>%
+                reshape2::dcast(subvar + subset + den ~ response, value.var = c("CI")),
+              by = c("subset", "subvar", "den"))  %>%
 
     rename_with(~ gsub(".x", ".percent",.x, fixed = TRUE)) %>%
     rename_with(~ gsub(".y", ".CI",.x, fixed = TRUE))
@@ -45,12 +52,17 @@ stats_wide <- function(df_stats) {
   ##
   ##  get the correct order of the factors
 
-  coi_data <- coi_data(coi = coi ) %>% pull({{coi}}) %>% droplevels()
+  res <- try({
+    coi_data <- coi_data(coi = coi ) %>% pull({{coi}}) %>% droplevels()
 
-  fctrs <- levels(coi_data)
-  fctrs <- fctrs[fctrs%in%unique(df_stats$response)]
+    fctrs <- levels(coi_data)
+    fctrs <- fctrs[fctrs%in%unique(df_stats$response)]
+  })
 
-  stats <- c("num", "percent", "CI") #,"CI_lower","CI_upper")
+  if(inherits(res, "try-error")) {
+    fctrs <- unique(df_stats$response)
+  }
+  #  stats <- c("num", "percent", "CI") #,"CI_lower","CI_upper")
 
   df_col_order <- data.frame(name = colnames(df_stats_wide)) %>%
     mutate(is_meas = grepl(".",name, fixed=TRUE)) %>%
@@ -63,106 +75,45 @@ stats_wide <- function(df_stats) {
   col_order <- df_col_order %>%
     pull(name)
 
-  n_non <- df_col_order %>% filter(varpos == 0) %>% nrow
+  # n_non <- df_col_order %>% filter(varpos == 0) %>% nrow
+
 
   df_spanners <- df_col_order %>%
     filter(is_meas) %>%
     group_by(var,varpos) %>%
-    summarize(tot = max(statpos)) %>%
+    summarize(tot = max(statpos), .groups = "keep") %>%
     arrange(varpos)
 
+  df_stats_wide <- df_stats_wide  %>%
+    select(all_of(col_order))%>%
+    select(-ends_with(rem_cols))
 
-  df_stats_wide <- df_stats_wide  %>% select(all_of(col_order))
+  lbls <- sapply(colnames(df_stats_wide), function(cname){
+    is.stat <- grepl(".",cname,fixed = TRUE)
 
+    if(is.stat) {
 
-  lbls <- as.list(mapply(function(nm,val) {
-    x <- val
-    x
-  }, df_col_order$name, df_col_order$stat))
+      stat <- gsub("(.*)[.](.*)","\\2",cname)
+      attr(df_stats_wide[[cname]],"stat") <<- stat
 
-  lbls[lbls=="percent"] <- "%"
+      attr(df_stats_wide[[cname]],"spanner") <<-
+        gsub("(.*)[.](.*)","\\1",cname)
 
-  ############################################
-  ##
-  ##    build the table
+      return(stat)
 
-  gt_stats <- gt::gt(df_stats_wide,
-                     groupname_col= "subvar",
-                     rowname_col="subset") %>%
-    gt::tab_header(title = htmltools::HTML(paste0(geog_name(params["geog"]), " BRFSS<br>",
-                                       params["year"])),
-                   subtitle = paste0("Variable: ", coi)) %>%
+    } else {
 
-    tab_stubhead(label = "Group") %>%
-
-    cols_label( .list =lbls) %>%
-
-    cols_align(
-      align = c("center"),
-      columns = matches("CI")
-    ) %>%
-
-    tab_style(
-      style = list(
-        cell_borders(
-          sides = c("left"),
-          color = "black",
-          weight = px(1),
-          style = "solid"
-          # ),
-          # cell_borders(
-          #   sides = c("right"),
-          #   color = "black",
-          #   weight = px(2),
-          #   style = "solid"
-        )),
-      locations = list(
-        cells_body(
-          columns = contains("num")
-        )
-      )
-    ) %>%
-
-    tab_style(
-      style = list(
-        cell_borders(
-          color = "black",
-          weight = px(1),
-          style = "solid"
-          # ),
-          # cell_borders(
-          #   sides = c("right"),
-          #   color = "black",
-          #   weight = px(2),
-          #   style = "solid"
-        )),
-      locations = list(
-
-        cells_column_spanners(
-
-        ),
-        cells_column_labels(
-
-        )
-      )
-    ) %>%
-
-    tab_style(
-      style = cell_text(align = "left", indent = px(20)),
-      locations = cells_stub()
-    )
-
-
-  sapply(1:max(df_col_order$varpos), function(i) {
-
-    gt_stats <<- gt_stats %>%
-
-      tab_spanner(label = df_spanners[i,"var"],
-                  columns = df_col_order %>% filter(varpos == i) %>% pull(name) )
+      return(cname)
+    }
 
   })
 
-  gt_stats
+  #df_stats_wide <- df_stats_wide %>% select(-ends_with(rem_cols))
+
+  attr(df_stats_wide,"spanners") <- df_spanners$var
+  attr(df_stats_wide,"stats") <- stats
+  attr(df_stats_wide,"coi") <- coi
+  attr(df_stats_wide,"lbls") <- lbls
+
+  df_stats_wide
 }
-
-

@@ -85,17 +85,17 @@ binary_yes<-function() {
 }
 
 
-coi_data_vers<- function(coi=NULL, subsets = NULL, version = NULL) {
+coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NULL) {
 
   vwt <- apply.pattern("weight_col",VERS=version)
   stratum <- apply.pattern("stratum_col")
 
   brfss.params(version = version)
-  df <- brfss_geog_data()
+  if(is.null(df_data)) df_data <- brfss_geog_data()
 
-  if(is.null(df)) return(data.frame())
+  if(is.null(df_data)) return(data.frame())
 
-  df%>%
+  df_data %>%
     rename(FINAL_WT = {{vwt}}) %>%
     rename(STRATUM = {{stratum}}) %>%
     select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
@@ -105,7 +105,7 @@ coi_data_vers<- function(coi=NULL, subsets = NULL, version = NULL) {
 
 }
 
-coi_data <- function( coi = NULL, subsets = NULL, exclude = "^$") {
+coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
 
 
   #df_brfss <- brfss_data(year,geog)
@@ -113,8 +113,10 @@ coi_data <- function( coi = NULL, subsets = NULL, exclude = "^$") {
 
   invisible(
     sapply(0:highest_version(),function(ver) {
-      df_brfss <<- df_brfss %>% bind_rows(coi_data_vers(coi = coi, subsets = subsets,
-                                                        version = ver))
+      df_brfss <<- df_brfss %>%
+        bind_rows(coi_data_vers(df_data = df_data,
+                                coi = coi, subsets = subsets,
+                                version = ver))
     })
   )
 
@@ -127,7 +129,7 @@ coi_data <- function( coi = NULL, subsets = NULL, exclude = "^$") {
   df_brfss <- df_brfss %>%
     left_join(df_resp, by = c("vers" = "version")) %>%
     mutate(FINAL_WT = FINAL_WT * pct) %>%
-    select(coi,FINAL_WT, STRATUM, all_of(subsets))%>%
+    select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets))%>%
     rename(coi = {{coi}})%>%
     mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
     na.exclude() %>%

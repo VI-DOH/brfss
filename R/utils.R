@@ -13,6 +13,8 @@ str_something <- function(string) {
 
 geog_ids<-function(geogs) {
 
+  geogs[is.na(geogs)] <- ""
+
   ##  get data.frame of geogs
 
   df_geogs<- readRDS(paste0(orrr::dir.project("data"),"geogs.rds"))
@@ -38,13 +40,15 @@ geog_ids<-function(geogs) {
 
 geog_abbs<-function(geogs) {
 
-  ##  get data.frame of geogs
+   ##  get data.frame of geogs
 
   df_geogs<- readRDS(paste0(orrr::dir.project("data"),"geogs.rds"))
 
   if(missing(geogs)) {
     geogs<-df_geogs$Abbrev
   } else {
+    geogs[is.na(geogs)] <- ""
+
     if(is.character(geogs)) {
 
       if(nchar(geogs[1])==2) {
@@ -62,11 +66,13 @@ geog_abbs<-function(geogs) {
       })  }
 
   }
-  geogs
+  unlist(geogs)
 }
 
 
 geog_names<-function(geogs) {
+
+  geogs[is.na(geogs)] <- ""
 
   ##  get data.frame of geogs
 

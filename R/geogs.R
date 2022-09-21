@@ -52,6 +52,8 @@ get_geogs_all <- function() {
 #' }
 geog_name <- function(geogs) {
 
+  geogs[is.na(geogs) | length(geogs) == 0 ] <- ""
+
   geogs <- unlist(geogs)
 
   df_geogs <- get_geogs_all() %>%
@@ -65,7 +67,6 @@ geog_name <- function(geogs) {
 
 
   df <- data.frame(geog = geogs)
-
 
   if(is.character(geogs[1])) {
     if(nchar(geogs[1])==2) {
@@ -107,6 +108,9 @@ geog_name <- function(geogs) {
 geog_abb <- function(geogs) {
   require(dplyr)
 
+  if(is.na(geogs) || length(geogs) == 0 || (is.character(geogs) && geogs[1] == "")) return("")
+
+
   df_geogs <- get_geogs_all() %>%
     mutate(Id = as.integer(Id))
 
@@ -119,7 +123,7 @@ geog_abb <- function(geogs) {
   df <- data.frame(geog = geogs)
 
 
-  if(is.character(geogs[1]) && nchar(geogs[1])!=2) {
+  if(is.character(geogs) && length(geogs)>0 && nchar(geogs[1])!=2) {
     geogs <- df %>%
       left_join(df_geogs %>% mutate(Geog = tolower(Geog)), by=c("geog" = "Geog")) %>%
       pull(Abbrev)
@@ -155,6 +159,7 @@ geog_abb <- function(geogs) {
 #'
 geog_id <- function(geogs) {
 
+  geogs[is.na(geogs) | length(geogs) == 0 ] <- ""
   df_geogs <- get_geogs_all() %>%
     mutate(Id = as.integer(Id))
 
@@ -170,7 +175,7 @@ geog_id <- function(geogs) {
   df <- data.frame(geog = geogs)
 
 
-  if(is.character(geogs[1]) && nchar(geogs[1])!=2) {
+  if(is.character(geogs) && length(geogs)>0 && nchar(geogs[1])!=2) {
     geogs <- df %>%
       left_join(df_geogs %>% mutate(Geog = tolower(Geog)), by=c("geog" = "Geog")) %>%
       pull(Id)

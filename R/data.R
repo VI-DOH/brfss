@@ -59,16 +59,16 @@
 #' }
 "geogs"
 
-' Aliases for Column Names
-#'
-#' A list containing  information for current BRFSS processing
-#'
-#' @format A data frame with 3 variables
-#' \describe{
-#'
-#'   \item{geog}{text name of geography (e.g. "Montana")}
-#'   \item{column}{BRFSS integer ID for the Geography - equivalent to the FIPS code (e.g. 30)}
-#'   \item{alias}{2-digit abbreviation for the geography (state/territory) (e.g. "MT")}
-#'   ...
-#' }
-"aliases"
+#' ' Aliases for Column Names
+#' #'
+#' #' A list containing  information for current BRFSS processing
+#' #'
+#' #' @format A data frame with 3 variables
+#' #' \describe{
+#' #'
+#' #'   \item{geog}{text name of geography (e.g. "Montana")}
+#' #'   \item{column}{BRFSS integer ID for the Geography - equivalent to the FIPS code (e.g. 30)}
+#' #'   \item{alias}{2-digit abbreviation for the geography (state/territory) (e.g. "MT")}
+#' #'   ...
+#' #' }
+#' "aliases"

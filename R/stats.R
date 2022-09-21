@@ -61,7 +61,7 @@ survey_stats_binary<-function(df_brfss,coi, num_vals,den_vals, ...) {
 #' confidence interval (lower and upper) for either the entire column of interest, or subsets of that column
 #' #'
 #'
-#' @param df_brfss - data.frame: the survey data
+#' @param df_data - data.frame: the survey data
 #' @param coi - character: column of interest name for analysis
 #' @param exclude - integer: values in coi to exclude for analysis purposes
 #' @param subset - character: name of column to subset data by
@@ -73,14 +73,20 @@ survey_stats_binary<-function(df_brfss,coi, num_vals,den_vals, ...) {
 #'
 #' @examples
 #'
-survey_stats<-function(coi, exclude = c("Don.*t|Refuse"), subsets = NULL,
+survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subsets = NULL,
                        subset_by = NULL, sub_exclude = c("Don.*t|Refuse"),
                        conf=.95, weighted = TRUE, pct = FALSE, digits = 99) {
 
   require(survey, quietly = T, warn.conflicts = F)
   require(dplyr, quietly = T, warn.conflicts = F)
 
-  df_brfss <- coi_data( coi = coi, subsets = subsets, exclude = exclude)
+  ##    this is a kludgy way to remove the exclude ... NULL would be better and that will be fixed
+
+  if(is.null(exclude)) exclude <- "DHFHREYDHDMJDNCNJ"
+
+  ###########################################################
+
+  df_brfss <- coi_data(df_data = df_data, coi = coi, subsets = subsets, exclude = exclude)
 
   test <- df_brfss %>% pull({{coi}})
 
@@ -150,7 +156,18 @@ survey_stats<-function(coi, exclude = c("Don.*t|Refuse"), subsets = NULL,
 
   df <- bind_rows(df_stats_main, df_subs )
 
-  attr(df$response,"coi") <- coi
+  df_lo <- get.layout() %>%
+    filter(col_name == {{coi}})
+
+  attr(df,"question") <- df_lo %>%
+    pull(question)
+
+  attr(df,"label") <- unname(df_lo %>%
+    pull(label))
+
+  attr(df,"coi") <- coi
+
+  attr(df,"weighted") <- weighted
 
   df
 }
@@ -173,13 +190,14 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
   mysvytotal<-survey::svyby(frmla1,frmla2,des,svytotal)
   mysvycounts<-survey::svyby(frmla1,frmla2,des,unwtd.count)
 
+  df_dens <- mysvycounts %>% select(-se) %>%
+    rename( den = counts) %>%
+    rename(subset = {{subset}})
+
   df_nums <- data.frame(des$variables[1],des$variables[2],check.names = FALSE) %>%
     group_by_at(c(coi, subset)) %>%
     summarise(num=n()) %>%
-    rename(response = {{coi}}, subset = {{subset}}) %>%
-    left_join(
-      mysvycounts %>% select(-se) %>% rename( den = counts), by = c("subset" = subset)) %>%
-    relocate(den, .after = subset)
+    rename(response = {{coi}}, subset = {{subset}})
 
   df_stats <- reshape::melt(as.data.frame(mysvymean), id.vars = subset)
 
@@ -200,13 +218,18 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(subvar = names(des$variables[2])) %>%
     add_CI(conf) %>%
     mutate(across(where(is.numeric), ~ . * mult)) %>%
-    mutate(across(where(is.numeric), round, digits)) %>%
+    mutate(across(where(is.numeric), round, digits))
+
+
+  df_stats <- df_stats %>%
     left_join(df_nums, by = c("subset", "response")) %>%
     replace(is.na(.), 0) %>%
+    select(subvar, subset, response, num, percent, se, starts_with("CI"))
+
+
+
+  df_stats %>% left_join(df_dens, by = c("subset"))%>%
     select(subvar, subset, response, den, num, percent, se, starts_with("CI"))
-
-
-  df_stats
 }
 
 ###########################################################
@@ -397,6 +420,118 @@ sig_diffs <- function(df) {
 
 
 
+}
+
+#'
+#' Survey Statistics - Logistical Regression
+#'
+#' Retrieve survey statistics from survey data set for a specific column with optional subsetting by other column(s) and
+#' optional weighting. This coerces the values in num_vals (numerator values) to 'Yes' and all values in den_vals (denominator values)
+#' not in num_vals to 'No'
+#'
+#' Retuns a data.frame containing columns identiying the calculated numerators, denominators, means, standard error, and
+#' confidence interval (lower and upper) for either the entire column of interest, or subsets of that column
+#' #'
+#'
+#' @param df_data - data.frame: the survey data
+#' @param depvar - character: dependent variable
+#' @param exclude - integer: values in coi to exclude for analysis purposes
+#' @param indepvar - character: name of column to subset data by
+#' @param conf - numeric: confidence level, default is .95
+#' @param weighted - logical: use weighting
+##'
+#' @return data.frame: statistics for the coi each subset
+#' @export
+#'
+#' @examples
+#'
+log_reg<-function(df_data = NULL, depvar, exclude = c("Don.*t|Refuse"), indepvar = NULL,
+                       subset_by = NULL, sub_exclude = c("Don.*t|Refuse"),
+                       conf=.95, weighted = TRUE, pct = FALSE, digits = 99) {
+
+  require(survey, quietly = T, warn.conflicts = F)
+  require(dplyr, quietly = T, warn.conflicts = F)
+
+  df_brfss <- coi_data(df_data = df_data, coi = coi, subsets = subsets, exclude = exclude)
+
+  test <- df_brfss %>% pull({{coi}})
+
+  if(!(is.factor(test) && length(levels(test))>1) ) return(NULL)
+
+  # get data from
+
+  if(nrow(df_brfss)==0) {
+    ret<-data.frame()
+    return (ret)
+  }
+
+
+  # only the valid values - remove the excludes
+
+  ##########################
+  ##
+  ##  survey package
+  ##
+  ##
+  if(weighted) weighting<-reformulate("FINAL_WT")   else weighting=NULL
+  strata<-reformulate("STRATUM")   #else weights=NULL
+
+  #  ids<- reformulate(all_vals)
+
+  options(survey.lonely.psu = "adjust")
+
+  frmla<- as.formula(c(indepvar) %>% paste0("`",.,"` ~") %>% paste0(.,paste0("`",depvar,"`")))
+  frmla <- c("SEXVAR","HLTHPLN1")  %>% paste0("`",.,"`") %>% reformulate()
+
+  des<-survey::svydesign(ids = ~1,
+                         strata = strata,
+                         variables =  frmla,
+                         data = df_brfss,
+                         weights = weighting,
+                         deff=F)
+
+  df_stats_main <- stats_no_subs(des, pct = pct, digits = digits)
+
+  df_subs <- data.frame()
+
+  if (nsubs > 0) {
+    invisible(
+      sapply(subsets, function(subset) {
+        cols <- c(coi,subset)  %>% paste0("`",.,"`")
+        frmla<- reformulate(cols)
+
+        des<-survey::svydesign(ids = ~1,
+                               strata = strata,
+                               variables =  frmla,
+                               data = df_brfss,
+                               weights = weighting,
+                               deff=F)
+
+        df_subs <<- df_subs %>%
+          bind_rows(stats_w_subs(des, pct = pct, digits = digits))
+
+      })
+    )
+
+    df_subs <- df_subs %>% filter(!grepl(sub_exclude,subset))
+  }
+
+  df <- bind_rows(df_stats_main, df_subs )
+
+  df_lo <- get.layout() %>%
+    filter(col_name == {{coi}})
+
+  attr(df,"question") <- df_lo %>%
+    pull(question)
+
+  attr(df,"label") <- unname(df_lo %>%
+                               pull(label))
+
+  attr(df,"coi") <- coi
+
+  attr(df,"weighted") <- weighted
+
+  df
 }
 
 

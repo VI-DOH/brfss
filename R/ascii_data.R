@@ -38,7 +38,8 @@ ascii_data_url<-function(year) {
 #' }
 
 ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
-                               dl_data = FALSE, codebook = TRUE, saq = FALSE,
+                               dl_data = FALSE, codebook = TRUE, attribs = TRUE,
+                               saq = FALSE, layout = FALSE,
                                convert = TRUE, split = TRUE, factorize = TRUE,
                                responses = TRUE, verbose=FALSE, progress = NULL) {
 
@@ -60,12 +61,14 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
     ascii.download.data(progress = progress)
   }
 
+  if (layout) save_sas_layout(progress = progress)
+
   if(codebook) {
     process_codebook(progress = progress)
   }
 
   if(saq) {
-    browser()
+
     build_saq_layout()
     merge_saq_layout()
 
@@ -79,12 +82,15 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
     convert_ascii(verbose=verbose, progress = progress)
   }
 
+  if(attribs) add_column_attributes()
+
   if(split) split_geogs(progress = progress)
 
   if(factorize) factorize( progress = progress)
 
   if(responses) {
     save_response_stats()
+    browser()
     save_module_stats()
   }
   invisible()
@@ -152,7 +158,7 @@ ascii.download.data<-function(destpath = NULL, unzip=TRUE, rmzip=TRUE, progress 
       options(timeout = 180)
 
       show_progress(progress,
-                    message = stringr::str_wrap(paste0("Downloading ... trying ", url)),50)
+                    message = stringr::str_wrap(paste0("Downloading ... trying ", url),50))
 
       download.file(url = url,destfile = destfile,
                     method = "libcurl",quiet = TRUE, mode = "wb")
@@ -178,7 +184,6 @@ ascii.download.data<-function(destpath = NULL, unzip=TRUE, rmzip=TRUE, progress 
 #'
 #'  Convert BRFSS raw ASCII data files to data frames and save
 #'
-#' @param year integer year of interest
 #' @param layout character name of the file containing the layout or data.frame containing the layout
 #' @param completes logical whether or not to include only complete interviews (default = TRUE)
 #' @param main logical include main ascii file (version 0) (default = TRUE)
@@ -222,11 +227,11 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
     if(verbose) cat("... reading version [", version, "] : ", path_raw, "\n")
 
     show_progress(progress, message =
-    paste0("Converting ... version [", version, "] : ", file_raw))
+                    paste0("Converting ... version [", version, "] : ", file_raw))
 
     df <- read.ascii(filename = path_raw, layout = layout, verbose = verbose)
 
-    df <- add_col_attributes(df)
+#    df <- add_col_attributes(df)
 
     path <- apply.pattern("brfss_annual_data_path",params)
     if(!dir.exists(dirname(path))) dir.create(dirname(path))
@@ -236,7 +241,7 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
     show_progress(progress, message =
                     paste0("Converting ... saving version [", version, "] ", path))
 
-        saveRDS(df, file = path)
+    saveRDS(df, file = path)
 
     version <- version + 1
     brfss.param(version = version)
@@ -245,8 +250,11 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
 
   }
 
+  brfss.param(version = 0)
+
   invisible()
 }
+
 
 #' Convert a BRFSS raw ASCII data file
 #'
@@ -367,7 +375,7 @@ cleave.geogs.ascii<-function(year = NULL,
 
   ver<-integer(0)
   if(main) ver<-0
-  browser()
+
   vermax <- highest_version()
 
   if(versions) ver<-c(ver,1:vermax)

@@ -101,13 +101,13 @@ fix.missing.columns<-function(year,year2=year-1) {
 #'
 #' @examples
 #' \dontrun{
-#' sas_process_year(year = 2020, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE, split = TRUE)
+#' sas_process_year(dl_metadata=TRUE, dl_codebook = TRUE, dl_data = TRUE)
 #'
 #' }
 
 sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
                              dl_data = FALSE, layout = TRUE,
-                             codebook = TRUE, saq = FALSE,
+                             codebook = TRUE, attribs = TRUE, saq = FALSE,
                              convert = TRUE, split = TRUE, responses = TRUE,
                              factorize = TRUE, verbose=FALSE, progress = NULL,
                              ...)  {
@@ -155,6 +155,7 @@ sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
   }
 
+  if(attribs) add_column_attributes()
 
   if(split) split_geogs( factorize = factorize)
 
@@ -436,7 +437,7 @@ read.xpt<-function(version = 0, verbose = F) {
     cat("Getting sasout\n")
 
 
-    df_xpt <- df_xpt %>% add_col_attributes()
+    #df_xpt <- df_xpt %>% add_col_attributes()
 
     if(!dir.exists(dirname(save_file))) dir.create(dirname(save_file),recursive = T)
 
@@ -447,6 +448,77 @@ read.xpt<-function(version = 0, verbose = F) {
     if(verbose) cat(xpt_file," doesn't exist\n")
     return(FALSE)
   }
+}
+
+#' Add Column Attributes
+#'
+#' Based on the layout structure from the codebook and/or the SAS layout file,
+#' add the following attributes to BRFSS columns ...
+#'
+#'   section type: Core, Module, SAQ, Non-Survey
+#'   section num: Section number within the section type
+#'   section index: the index of this column within the section
+#'   section name: Name of the section
+#'   label: Label assigned to this column
+#'   question: The actual question asked (if this was a survey question)
+
+#'
+#' @param layout
+#' @param main
+#' @param versions
+#' @param verbose
+#' @param progress
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' add_column_attributes()
+#' }
+add_column_attributes<-function(layout = NULL, main = TRUE,
+                                versions = TRUE, verbose = FALSE, progress = NULL) {
+
+  show_progress(progress, message = "Add column attributes ... ")
+
+  params <- my.brfss.patterns()
+
+  if(is.null(layout)) {
+    layout <- get.layout()
+  }
+
+  if(is.null(layout)) {
+    winDialog("ok","Adding column attributes requires a layout.")
+    return (NULL)
+  }
+
+  if(main) version <- 0 else {
+    if(versions) version = 1 else return()
+  }
+
+  path <- apply.pattern("brfss_annual_data_path",params)
+
+  while (file.exists(path)) {
+
+    if(verbose) cat("... adding to version [", version, "] : ", path, "\n")
+
+    show_progress(progress, message =
+                    paste0("Adding atts to ... version [", version, "] : ", path))
+
+    df <- brfss_data() %>%
+      add_col_attributes()
+
+    saveRDS(df, file = path)
+
+    version <- version + 1
+    brfss.param(version = version)
+    params <- my.brfss.patterns()
+    path <- apply.pattern("brfss_annual_data_path",params)
+
+  }
+  brfss.param(version = 0)
+
+  invisible()
 }
 
 add_col_attributes <- function(df_in) {

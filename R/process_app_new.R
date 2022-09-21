@@ -17,7 +17,7 @@
 #' @export
 #'
 #'
-process_app <- function() {
+process_app_new <- function() {
 
   require(shiny)
   require(shinyWidgets)
@@ -113,14 +113,27 @@ process_app <- function() {
 
         fluidRow(style = "background-color: #DCDFFD; padding: 4px; margin: 4px",
                  column(width=3, style = "color:blue; padding_left: 5px",
-                        sliderTextInput(
-                          inputId = "year_id",
-                          label = "Year:",
-                          choices = seq(from = 2016,
-                                        to = lubridate::year(Sys.Date())
+                        fluidRow(
+                          sliderTextInput(
+                            inputId = "year_id",
+                            label = "Year:",
+                            choices = seq(from = 2016,
+                                          to = lubridate::year(Sys.Date())
+                            ),
+                            selected = my_brf["year"],
+                            grid = TRUE
                           ),
-                          selected = my_brf["year"],
-                          grid = TRUE
+                          fluidRow(
+                                 p("Data Extent:", style="font-weight: bold"),
+                                 switchInput(
+                                   inputId = "extent_id",
+                                   onLabel = "Local",
+                                   offLabel = "National",
+                                   onStatus = "extent_local",
+                                   offStatus = "extent_national",
+                                   value = (my_brf["extent"] == "local")
+                                 )
+                          )
                         )
                  ),
                  column(width = 2,
@@ -153,17 +166,6 @@ process_app <- function() {
                           offStatus = "source_ascii",
                           value = (my_brf["source"] == "sas")
 
-                        )
-                 ),
-                 column(width = 3,
-                        p("Data Extent:", style="font-weight: bold"),
-                        switchInput(
-                          inputId = "extent_id",
-                          onLabel = "Local",
-                          offLabel = "National",
-                          onStatus = "extent_local",
-                          offStatus = "extent_national",
-                          value = (my_brf["extent"] == "local")
                         )
                  )
         ),

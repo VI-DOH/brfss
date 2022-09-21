@@ -41,7 +41,7 @@ brfss.param <- function(..., myself = FALSE) {
     my_brfss <- my.brfss.env()
 
     param <-as.character(arg[[1]])
-    return(my_brfss[[param]]$value)
+    return(unlist(my_brfss[[param]]$value))
 
   } else {
 
@@ -71,7 +71,8 @@ set_param <- function(param, value, myself = FALSE) {
     value <- match.arg(value,values)
 
     if(!value%in%values) {
-      warning(paste0("The value for ", param, "[", value,"] is not in the list of acceptable values"))
+      warning(paste0("The value for ", param,
+                     "[", value,"] is not in the list of acceptable values"))
       return(NULL)
     }
   }
@@ -198,8 +199,10 @@ brfss.param_pats <- function(...) {
 #'}
 brfss.params <- function(... , val_only = TRUE) {
 
-  args <- list(...)
+#    browser()
+   args <- list(...)
 
+  #cat(" params ... ", paste0(unlist(args),collapse = ", ") ,"\n")
   # get current environment/list
 
   my_brfss <- my.brfss.env()
@@ -296,6 +299,10 @@ my.brfss.init <- function() {
 
   my_brfss <- list()
 
+  ###################################################
+  ##
+  ##    year
+
   my_brfss$year$value <- lubridate::year(Sys.Date()) - 1
   my_brfss$year$pattern <- "YEAR"
 
@@ -313,6 +320,9 @@ my.brfss.init <- function() {
       brfss.param(year = year, myself = TRUE)
 
     }
+
+    ##    yr
+
     yr_val <- year%%100
     brfss.param(yr = yr_val)
   }
@@ -322,24 +332,53 @@ my.brfss.init <- function() {
     brfss.param(year = year_val)
   }
 
+  my_brfss$year$on_na <- function(year) {
+    year_val = lubridate::year(Sys.Date()) - 1
+    brfss.param(year = year_val)
+  }
+
+  ###################################################
+  ##
+  ##    yr
+
   my_brfss$yr$value <- my_brfss$year$value%%100
   my_brfss$yr$pattern <- "YR"
+
+  ###################################################
+  ##
+  ##    geog
 
   my_brfss$geog$value <- ""
   my_brfss$geog$pattern <- "GEOG"
 
   my_brfss$geog$on_change <- function(geog) {
+
+    geog <- unlist(geog)
+
     if(orrr::is.numeric_like(geog)) geog<-geog_abbs(geog)
+    if(is.na(geog) || length(geog)==0) geog<-""
     brfss.param(geog = geog, myself=TRUE)
+
   }
 
+  ###################################################
+  ##
+  ##    other_geogs
 
   my_brfss$geogs_other$value <- ""
   my_brfss$geogs_other$pattern <- ""
 
+  ###################################################
+  ##
+  ##    source
+
   my_brfss$source$value <- "ascii"
   my_brfss$source$pattern <- "SRC"
   my_brfss$source$values <- c("ascii","sas")
+
+  ###################################################
+  ##
+  ##    extent
 
   my_brfss$extent$value <- "local"
   my_brfss$extent$pattern <- "EXT"
@@ -351,9 +390,16 @@ my.brfss.init <- function() {
     }
   }
 
+  ###################################################
+  ##
+  ##    version
 
   my_brfss$version$value <- 0
   my_brfss$version$pattern <- "VERS"
+
+  ###############################################
+  ##
+  ##  updare/save parameters
 
   saveRDS(my_brfss, file = path)
 
