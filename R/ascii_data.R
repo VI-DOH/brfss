@@ -90,7 +90,6 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
   if(responses) {
     save_response_stats()
-    browser()
     save_module_stats()
   }
   invisible()

@@ -199,8 +199,8 @@ brfss.param_pats <- function(...) {
 #'}
 brfss.params <- function(... , val_only = TRUE) {
 
-#    browser()
-   args <- list(...)
+  #    browser()
+  args <- list(...)
 
   #cat(" params ... ", paste0(unlist(args),collapse = ", ") ,"\n")
   # get current environment/list
@@ -280,6 +280,7 @@ my.brfss.path <- function() {
 #'
 #'  \itemize{
 #'  \item{year}{ - the year of interest}
+#'  \item{month}{ - the month of interest}
 #'  \item{geog}{ - the geography of interest}
 #'  \item{version}{ - the version of interest}
 #'  \item{extent}{ - the extent of the raw data file ... local (one geog) or
@@ -343,6 +344,39 @@ my.brfss.init <- function() {
 
   my_brfss$yr$value <- my_brfss$year$value%%100
   my_brfss$yr$pattern <- "YR"
+
+  ###################################################
+  ##
+  ##    month
+
+  my_brfss$month$value <- 0
+  my_brfss$month$pattern <- "MONTH"
+
+  my_brfss$month$on_change <- function(month) {
+
+    if(orrr::is.integer_like(month)) {
+
+      month <-  as.integer(month)
+
+    } else if(is.character(month)) {
+
+        month <- tolower(month)
+
+        if(nchar(month)==3) {
+          month <- which(tolower(month.abb) == month)
+
+        } else {
+          month <- which(tolower(month.name) == month)
+        }
+    } else {
+      month  <-  0
+    }
+
+    if(length(month)==0) month <- 0
+
+    brfss.param(month = month, myself = TRUE)
+
+  }
 
   ###################################################
   ##

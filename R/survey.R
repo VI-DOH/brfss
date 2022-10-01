@@ -96,10 +96,10 @@ coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NUL
   if(is.null(df_data)) return(data.frame())
 
   df_data %>%
-    rename(FINAL_WT = {{vwt}}) %>%
-    rename(STRATUM = {{stratum}}) %>%
-    select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
-    mutate(vers = {{version}}) %>%
+    dplyr::rename(FINAL_WT = {{vwt}}) %>%
+    dplyr::rename(STRATUM = {{stratum}}) %>%
+    dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
+    dplyr::mutate(vers = {{version}}) %>%
     na.exclude()
 
 
@@ -123,18 +123,18 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
   voi <- df_brfss %>% pull(vers) %>% unique()
 
   df_resp <- responses_by_geog(year,geog) %>%
-    filter(version %in% voi) %>%
-    mutate(pct = responses/sum(responses))
+    dplyr::filter(version %in% voi) %>%
+    dplyr::mutate(pct = responses/sum(responses))
 
   df_brfss <- df_brfss %>%
-    left_join(df_resp, by = c("vers" = "version")) %>%
-    mutate(FINAL_WT = FINAL_WT * pct) %>%
-    select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets))%>%
-    rename(coi = {{coi}})%>%
-    mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
+    dplyr::left_join(df_resp, by = c("vers" = "version")) %>%
+    dplyr::mutate(FINAL_WT = FINAL_WT * pct) %>%
+    dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets))%>%
+    dplyr::rename(coi = {{coi}})%>%
+    dplyr::mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
     na.exclude() %>%
-    mutate(coi = droplevels(coi)) %>%
-    rename({{coi}} := coi)
+    dplyr::mutate(coi = droplevels(coi)) %>%
+    dplyr::rename({{coi}} := coi)
 
 
   df_brfss

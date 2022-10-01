@@ -361,13 +361,22 @@ patternize<-function(strIn, ..., expand = TRUE) {
   ##    e.g. "LLCP([VERS]==0;[YEAR])([VERS]>0;[YR]V[VERS])_XPT.zip"
 
   while(has_conditions(ret)) {
+    browser()
+    # there is at least one condition .. get the text
 
     next_cond <- next_condition(ret)
+
+    # parse the expression part of the condition
+
     expr <- substr(ret, next_cond$start, next_cond$end)
 
+    # are there any embedded params ... [XXXX] ...
     if(grepl("[",expr, fixed = TRUE)) {
+
       expr <- ""
     } else {
+
+      # condition is clean ... evaluate
       expr <- eval_pattern_cond(expr)
     }
 
@@ -375,6 +384,9 @@ patternize<-function(strIn, ..., expand = TRUE) {
                    expr,
                    substring(ret, next_cond$end+1))
   }
+
+  # no more conditions
+
   if(expand && grepl("./",ret, fixed = T)) ret <- orrr::convert.dot(ret)
 
   ret
@@ -392,21 +404,26 @@ has_conditions <- function(expr) {
 }
 
 eval_pattern_cond <- function(expr_in) {
-  expr <- gsub(".*[(](.*)[)].*","\\1",expr_in)
-  expr <-  gsub("(.*);(.*)","\\1",expr)
+
+    expr <- gsub(".*[(](.*)[)].*","\\1",expr_in)
+
+    if(grepl(";",expr_in)) {
+      expr <-  gsub("(.*);(.*)","\\1",expr)
 
 
-  if(grepl(" *[=!]= *'",expr)) {
-    expr <- gsub(" *([A-Za-z]*) *([=!]=)","'\\1' \\2",expr)
-  }
-  ok <- eval(parse(text = expr))
+    if(grepl(" *[=!]= *'",expr)) {
+      expr <- gsub(" *([A-Za-z]*) *([=!]=)","'\\1' \\2",expr)
+    }
+    ok <- eval(parse(text = expr))
 
-  if (ok) {
-    ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\2\\3",expr_in)
+    if (ok) {
+      ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\2\\3",expr_in)
+    } else {
+      ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\3",expr_in)
+    }
   } else {
-    ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\3",expr_in)
+    ret <- eval(parse(text = expr))
   }
-
   ret
 }
 
@@ -435,9 +452,9 @@ try.patterns <- function(names = ".*", ...) {
 
   pats <- sapply(pat_names, function(nm) {
 
-     pat<-apply.pattern(nm, ...)
+    pat<-apply.pattern(nm, ...)
 
-     pat
+    pat
 
   })
 

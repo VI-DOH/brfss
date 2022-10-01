@@ -202,8 +202,12 @@ init.patterns <- function() {
 
     ##    data file of response totals
 
-    append.pattern("brfss_responses_folder","{brfss_data_folder}[YEAR]/",
+    # append.pattern("brfss_responses_folder","{brfss_data_folder}[YEAR]/",
+    #                type = "folder") %>%
+    append.pattern("brfss_responses_folder",paste0("{brfss_data_folder}[YEAR]/",
+                                                 "([EXT] == 'local';geog/[GEOG]/)"),
                    type = "folder") %>%
+
     append.pattern("brfss_responses_file","responses_[YEAR].rds",
                    type = "file") %>%
     append.pattern("brfss_responses_path","{brfss_responses_folder}{brfss_responses_file}",
@@ -214,7 +218,8 @@ init.patterns <- function() {
 
     ##    data file of modules
 
-    append.pattern("brfss_modules_folder","{brfss_data_folder}[YEAR]/",
+    append.pattern("brfss_modules_folder",paste0("{brfss_data_folder}[YEAR]/",
+                                                 "([EXT] == 'local';geog/[GEOG]/)"),
                    type = "folder") %>%
     append.pattern("brfss_modules_file","modules_[YEAR].rds",
                    type = "file") %>%
@@ -258,6 +263,7 @@ init.patterns <- function() {
     append.pattern("ascii_filename",
                    "([EXT] == 'local';[GEOG]_)[YEAR]([VERS] > 0;_V[VERS]).rds",
                    type = "file") %>%
+
     append.pattern("ascii_path","{ascii_data_folder}{ascii_filename}",
                    type = "path") %>%
 
@@ -360,7 +366,18 @@ init.patterns <- function() {
     append.pattern("merged_values_path","{merged_layout_folder}{merged_values_file}",
                    type = "path")  %>%
 
+    ## monthly data
+
+    append.pattern("monthlies_folder",
+                   "{brfss_annual_raw_data_folder}monthly/",
+                   type = "folder") %>%
+
+    append.pattern("monthlies_file",
+                   "04_APRIL",
+                   type = "file") %>%
+
     ## Miscellaneous
+
 
     append.pattern("aliases_path","{data_folder}aliases.rds",
                    type = "path") %>%
