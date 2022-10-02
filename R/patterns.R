@@ -349,7 +349,7 @@ patternize<-function(strIn, ..., expand = TRUE) {
   ret <- strIn
 
   mapply(function(nm,val) {
-    nm <- paste0("[",nm,"]")
+    nm <- paste0("^",nm,"^")
     ret<<-gsub(nm,val,ret,fixed = T)
 
 
@@ -358,10 +358,10 @@ patternize<-function(strIn, ..., expand = TRUE) {
   #######################################################################
   ##
   ##    check for logical expressions
-  ##    e.g. "LLCP([VERS]==0;[YEAR])([VERS]>0;[YR]V[VERS])_XPT.zip"
+  ##    e.g. "LLCP(^VERS^==0;^YEAR^)(^VERS^>0;^YR^V^VERS^)_XPT.zip"
 
   while(has_conditions(ret)) {
-    browser()
+
     # there is at least one condition .. get the text
 
     next_cond <- next_condition(ret)
@@ -487,16 +487,17 @@ pattern.requirements <- function(names = ".*") {
   invisible(
     mapply(function(nm,pat) {
 
-      pat <-expand.pattern(pat)
+      pat <- expand.pattern(pat)
 
       pat0 <- unname(pat)
+      pat0 <- gsub("^^","^ ^",pat0,fixed=TRUE) # helps sub work right
 
       params <- character(0)
 
-      while(grepl("\\[", pat0)) {
-        x <- gsub(".*?\\[(.*?)\\].*","\\1",pat0)
+      while(grepl("\\^", pat0)) {
+        x <- gsub(".*?\\^(.*?)\\^.*","\\1",pat0)
         params <- c(params,x)
-        pat0 <- sub("?\\[(.*?)\\]","", pat0)
+        pat0 <- sub("?\\^(.*?)\\^","", pat0)
       }
       params <- params %>% stringr::str_replace("YR","YEAR") %>% unique()
 

@@ -30,6 +30,8 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
 
   df_geogs <- get_geogs_all()
 
+  # factorize each version
+
   sapply(ver,function(version) {
 
     brfss.param(version = version)
@@ -70,8 +72,10 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
         # make sure, even if temporarily, extent param is set to local
         #     to make sure we are saving the data under the geog folder
         fname <- brfss_data_path( rw = 'w')
+        df_state <- data.frame()
 
-        df_state <- readRDS(file = fname)
+        tryCatch(expr = {df_state <- readRDS(file = fname)},
+            error =  function(e) e)
 
         if(nrow(df_state)>0) {
           if(verbose) cat("Factorizing ",nm,"V",version,"\n")
