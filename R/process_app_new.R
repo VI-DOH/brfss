@@ -101,7 +101,7 @@ process_app_new <- function() {
         bs_clr(bs = "info", bg = "black", fg = "magenta"),
         bs_clr(bs = "source_ascii", bg = "white", fg = "green"),
         bs_clr(bs = "source_sas", bg = "green", fg = "white"),
-        bs_clr(bs = "extent_local", bg = "#0000ff50", fg = "white"),
+        bs_clr(bs = "extent_local", bg = "#0000aa50", fg = "white"),
         bs_clr(bs = "extent_national", bg = "white", fg = "#0044ff"),
         bs_clr(bs = "brfss_on", bg = "#ffff44aa", fg = "white"),
 
@@ -110,9 +110,16 @@ process_app_new <- function() {
                                     "color: #222222; background-color: #ffffff;",
                                     "border-radius: 25px;  text-align: center;",
                                     "font-size: 20px;"))),
+        # top filter section
 
         fluidRow(style = "background-color: #DCDFFD; padding: 4px; margin: 4px",
-                 column(width=3, style = "color:blue; padding_left: 5px",
+
+                 # first column
+
+                 column(width=3, style = "color:blue; margin_left: 15px; padding_left: 15px",
+
+                        # year slider
+
                         fluidRow(
                           sliderTextInput(
                             inputId = "year_id",
@@ -123,24 +130,40 @@ process_app_new <- function() {
                             selected = my_brf["year"],
                             grid = TRUE
                           ),
+
+                          # data extent switch
+
                           fluidRow(
-                                 p("Data Extent:", style="font-weight: bold"),
-                                 switchInput(
-                                   inputId = "extent_id",
-                                   onLabel = "Local",
-                                   offLabel = "National",
-                                   onStatus = "extent_local",
-                                   offStatus = "extent_national",
-                                   value = (my_brf["extent"] == "local")
-                                 )
+                            column(width=1),
+                            column(width=11,
+                                   # p("Dataset:",
+                                   #   style="font-weight: bold; padding-left: 20px"),
+                                   radioGroupButtons(
+                                     inputId = "extent_id",
+                                     label = "Dataset",
+                                     choices = c("National",
+                                                 "Local", "Monthly"),
+                                     selected = "Local",
+                                     direction = "horizontal"
+                                   )
+                                   # switchInput(
+                                   #   inputId = "extent_id",
+                                   #   onLabel = "Local",
+                                   #   offLabel = "National",
+                                   #   onStatus = "extent_local",
+                                   #   offStatus = "extent_national",
+                                   #   value = (my_brf["extent"] == "local")
+                                   # )
+                            )
                           )
                         )
                  ),
+
                  column(width = 2,
                         fluidRow(
                           pickerInput(
                             inputId = "geog_id",
-                            label = "Geography",
+                            label = "Geographies",
                             choices = sort(brfss::geogs$Geog),
                             selected = my_geogs, multiple = TRUE
                           )),
@@ -338,13 +361,21 @@ process_app_new <- function() {
                                         )
 
 
+                                      ),
+
+                                      pickerInput(
+                                        inputId = "stats_id",
+                                        label = "Stats:",
+                                        choices = c("num","den","percent","se","CI"),
+                                        multiple = TRUE
+
                                       )
                                   )
                      ),
 
 
                      mainPanel(
-                       gt_output(outputId = "stats_id")
+                       gt_output(outputId = "measure_id")
                      )
                    ))
           ),
@@ -722,7 +753,7 @@ process_app_new <- function() {
 
       observeEvent(input$extent_id, {
         cat("observeEvent(input$extent_id, { ... ","input$extent_id=",input$extent_id,"\n")
-        ext <- ifelse(input$extent_id, "local", "national")
+        ext <- tolower(input$extent_id)
 
         brfss.param(extent = ext)
 
@@ -902,11 +933,12 @@ process_app_new <- function() {
       observeEvent(input$sect_type_id,
                    {
                      if(nchar(input$sect_type_id)>0) {
-                       updatePickerInput(session = session,
-                                         inputId = "section_id",
-                                         choices = df_layout %>%
-                                           filter(sect_type == input$sect_type_id) %>%
-                                           pull(section) %>% unique()
+                       updatePickerInput(
+                         session = session,
+                         inputId = "section_id",
+                         choices = df_layout %>%
+                           filter(sect_type == input$sect_type_id) %>%
+                           pull(section) %>% unique()
                        )
                      }
                    }
@@ -937,7 +969,7 @@ process_app_new <- function() {
         rvals$reanalyze <- !rvals$reanalyze
       }
 
-      output$stats_id <- render_gt({
+      output$measure_id <- render_gt({
 
         dummy <- rvals$reanalyze
         column <-rvals$coi
@@ -945,7 +977,7 @@ process_app_new <- function() {
         #subvar  subset  response  num   mean   se  CI_lower
         df <- survey_stats(coi = column, subsets = input$subsets_id,
                            pct = TRUE, digits = 1) %>%
-          stats_wide_htm()
+          stats_wide_htm(stats = input$stats_id)
       })
 
       ###################################################################

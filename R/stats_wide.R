@@ -315,8 +315,8 @@ stats_wide_ltx <- function(df_stats, stats ,
 #' @export
 #'
 #' @examples
-stats_wide_htm <- function(df_stats, stats,
-                           pct_txt) {
+stats_wide_htm <- function(df_stats, stats=c("pct"),
+                           pct_txt="Pct") {
 
   stats_wide(df_stats = df_stats, stats = stats,
              pct_txt = pct_txt, latex = FALSE)

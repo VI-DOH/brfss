@@ -159,7 +159,7 @@ brfss.param_pats <- function(...) {
   if(length(args)>0) {
     mapply(function(arg, param) {
 
-      my_brfss[[param]][2]<<-arg[[1]]
+      my_brfss[[param]]["pattern"]<<-arg[[1]]
 
     }, args, names(args))
 
@@ -168,9 +168,9 @@ brfss.param_pats <- function(...) {
 
     x <- sapply(my_brfss, function(myb) {
 
-      if(length(myb)<2) return(NULL)
-
-      myb[[2]]
+      # if(length(myb)<2) return(NULL)
+      # browser()
+      myb[["pattern"]]
 
     })
     return(x)
@@ -223,13 +223,26 @@ brfss.params <- function(... , val_only = TRUE) {
     # return the (possibly updated) list of params
 
     if(val_only) {
-      my_brfss <- sapply(my_brfss, function(myb,nm) {
+
+      my_brfss <- sapply(my_brfss, function(myb) {
         myb$value
+      })
+    } else {
+
+      my_brfss <- sapply(my_brfss, function(myb) {
+
+        funcs <- sapply(myb, function(b){
+          typeof(b) == "closure"
+        })
+
+        if(length(funcs)>0) myb[funcs] <- "[* function *]"
+        myb
       })
     }
 
     return(my_brfss)
   }
+
 }
 
 
@@ -360,14 +373,14 @@ my.brfss.init <- function() {
 
     } else if(is.character(month)) {
 
-        month <- tolower(month)
+      month <- tolower(month)
 
-        if(nchar(month)==3) {
-          month <- which(tolower(month.abb) == month)
+      if(nchar(month)==3) {
+        month <- which(tolower(month.abb) == month)
 
-        } else {
-          month <- which(tolower(month.name) == month)
-        }
+      } else {
+        month <- which(tolower(month.name) == month)
+      }
     } else {
       month  <-  0
     }
@@ -416,7 +429,7 @@ my.brfss.init <- function() {
 
   my_brfss$extent$value <- "local"
   my_brfss$extent$pattern <- "EXT"
-  my_brfss$extent$values <- c("local","national")
+  my_brfss$extent$values <- c("local","national", "monthly")
 
   my_brfss$extent$on_change <- function(extent) {
     if(extent == "local" && brfss.param(geog) == "") {
@@ -430,6 +443,14 @@ my.brfss.init <- function() {
 
   my_brfss$version$value <- 0
   my_brfss$version$pattern <- "VERS"
+
+  ###################################################
+  ##
+  ##    phone
+
+  my_brfss$phone$value <- "cell"
+  my_brfss$phone$values <- c("cell","land", "comb")
+  my_brfss$phone$pattern <- "PHON"
 
   ###############################################
   ##

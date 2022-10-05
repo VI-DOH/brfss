@@ -235,7 +235,7 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
     path <- apply.pattern("brfss_annual_data_path",params)
     if(!dir.exists(dirname(path))) dir.create(dirname(path))
 
-    if(verbose) cat("... writing ", df_name, "to ", path,"\n")
+    if(verbose) cat("... writing ", path,"\n")
 
     show_progress(progress, message =
                     paste0("Converting ... saving version [", version, "] ", path))

@@ -164,10 +164,10 @@ save.patterns <- function(naming_patterns) {
 expand.pattern <- function(pattern) {
 
   ctr <- 0
-  while(grepl("\\{", pattern) && ctr<10) {
-    pat0 <- gsub(".*?\\{(.*?)\\}.*","\\1",pattern)
+  while(grepl("\\$", pattern) && ctr<10) {
+    pat0 <- gsub(".*?\\$(.*?)\\$.*","\\1",pattern)
     pat1<- get.pattern(pat0)
-    pattern <- gsub(paste0("(\\{",pat0,"\\})"),pat1,pattern)
+    pattern <- gsub(paste0("(\\$",pat0,"\\$)"),pat1,pattern)
     ctr <- ctr + 1
 
   }
@@ -333,19 +333,19 @@ patternize<-function(strIn, ..., expand = TRUE) {
   nms <- names(args)
   vals <- unlist(unname(args))
 
-  ###########################################################################
-  ##
-  ##  this is a special case for YEAR ... creating the 2-digit year as well
-  yr_arg <- which(nms == "YEAR")
-
-  if(length(yr_arg)>0) {
-    year <- as.integer(vals[yr_arg[1]])
-    nms[length(nms)+1] <- "YR"
-    vals[length(vals)+1] <- year%%100
-
-  }
-
-  #############################################################################
+  # ###########################################################################
+  # ##
+  # ##  this is a special case for YEAR ... creating the 2-digit year as well
+  # yr_arg <- which(nms == "YEAR")
+  #
+  # if(length(yr_arg)>0) {
+  #   year <- as.integer(vals[yr_arg[1]])
+  #   nms[length(nms)+1] <- "YR"
+  #   vals[length(vals)+1] <- year%%100
+  #
+  # }
+  #
+  # #############################################################################
   ret <- strIn
 
   mapply(function(nm,val) {
@@ -370,8 +370,8 @@ patternize<-function(strIn, ..., expand = TRUE) {
 
     expr <- substr(ret, next_cond$start, next_cond$end)
 
-    # are there any embedded params ... [XXXX] ...
-    if(grepl("[",expr, fixed = TRUE)) {
+    # are there any embedded params ... ^XXXX^ ...
+    if(grepl("^",expr, fixed = TRUE)) {
 
       expr <- ""
     } else {
@@ -393,19 +393,24 @@ patternize<-function(strIn, ..., expand = TRUE) {
 }
 
 next_condition <- function(expr) {
-  start <- max(gregexpr("(",expr, fixed  = T)[[1]])
-  ends <- gregexpr(")",expr, fixed  = T)[[1]]
-  end <- min(ends[ends>start])
+  start <- max(gregexpr("{",expr, fixed  = T)[[1]])
+  ends <- gregexpr("}",expr, fixed  = T)[[1]]
+  tryCatch(
+  end <- min(ends[ends>start]),
+  warning = function(w){
+    "Mismatched brackets"
+  }
+  )
   list(start = start, end = end)
 }
 
 has_conditions <- function(expr) {
-  grepl(".*[(](.*)[)].*",expr)
+  grepl(".*[{](.*)[}].*",expr)
 }
 
 eval_pattern_cond <- function(expr_in) {
 
-    expr <- gsub(".*[(](.*)[)].*","\\1",expr_in)
+    expr <- gsub(".*[{](.*)[}].*","\\1",expr_in)
 
     if(grepl(";",expr_in)) {
       expr <-  gsub("(.*);(.*)","\\1",expr)
@@ -417,9 +422,9 @@ eval_pattern_cond <- function(expr_in) {
     ok <- eval(parse(text = expr))
 
     if (ok) {
-      ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\2\\3",expr_in)
+      ret <- gsub("(.*)[{].*;(.*)[}](.*)","\\1\\2\\3",expr_in)
     } else {
-      ret <- gsub("(.*)[(].*;(.*)[)](.*)","\\1\\3",expr_in)
+      ret <- gsub("(.*)[{].*;(.*)[}](.*)","\\1\\3",expr_in)
     }
   } else {
     ret <- eval(parse(text = expr))
