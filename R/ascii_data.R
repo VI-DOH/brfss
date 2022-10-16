@@ -70,7 +70,7 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
   if(saq) {
 
     build_saq_layout()
-    merge_saq_layout()
+    stat <- merge_saq_layout()  # may develop this status msg'ing later
 
     build_saq_values()
     merge_saq_values()

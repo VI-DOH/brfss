@@ -61,19 +61,38 @@ merge_saq_layout <- function(df_layout = NULL, df_saq_layout = NULL) {
 
   if(is.null(df_layout)) {
     df_layout <- get.codebook.layout()
-    if(is.null(df_layout)) df_layout <- get.sas.layout()
+    #    if(is.null(df_layout)) df_layout <- get.sas.layout()
+
+    ##    not sure if the line below this is the fix
+
+    if(is.null(df_layout)) df_layout <- get.layout()
   }
 
   if(is.null(df_saq_layout)) {
     df_saq_layout <- saq_layout()
   }
 
-  if(!is.null(df_saq_layout)) {
+  # if the saq layout file exists (there are state added questions) and
+  # "STATEQUE" is still one of the values in col_name (it hasn't been merged yet)
 
+  has_saq_layout <- !is.null(df_saq_layout)
+  not_merged <- any(grepl('STATEQUE', df_layout %>% pull(col_name)))
 
-    df_saq_layout <- df_saq_layout  %>%
-      mutate(sect_num = as.character(sect_num)) %>%
-      mutate(question_num = as.character(question_num))
+  if(!has_saq_layout) {
+    stat = 1
+    msg <- "No SAQ layout"
+  } else if(not_merged) {
+    stat = 2
+    msg <- "Already merged"
+  } else {
+
+    ##    for some reason I found it necessary to convert the section and
+    ##     question number fields to character ... this caused an error later
+    ##      so far no repercussions from commenting it out.
+
+    #    df_saq_layout <- df_saq_layout  %>%
+    #      mutate(sect_num = as.character(sect_num)) %>%
+    #      mutate(question_num = as.character(question_num))
 
     slice_row <- which(df_layout$col_name == 'STATEQUE')
     saq_size <-  df_layout %>% slice(slice_row) %>% pull(field_size)
@@ -83,23 +102,27 @@ merge_saq_layout <- function(df_layout = NULL, df_saq_layout = NULL) {
 
     my_saq_size <-df_saq_layout  %>% pull(field_size) %>% sum()
 
-    saq_dummy <- data.frame( col_name = 'DUMMY_SAQ', field_size = saq_size - my_saq_size)
+    saq_dummy <- data.frame( col_name = 'DUMMY_SAQ',
+                             field_size = saq_size - my_saq_size)
 
     df_layout <- keep0  %>%
       bind_rows(df_saq_layout, saq_dummy, keep1)
+
+    fldr <- apply.pattern("codebook_layout_folder",params)
+    fil <- apply.pattern("merged_layout_file", params)
+
+    file <- paste0(fldr,fil)
+
+    if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
+
+
+    saveRDS(df_layout, file = file)
+
+    stat = 0
+    msg = NULL
   }
 
-  fldr <- apply.pattern("codebook_layout_folder",params)
-  fil <- apply.pattern("merged_layout_file", params)
-
-  file <- paste0(fldr,fil)
-
-  if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
-
-
-  saveRDS(df_layout, file = file)
-
-  invisible()
+  return(list(status = stat, msg = msg))
 
 }
 

@@ -69,6 +69,12 @@ modules_used <- function() {
 
 }
 
+#' Title
+#'
+#' @return
+#' @export
+#'
+#' @examples
 save_module_stats<-function() {
   require(dplyr)
 
