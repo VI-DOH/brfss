@@ -11,6 +11,7 @@ process_year(
   layout = TRUE,
   convert = TRUE,
   codebook = TRUE,
+  attribs = TRUE,
   split = TRUE,
   factorize = TRUE,
   saq = FALSE,
@@ -26,9 +27,15 @@ Useful (set = FALSE) if you already have the downloaded files processed}
 
 \item{codebook}{- logical - download and process the annual codebook}
 
+\item{attribs}{- logical - add attributes to each column describing the column's data}
+
 \item{split}{- logical - split the processed data file by state/geography}
 
 \item{factorize}{- logical - convert columns to factors where appropriate}
+
+\item{saq}{- logical - add state-added questions}
+
+\item{progress}{- function - progress function to pass progress info to}
 
 \item{...}{other params}
 

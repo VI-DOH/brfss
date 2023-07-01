@@ -23,8 +23,6 @@ convert_ascii(
 \item{versions}{logical include ascii file versions (default = TRUE)}
 
 \item{verbose}{logical print some extra information during processing (default = FALSE)}
-
-\item{year}{integer year of interest}
 }
 \value{
 data frame containing survey data

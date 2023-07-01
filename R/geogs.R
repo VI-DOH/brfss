@@ -108,7 +108,10 @@ geog_name <- function(geogs) {
 geog_abb <- function(geogs) {
   require(dplyr)
 
-  if(is.na(geogs) || length(geogs) == 0 || (is.character(geogs) && geogs[1] == "")) return("")
+  if(any(is.na(geogs)) ||
+     length(geogs) == 0 ||
+     (is.character(geogs) && geogs[1] == ""))
+    return("")
 
 
   df_geogs <- get_geogs_all() %>%

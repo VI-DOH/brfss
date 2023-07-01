@@ -70,6 +70,8 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
   if(saq) {
 
     build_saq_layout()
+
+    browser()
     stat <- merge_saq_layout()  # may develop this status msg'ing later
 
     build_saq_values()
@@ -204,7 +206,6 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
 
   show_progress(progress, message = "Converting ... ")
 
-  params <- my.brfss.patterns()
 
   if(is.null(layout)) {
     layout <- get.layout()
@@ -217,6 +218,8 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
   if(main) version <- 0 else {
     if(versions) version = 1 else return()
   }
+  brfss.param(version = version)
+  params <- my.brfss.patterns()
 
   file_raw <- apply.pattern("ascii_filename_raw", params)
   path_raw <- apply.pattern("ascii_path_raw", params)
@@ -227,6 +230,7 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
 
     show_progress(progress, message =
                     paste0("Converting ... version [", version, "] : ", file_raw))
+
 
     df <- read.ascii(filename = path_raw, layout = layout, verbose = verbose)
 
@@ -312,6 +316,7 @@ read.ascii<-function(filename=NULL,layout = NULL, completes=T, verbose = FALSE) 
   ## this is a kludge ... the weight fields should be numeric
 
   col_types[grepl("_.*WT.*",names(col_types))] <- 'numeric'
+  col_types[is.na(col_types)] <- 'character'
 
   # end kludge
 
@@ -358,91 +363,91 @@ read.ascii<-function(filename=NULL,layout = NULL, completes=T, verbose = FALSE) 
 #' my_geog="MT", other_geogs=NULL,verbose=TRUE)
 #'}
 #'
-cleave.geogs.ascii<-function(year = NULL,
-                             main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
-
-  if(!(main || versions)) return(NULL)
-
-  year <- get.year(year)
-
-  if(is.null(my_geog)) my_geog <- my.geog()
-  if(is.null(other_geogs)) other_geogs <- my.other.geogs()
-
-  if(my_geog=="") my_geog <- character(0)
-
-  geogs <- get.geogs()
-
-  ver<-integer(0)
-  if(main) ver<-0
-
-  vermax <- highest_version()
-
-  if(versions) ver<-c(ver,1:vermax)
-
-  df_geogs <- get_geogs_all()
-
-  sapply(ver,function(version) {
-
-    rdata_file <- apply.pattern("ascii_path",YEAR = year, VERS = version)
-
-    df_xpt<-load.sas(year,rdata_file = rdata_file, version)
-
-    if(geogs[1] == '*') {
-      geogs<-unique(df_xpt$`_STATE`)
-
-    } else {
-
-      if(is.character(geogs)) {
-        geogs<-sapply(geogs,function(state) {
-          df_geogs[df_geogs$Abbrev==state,"Id"]
-        })
-
-        geogs <- unlist(unname(geogs))
-      }
-    }
-
-    add_cols<-character(0)
-
-    mapply(function(id,nm) {
-
-      if(id%in%geogs) {
-
-        df_state<-df_xpt[df_xpt$`_STATE`==id,]
-
-        if(nrow(df_state)>0) {
-          if(verbose) cat("Saving ",nm,"V",version,"\n")
-          sapply(1:ncol(df_xpt),function(i) {
-            attrs<-attributes(df_xpt[[i]])
-
-            if(!is.null(attrs)){
-              sapply(1:length(attrs),function(j) {
-                #browser()
-                attr(df_state[[i]],names(attrs[j]))<<-attr(df_xpt[[i]],names(attrs[j]))
-              })
-            } else {
-              add_cols<<-c(add_cols,colnames(df_xpt)[i])
-            }
-
-          })
-
-          dfname<-paste0("df_",nm,"_",year)
-          if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
-
-          assign(dfname,df_state)
-
-          fname <- brfss_data_path(year = year, geog = nm, version = version, rw = 'w')
-
-          if(verbose) cat("Going to save :", fname, "\n")
-
-          saveRDS(df_state,file = fname)
-
-          #columns.add(year,add_cols)
-        }
-      }
-    },df_geogs$Id,df_geogs$Abbrev)
-  })
-  invisible()
-}
+# cleave.geogs.ascii<-function(year = NULL,
+#                              main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
+#
+#   if(!(main || versions)) return(NULL)
+#
+#   year <- get.year(year)
+#
+#   if(is.null(my_geog)) my_geog <- my.geog()
+#   if(is.null(other_geogs)) other_geogs <- my.other.geogs()
+#
+#   if(my_geog=="") my_geog <- character(0)
+#
+#   geogs <- get.geogs()
+#
+#   ver<-integer(0)
+#   if(main) ver<-0
+#
+#   vermax <- highest_version()
+#
+#   if(versions) ver<-c(ver,1:vermax)
+#
+#   df_geogs <- get_geogs_all()
+#
+#   sapply(ver,function(version) {
+#
+#     rdata_file <- apply.pattern("ascii_path",YEAR = year, VERS = version)
+#
+#     df_xpt<-load.sas(year,rdata_file = rdata_file, version)
+#
+#     if(geogs[1] == '*') {
+#       geogs<-unique(df_xpt$`_STATE`)
+#
+#     } else {
+#
+#       if(is.character(geogs)) {
+#         geogs<-sapply(geogs,function(state) {
+#           df_geogs[df_geogs$Abbrev==state,"Id"]
+#         })
+#
+#         geogs <- unlist(unname(geogs))
+#       }
+#     }
+#
+#     add_cols<-character(0)
+#
+#     mapply(function(id,nm) {
+#
+#       if(id%in%geogs) {
+#
+#         df_state<-df_xpt[df_xpt$`_STATE`==id,]
+#
+#         if(nrow(df_state)>0) {
+#           if(verbose) cat("Saving ",nm,"V",version,"\n")
+#           sapply(1:ncol(df_xpt),function(i) {
+#             attrs<-attributes(df_xpt[[i]])
+#
+#             if(!is.null(attrs)){
+#               sapply(1:length(attrs),function(j) {
+#                 #browser()
+#                 attr(df_state[[i]],names(attrs[j]))<<-attr(df_xpt[[i]],names(attrs[j]))
+#               })
+#             } else {
+#               add_cols<<-c(add_cols,colnames(df_xpt)[i])
+#             }
+#
+#           })
+#
+#           dfname<-paste0("df_",nm,"_",year)
+#           if(version>0) dfname<-gsub(nm,paste0(nm,"_V",version),dfname)
+#
+#           assign(dfname,df_state)
+#
+#           fname <- brfss_data_path(year = year, geog = nm, version = version, rw = 'w')
+#
+#           if(verbose) cat("Going to save :", fname, "\n")
+#
+#           saveRDS(df_state,file = fname)
+#
+#           #columns.add(year,add_cols)
+#         }
+#       }
+#     },df_geogs$Id,df_geogs$Abbrev)
+#   })
+#   invisible()
+# }
 
 # read.ascii<-function(filename=NULL,layout = NULL, completes=T, verbose = FALSE) {
 #

@@ -226,7 +226,8 @@ save_brfss <- function(df, year= NULL, geog = NULL, version = 0) {
   year <- get.year(year)
   geog <- get.geog(geog)
 
-  fname <- brfss_data_path(year = year, geog = geog, version = version, rw = 'w')
+  #fname <- brfss_data_path(year = year, geog = geog, version = version, rw = 'w')
+  fname <- brfss_data_path( rw = 'w')
 
   saveRDS(df,file = fname)
 

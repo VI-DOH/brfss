@@ -71,6 +71,7 @@ process_app <- function() {
 
 
   df_mods <- modules_used()
+
   if(!is.null(df_layout) && !is.null(df_mods)) {
     df_layout <- df_layout %>%
       filter(sect_type != "DUMMY") %>%

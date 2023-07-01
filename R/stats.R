@@ -90,8 +90,11 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
 
   test <- df_brfss %>% pull({{coi}})
 
-  if(!(is.factor(test) && length(levels(test))>1) ) return(NULL)
+  if(!(is.factor(test) && length(levels(test))>1) ) {
+    #return(NULL)
+    df_brfss<- df_brfss %>% mutate({{coi}} := as.factor(.[[coi]]))
 
+  }
   # get data from
 
   if(nrow(df_brfss)==0) {
@@ -163,7 +166,7 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
     pull(question)
 
   attr(df,"label") <- unname(df_lo %>%
-    pull(label))
+                               pull(label))
 
   attr(df,"coi") <- coi
 
@@ -446,8 +449,8 @@ sig_diffs <- function(df) {
 #' @examples
 #'
 log_reg<-function(df_data = NULL, depvar, exclude = c("Don.*t|Refuse"), indepvar = NULL,
-                       subset_by = NULL, sub_exclude = c("Don.*t|Refuse"),
-                       conf=.95, weighted = TRUE, pct = FALSE, digits = 99) {
+                  subset_by = NULL, sub_exclude = c("Don.*t|Refuse"),
+                  conf=.95, weighted = TRUE, pct = FALSE, digits = 99) {
 
   require(survey, quietly = T, warn.conflicts = F)
   require(dplyr, quietly = T, warn.conflicts = F)

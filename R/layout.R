@@ -34,7 +34,8 @@ save_sas_layout<-function(progress = NULL) {
 
     lines<-readLines(file, warn = F, encoding = "latin1")
 
-    lines <- gsub("—", "-",lines)
+    lines <- gsub("—", "-",lines) %>%
+      iconv( to = "ASCII//TRANSLIT")
 
     # get the start point of interest and remove everything before
 
@@ -159,7 +160,8 @@ fixed_width_layout<-function(year) {
   df_saq<- saq_data(year)
   # get sas layout provided by CDC
 
-  df_sas_layout<-sas_layout(year)
+  df_sas_layout<-sas_layout()
+#  df_sas_layout<-sas_layout(year)
 
   # clean up sas layout - remove overlapping vars
   #   and remove the state-added-question columns which are to be added from df_saq
@@ -202,21 +204,21 @@ fixed_width_layout<-function(year) {
   list(widths=df_fwf$field_size,cols=df_layout$col_name,layout=df_layout)
 }
 
-
-merge_layout<-function(df_quest, year = NULL) {
-
-  year <- get.year(year)
-
-  df_layout<-sas_layout(year)
-
-  df_quest<- df_quest %>%
-    mutate(index = as.integer(qnumber)) %>%
-    rename(type_index = snumber)
-
-  df_questions<-dplyr::left_join(df_quest,df_layout) %>%
-    select(qnum, question, type, section, type_index, code, index,label, col_name)
-
-}
+#
+# merge_layout<-function(df_quest, year = NULL) {
+#
+#   year <- get.year(year)
+#
+#   df_layout<-sas_layout(year)
+#
+#   df_quest<- df_quest %>%
+#     mutate(index = as.integer(qnumber)) %>%
+#     rename(type_index = snumber)
+#
+#   df_questions<-dplyr::left_join(df_quest,df_layout) %>%
+#     select(qnum, question, type, section, type_index, code, index,label, col_name)
+#
+# }
 
 
 #' Get Layout

@@ -12,6 +12,7 @@ sas_process_year(
   dl_data = FALSE,
   layout = TRUE,
   codebook = TRUE,
+  attribs = TRUE,
   saq = FALSE,
   convert = TRUE,
   split = TRUE,
@@ -54,7 +55,7 @@ and create a data frame with all data from the XPT file, as well as any other ve
 }
 \examples{
 \dontrun{
-sas_process_year(year = 2020, download=TRUE, layout = TRUE, codebook = TRUE, convert = TRUE, split = TRUE)
+sas_process_year(dl_metadata=TRUE, dl_codebook = TRUE, dl_data = TRUE)
 
 }
 }

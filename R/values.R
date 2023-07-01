@@ -369,14 +369,18 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 
   if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year, ...)
 
+  df_cnt <- df_vals %>% group_by(col_name) %>% summarise(n=n())
+
   is.calc <- grepl("^Calc",df_layout$section)
   is.wt <- grepl("[Ww]eighting.V",df_layout$section)
+
+  has.mult <- df_layout %>% left_join(df_cnt, by = "col_name")%>% replace(is.na(.), 0) %>% pull(n) %>% .[] > 1
 
   col_names <- df_layout %>% pull(col_name)
   #  df <- data.frame(col_name = col_names)
 
   types <- mapply(function(col, calc, wt) {
-
+    #cat(" trying ... [", col, "] is.calc: ", calc," | is.wt (range): ", wt, "\n")
     df_lo <- df_layout %>% filter(col_name == col)
 
     df0 <- df_vals %>%
@@ -405,7 +409,7 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
     } else {
       return("unknown")
     }
-  }, col_names, is.calc, is.wt)
+  }, col_names, is.calc, is.wt & !has.mult)
 
   types[grepl("_STSTR",col_names)] <- "stratum"
 

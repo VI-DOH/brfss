@@ -99,8 +99,8 @@ coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NUL
     dplyr::rename(FINAL_WT = {{vwt}}) %>%
     dplyr::rename(STRATUM = {{stratum}}) %>%
     dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
-    dplyr::mutate(vers = {{version}}) %>%
-    na.exclude()
+    dplyr::mutate(vers = {{version}}) #%>%
+    #na.exclude()
 
 
 }
@@ -113,6 +113,7 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
 
   invisible(
     sapply(0:highest_version(),function(ver) {
+
       df_brfss <<- df_brfss %>%
         bind_rows(coi_data_vers(df_data = df_data,
                                 coi = coi, subsets = subsets,
@@ -129,14 +130,15 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
   df_brfss <- df_brfss %>%
     dplyr::left_join(df_resp, by = c("vers" = "version")) %>%
     dplyr::mutate(FINAL_WT = FINAL_WT * pct) %>%
-    dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets))%>%
+    dplyr::select(matches(coi), FINAL_WT, STRATUM, all_of(subsets))%>%
     dplyr::rename(coi = {{coi}})%>%
     dplyr::mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
-    na.exclude() %>%
-    dplyr::mutate(coi = droplevels(coi)) %>%
+    na.exclude()
+
+  if (is.factor(df_brfss %>% pull(coi)))
+    df_brfss <- df_brfss %>% dplyr::mutate(coi = droplevels(coi))
+
+  df_brfss %>%
     dplyr::rename({{coi}} := coi)
-
-
-  df_brfss
 }
 

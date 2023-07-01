@@ -48,18 +48,36 @@ widen_stats <- function(df_stats, stats = c("num", "percent", "CI")){
     rename_with(~ gsub(".x", ".percent",.x, fixed = TRUE)) %>%
     rename_with(~ gsub(".y", ".CI",.x, fixed = TRUE))
 
+  #########################################################################
+  ##
+  ##    reorder rows back to original
+  ##      dcast is alphabetically ordering the subvars
+
+  df_ord <- df_stats %>% select(subvar, subset) %>% distinct()
+
+  df_stats_wide <- df_ord %>% left_join(df_stats_wide, by = c("subvar", "subset"))
+
+
   ##################################################
   ##
   ##  get the correct order of the factors
 
-  res <- try({
+  res <- tryCatch({
     coi_data <- coi_data(coi = coi ) %>% pull({{coi}}) %>% droplevels()
 
     fctrs <- levels(coi_data)
     fctrs <- fctrs[fctrs%in%unique(df_stats$response)]
+  },
+  error=function(cond) {
+    # message(paste("URL does not seem to exist:", url))
+    # message("Here's the original error message:")
+    # message(cond)
+    # Choose a return value in case of error
+
+    return(cond)
   })
 
-  if(inherits(res, "try-error")) {
+  if(inherits(res, "error")) {
     fctrs <- unique(df_stats$response)
   }
   #  stats <- c("num", "percent", "CI") #,"CI_lower","CI_upper")

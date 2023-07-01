@@ -16,12 +16,20 @@ modules_used <- function() {
   # extent = get.extent(extent)
   # source = get.source(source)
 
+  # ====== get the codebook layout  ===========
+
   codebook <- get.codebook.layout()
+
+  #  =====   get the brfss data   ==========
 
   brfss.param(version = 0)
   df_brfss <- brfss_data()
 
+  #  =====  ditch if not enough info to finish   ===========
+
   if(is.null(codebook) || is.null(df_brfss)) return(NULL)
+
+  # ======= get all available modules  =========
 
   df_modules <- codebook %>%
     filter(sect_type == "Module") %>%
@@ -45,12 +53,13 @@ modules_used <- function() {
 
     invisible(
       mapply(function(coi, mod_num, module) {
-        # if(ver == 1 && mod_num == 2) browser()
-        #cat("coi: ", coi, "\n")
+
         df <- df_brfss %>%
           rename(coi = {{coi}}) %>%
           select(geog,coi) %>%
+          mutate(coi = gsub(" ","",coi)) %>%
           filter(!is.na(coi)) %>%
+          filter(nchar(coi)>0) %>%
           select(geog) %>%
           distinct() %>%
           mutate(year = brfss.param(year), version = brfss.param(version),
@@ -60,10 +69,12 @@ modules_used <- function() {
 
         df_final <<- df_final %>% bind_rows(df)
 
+
       },df_modules$col_name,df_modules$sect_num, df_modules$section)
     )
 
   })
+
 
   df_final %>% mutate(geog = geog_abb(geog))
 

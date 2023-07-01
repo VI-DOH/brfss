@@ -53,7 +53,7 @@ download_codebook <- function(progress = NULL) {
 
   ##  URL patterns are stored under the group  "codebook_downloads"
 
-  pats<-names(brfss::get.pattern.group("codebook_downloads"))
+  pats<-names(get.pattern.group("codebook_downloads"))
 
   ## get storage location for the codebook
   ##    GEOG is not needed unless the user changes the folder pattern
@@ -141,8 +141,8 @@ read_codebook <- function(file=NULL, ...) {
   require(dplyr)
 
   args <- list(...)
-#
-#   params <- my.brfss.patterns()
+  #
+  #   params <- my.brfss.patterns()
 
   if(is.null(file)) {
 
@@ -271,6 +271,7 @@ save_codebook_layout <- function(file=NULL) {
   label_lines <- grep("^Label:", lines)
   mod_lines <- grep("^Module.*Number", lines)
   core_lines <- grep("^Core.*Number", lines)
+  sect_lines <- grep("^Sect.*Number", lines)
   value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
 
   ##
@@ -293,15 +294,42 @@ save_codebook_layout <- function(file=NULL) {
   sect_type <- rep("",length(label_lines))
   sect_num <- rep("",length(label_lines))
 
+  if(length(core_lines)== 0) {
+
+    # didn't find phrase Core Section n ... eg. 2021 has it, but 2016 doesn't
+    # 2016 ... Section n for both core and modules
+
+    # get section lines values (parse the n)
+
+    sects <- sapply(sect_lines, function(sect_ln) {
+      as.integer(stringr::str_trim(gsub(".*:(.*)","\\1",lines[sect_ln])))
+    })
+
+    #remove Section 0 lines
+
+    sect_lines <- sect_lines[sects > 0]
+    sects <- sects[sects > 0]
+
+    sects_next <- c(sects[-1],999)
+
+    split <- which(sects_next <  sects)[1] + 1
+
+    core_lines <- sect_lines[1:(split-1)]
+    mod_lines <- sect_lines[split:length(sect_lines)]
+
+  }
   ##    get Core Section numbers
 
-  cors<-sapply(core_lines, function(core_ln) {
+    cors<-sapply(core_lines, function(core_ln) {
 
-    max(which(label_lines<core_ln))
-  })
+      max(which(label_lines<core_ln))
+    })
 
-  sect_type[cors] <- "Core"
+
+
+   sect_type[cors] <- "Core"
   sect_num[cors] <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[core_lines]))
+
 
   ##    get Module Section numbers
 
@@ -310,7 +338,7 @@ save_codebook_layout <- function(file=NULL) {
     max(which(label_lines<mod_ln))
   })
 
-  sect_type[mods] <- "Module"
+    sect_type[mods] <- "Module"
   sect_num[mods] <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[mod_lines]))
 
   ##   Blank Section Name for  Weighting Variables
@@ -438,7 +466,7 @@ get.codebook.layout <- function() {
     file <- apply.pattern("codebook_layout_path", params)
 
     if(!file.exists(file)) return(NULL)
-}
+  }
 
   readRDS(file = file)
 

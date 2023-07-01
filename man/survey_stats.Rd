@@ -5,6 +5,7 @@
 \title{Survey Statistics}
 \usage{
 survey_stats(
+  df_data = NULL,
   coi,
   exclude = c("Don.*t|Refuse"),
   subsets = NULL,
@@ -17,6 +18,8 @@ survey_stats(
 )
 }
 \arguments{
+\item{df_data}{- data.frame: the survey data}
+
 \item{coi}{- character: column of interest name for analysis}
 
 \item{exclude}{- integer: values in coi to exclude for analysis purposes}
@@ -24,8 +27,6 @@ survey_stats(
 \item{conf}{- numeric: confidence level, default is .95}
 
 \item{weighted}{- logical: use weighting}
-
-\item{df_brfss}{- data.frame: the survey data}
 
 \item{subset}{- character: name of column to subset data by}
 }

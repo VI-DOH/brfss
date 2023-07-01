@@ -52,7 +52,6 @@ highest_version<-function() {
 }
 
 calc_responses <- function() {
-
   params <- my.brfss.patterns()
 
   df_resp <- data.frame()
@@ -66,6 +65,7 @@ calc_responses <- function() {
       df_brfss_vers <- brfss_data()
 
     } else {
+
 
       fldr <- apply.pattern("brfss_geog_folder", params)
 

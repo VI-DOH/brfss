@@ -491,7 +491,6 @@ prep_stats<-function(df,coi,subsets,min_num=0,percent=T, df_fields) {
     df$CI_upper=round(df$CI_upper*100,1)
   }
 
-  browser()
   fctr<-df_fields[df_fields$col_name==coi,]
 
   fctr$description<-trimws(fctr$description)
