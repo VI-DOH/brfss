@@ -118,7 +118,6 @@ parse_codebook_values <- function(file=NULL) {
 
   ncols <- length(col_names)
 
-
   #################################################################
   ##
   ##  warn if the variables don't line up (different vector lengths)
@@ -195,6 +194,9 @@ parse_codebook_values <- function(file=NULL) {
 
   value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
 
+  # add notes lines to the end of the previous line
+  notes_lines <- grep("^Notes:", lines)
+  lines[notes_lines-1] <- paste0(lines[notes_lines-1]," ", lines[notes_lines])
 
   lbl0 <- ""
 
@@ -206,26 +208,39 @@ parse_codebook_values <- function(file=NULL) {
     lbl0
   })
 
-  #browser()
+
   df <- data.frame(col_name = lbl, text = lines)
 
   df0 <- df %>%
+    #save original as a test for later
+    mutate(text_orig= text) %>%
+
     mutate(col_name = lbl)%>%
     filter(!grepl("(SAS.Var.*:|Value {6,}Value Lab)",.$text)) %>%
     filter(!grepl("^Notes:",.$text)) %>%
-    mutate(text = stringr::str_trim(text))
+    mutate(text = stringr::str_trim(text)) %>%
+
+    # fix no space between YesGo and YesIf
+    mutate(text = gsub("(Yes|No)(Go to|If)(.*)","\\1 \\2\\3",text))
+
 
   df_final <- df0 %>%
     mutate(text = gsub("(^.*?) {8,}.*","\\1",text))  %>%
 
     ## Get rid of 'go to somewhere' text in line
-    mutate(text = gsub("[—]*Go to.*","",text))  %>%
-    mutate(text = gsub("[—]*Code=.*","",text))  %>%
-    mutate(text = gsub("If .* is .* go to.*","",text))  %>%
+    mutate(text = gsub("[—]*Go to.*?(    [0-9].*)","\\1",text))  %>%
 
+    ## Get rid of 'Code' text in line
+    mutate(text = gsub("[—]*Code=.*?(    [0-9].*)","\\1",text))  %>%
+
+    ## Get rid of 'If' conditional text in line
+    mutate(text = gsub("If .* is .* go to.*?(    [0-9].*)","\\1",text))  %>%
+
+    mutate(text = gsub("Notes:.*?(    [0-9].*)","\\1",text))  %>%
 
     mutate(value = gsub("^([[:digit:]]+).*","\\1",text)) %>%
 
+    # get max val if text looks like 1 - 999 or similar
     mutate(maxval = ifelse(grepl("^[[:digit:]]+ *- *([[:digit:]]+).*",text),
                            gsub("^[[:digit:]]+ *- *([[:digit:]]+).*","\\1",text), NA)) %>%
     mutate(text = gsub("^[[:digit:]]+ *- *([[:digit:]]+) +","",text))  %>%
@@ -235,7 +250,7 @@ parse_codebook_values <- function(file=NULL) {
     filter(col_name != "IDAY" | value == "1") %>%
     mutate(maxval = ifelse(col_name == "IDAY","31", maxval)) %>%
 
-    # special case IYEAR ... usually just survey year and some follring year in January
+    # special case IYEAR ... usually just survey year and some following year in January
     #    mutate(text = ifelse(col_name == "IYEAR",gsub("^(.*?) .*","\\1",text), text)) %>%
     filter(col_name != "IYEAR" | grepl("Interview",text)) %>%
     mutate(value = ifelse(col_name == "IYEAR",year, value)) %>%
@@ -243,19 +258,32 @@ parse_codebook_values <- function(file=NULL) {
 
     # special case REPDEPTH ... no need for 30 lines ... make range 1 to 30
     filter(col_name != "REPDEPTH" | value == "1") %>%
-    mutate(maxval = ifelse(col_name == "REPDEPTH","30", maxval)) %>%
+    mutate(maxval = ifelse(col_name == "REPDEPTH","30", maxval))
 
-    #  get rid of numerics at end of each value name (totals that sometimes come over in codebook)
-    #  Value	Value Label	           Frequency	Pct	Pct Wtd
-    #      1 Yes	                       222	17.38	10.54
-    #      2 No	                         919	71.97	76.71
-    #      7 Don’t know/Not Sure	       136	10.65	12.75
-    #  BLANK Not asked or Missing	       101    .     .
+  #  used to but now don't get rid of all numerics at end of each value name
+  #         (totals (Frequency) are now being grabbed for comparisons later)
 
+  #  Value	Value Label	           Frequency	Pct	Pct Wtd
+  #      1 Yes	                       222	17.38	10.54
+  #      2 No	                         919	71.97	76.71
+  #      7 Don’t know/Not Sure	       136	10.65	12.75
+  #  BLANK Not asked or Missing	       101    .     .
+
+  cnt <- df_final$text
+
+  cnt <- gsub("(^.*? {3,}.*)","",cnt)
+  cnt <- gsub("(^.*?) {3,}.*","\\1",cnt)
+  cnt[grep("^[A-z$]",cnt)] <- ""
+  cnt <- gsub("^ ","",cnt)
+
+  tryCatch(expr = cnt <- as.integer(cnt),
+           warning = function(w) {})
+
+
+  df_final <- df_final %>%
+    mutate(count = {{cnt}})  %>%
     mutate(text = gsub("(^.*?) {3,}.*","\\1",text))  %>%
-
-
-    select(col_name,value, maxval, text)
+    select(col_name,value, maxval, text, count)
 
   df_final
 
@@ -592,3 +620,70 @@ simple_counts <- function(df_brfss, coi, na.rm = TRUE, valid = FALSE, total = TR
   x <- paste0(x,collapse = "\n")
   cat(x)
 }
+
+#' Compare Codebook Frequencies with Actual BRFSS Data
+#'
+#' Useful function for seeing if the data you are processing matches the frequencies
+#' listed in the codebook. This uses brfss::brfss_data() which gets most needed info
+#' from brfss.params()
+#'
+#' @param coi  character - column to check for consistency
+#'
+#' @return a data frame containing the comparison
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' coi <- "GENHLTH"
+#' df_compare <- compare.codebook(coi = coi)
+#' }
+#'
+compare.codebook <- function(coi) {
+
+  df_brfss <- brfss_data()
+  # cnames <- colnames(df_brfss)
+  #
+  # cnames
+  #
+  # cnames_race <- grep("RACE", cnames, value = TRUE)
+  #
+  # cnames_race
+  #
+  # coi <- '_PRACE2'
+
+  df_values <- brfss::codebook_values() %>%
+    filter(col_name == {{coi}}) %>%
+    select(value, text, col_name, codebook = count)
+
+  table(df_brfss[coi]) %>%
+    as.data.frame() %>%
+    rename(actual = Freq) %>%
+    rename(value = 1) %>%
+    left_join(df_values, by = "value") %>%
+    relocate(actual, .after = last_col())
+
+}
+
+#' Print a Comparison of Codebook Frequencies with Actual BRFSS Data
+#'
+#' Useful function for seeing if the data you are processing matches the frequencies
+#' listed in the codebook. This uses brfss::brfss_data() which gets most needed info
+#' from brfss.params()
+#'
+#' @param coi  character - column to check for consistency
+#'
+#' @return Nothing - prints to screen
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' coi <- "GENHLTH"
+#' print.compare.codebook(coi = coi)
+#' }
+print_compare_codebook <- function(coi){
+  require(dplyr)
+  q <- brfss::column_question(coi)
+  cat("\nColumn: ", coi,"\n",q,"\n\n")
+  print(brfss::compare.codebook(coi = coi) %>% select(-col_name), row.names = FALSE)
+}
+

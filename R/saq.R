@@ -77,11 +77,12 @@ merge_saq_layout <- function(df_layout = NULL, df_saq_layout = NULL) {
 
   has_saq_layout <- !is.null(df_saq_layout)
   not_merged <- any(grepl('STATEQUE', df_layout %>% pull(col_name)))
+  merged <- !not_merged
 
   if(!has_saq_layout) {
     stat = 1
     msg <- "No SAQ layout"
-  } else if(not_merged) {
+  } else if(merged) {
     stat = 2
     msg <- "Already merged"
   } else {
@@ -97,13 +98,20 @@ merge_saq_layout <- function(df_layout = NULL, df_saq_layout = NULL) {
     slice_row <- which(df_layout$col_name == 'STATEQUE')
     saq_size <-  df_layout %>% slice(slice_row) %>% pull(field_size)
 
-    keep0 <- df_layout %>% slice(1:(slice_row-1))
-    keep1 <- df_layout %>% slice((slice_row+1):nrow(df_layout))
+    keep0 <- df_layout %>% slice(1:(slice_row-1)) %>%
+      mutate(sect_num = as.integer(sect_num))%>%
+      mutate(question_num = as.integer(question_num))
+
+    keep1 <- df_layout %>% slice((slice_row+1):nrow(df_layout)) %>%
+      mutate(sect_num = as.integer(sect_num))%>%
+      mutate(question_num = as.integer(question_num))
 
     my_saq_size <-df_saq_layout  %>% pull(field_size) %>% sum()
 
     saq_dummy <- data.frame( col_name = 'DUMMY_SAQ',
-                             field_size = saq_size - my_saq_size)
+                             field_size = saq_size - my_saq_size,
+                             start = max(df_saq_layout$end)+1,
+                             end = min(keep1$start)-1)
 
     df_layout <- keep0  %>%
       bind_rows(df_saq_layout, saq_dummy, keep1)

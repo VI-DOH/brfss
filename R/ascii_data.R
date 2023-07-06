@@ -71,7 +71,6 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
     build_saq_layout()
 
-    browser()
     stat <- merge_saq_layout()  # may develop this status msg'ing later
 
     build_saq_values()
@@ -128,6 +127,8 @@ ascii.download.data<-function(destpath = NULL, unzip=TRUE, rmzip=TRUE, progress 
   if(is.null(destpath)) destpath <- apply.pattern("ascii_raw_data_folder",params)
   destpath <- normalizePath(destpath,winslash = "/",mustWork = FALSE)
   #
+
+  browser()
   if(!dir.exists(destpath)) dir.create(destpath,recursive = TRUE)
 
   version <- 0
