@@ -78,7 +78,8 @@ init.patterns <- function() {
                           "{^EXT^ == 'national';public/}"),
                    type = "folder",
 
-                   desc = "Folder to store the annual raw (imported/downloaded from CDC) data") %>%
+                   desc = paste0("Folder to store the annual raw ",
+                                 "(imported/downloaded from CDC) data")) %>%
 
     #####################################################################################
   ##
@@ -90,21 +91,36 @@ init.patterns <- function() {
 
     append.pattern("brfss_annual_data_folder",
                    paste0("$brfss_data_folder$^YEAR^/",
+
+                          #if it's a local file (NOT public)
                           "{^EXT^ == 'local';geog/^GEOG^/",
                           "{^SRC^ == 'sas';sas/}",
                           "{^SRC^ == 'ascii';ascii/}}",
+
+                          #if it's a public file (downloaded from CDC public site)
+                          # we must distinguish between the entire public data set and
+                          #  the local data set using GFLAG ... kind of a kludge to handle
+                          #  getting the entire public data set before the split into
+                          # individual states
+
                           "{^EXT^ == 'national';public/",
+                          "{^GFLAG^ == 'on';state/^GEOG^/}",
                           "{^SRC^ == 'sas';sas/}",
                           "{^SRC^ == 'ascii';ascii/}}"),
+                   #{^VERS^ == 0;^YEAR^}{^VERS^ > 0;^YR^V^VERS^}.ASC}
                    type = "folder",
                    desc = "Folder to store the annual processed BRFSS data") %>%
 
     append.pattern("brfss_annual_data_file",
                    paste0("{^EXT^ == 'local';^GEOG^_^YEAR^}",
-                          "{^EXT^ == 'national';{^SRC^ == 'sas';sas_^YEAR^}",
-                          "{^SRC^ == 'ascii';ascii_^YEAR^}}",
+                          "{^EXT^ == 'national';",
+                          "{^GFLAG^ == 'on';^GEOG^_^YEAR^}",
+                          "{^GFLAG^ == 'off';",
+                          "{^SRC^ == 'sas';sas_^YEAR^}",
+                          "{^SRC^ == 'ascii';ascii_^YEAR^}}}",
                           "{^VERS^ > 0;_V^VERS^}",
                           ".rds"),
+                   #"^GEOG^_^YEAR^.rds",
                    type = "file",
                    desc = paste0("File name for annual processed BRFSS data (main survey),
                    from specific geographies")) %>%
@@ -161,7 +177,7 @@ init.patterns <- function() {
 
     append.pattern("codebook_file",
                    paste0("{^EXT^ == 'local';^GEOG^^YR^CODE_LLCP}",
-                   "{^EXT^ != 'local';CODEBOOK^YR^_LLCP}"),
+                          "{^EXT^ != 'local';CODEBOOK^YR^_LLCP}"),
                    type = "file",
                    desc = "file name of the annual codebook file") %>%
 

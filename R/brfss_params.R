@@ -279,8 +279,24 @@ default.brfss.env <- function() {
 
 
 my.brfss.path <- function() {
-  folder <- orrr::convert.dot(apply.pattern("brfss_data_folder"))
-  paste0(folder, "my_brfss.rds")
+
+  path <- NULL
+
+  tryCatch(expr = {
+    folder <- orrr::convert.dot(apply.pattern("brfss_data_folder"))
+    path <- paste0(folder, "my_brfss.rds")
+  }, error = function(e) {
+    return(NULL)
+  }, warning = function(w) {
+    return(NULL)
+  })
+
+  if(!is.null(path) && !file.exists(path)) {
+    path <- paste0(folder, "my_brfss.rda")
+    if(!file.exists(path)) path <-  NULL
+  }
+
+  path
 }
 
 
@@ -310,6 +326,11 @@ my.brfss.path <- function() {
 #'}
 my.brfss.init <- function() {
   path <- my.brfss.path()
+
+  if(is.null(path)) {
+    path <- "./data/my_brfss.rda"
+
+  }
 
   my_brfss <- list()
 
@@ -452,11 +473,25 @@ my.brfss.init <- function() {
   my_brfss$phone$values <- c("cell","land", "comb")
   my_brfss$phone$pattern <- "PHON"
 
+
+  ###################################################
+  ##
+  ##    geog_flag
+
+  my_brfss$geog_flag$value <- "on"
+  my_brfss$geog_flag$values <- c("on","off")
+  my_brfss$geog_flag$pattern <- "GFLAG"
+
   ###############################################
   ##
-  ##  updare/save parameters
+  ##  update/save parameters
 
-  saveRDS(my_brfss, file = path)
+  if(grepl("[.]rds",path))
+    {
+    saveRDS(my_brfss, file = path)
+  } else {
+    save(my_brfss,file = path)
+  }
 
 }
 

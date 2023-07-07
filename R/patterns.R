@@ -363,12 +363,18 @@ patternize<-function(strIn, ..., expand = TRUE) {
   while(has_conditions(ret)) {
 
     # there is at least one condition .. get the text
+    # cat("\n==========================================\n\n")
+    # cat("ret (in)=",ret,"\n")
 
     next_cond <- next_condition(ret)
+
+    # cat("next_cond$start=",next_cond$start,"\n")
+    # cat("next_cond$end=",next_cond$end,"\n")
 
     # parse the expression part of the condition
 
     expr <- substr(ret, next_cond$start, next_cond$end)
+    # cat("expr=",expr,"\n")
 
     # are there any embedded params ... ^XXXX^ ...
     if(grepl("^",expr, fixed = TRUE)) {
@@ -379,15 +385,19 @@ patternize<-function(strIn, ..., expand = TRUE) {
       # condition is clean ... evaluate
       expr <- eval_pattern_cond(expr)
     }
-
+    # cat("expr (new)=",expr,"\n")
     ret  <- paste0(substring(ret, 1,next_cond$start-1),
                    expr,
                    substring(ret, next_cond$end+1))
+
+    # cat("ret=",ret,"\n")
   }
 
   # no more conditions
 
   if(expand && grepl("./",ret, fixed = T)) ret <- orrr::convert.dot(ret)
+
+  # cat("ret (final)=",ret,"\n")
 
   ret
 }
@@ -396,10 +406,10 @@ next_condition <- function(expr) {
   start <- max(gregexpr("{",expr, fixed  = T)[[1]])
   ends <- gregexpr("}",expr, fixed  = T)[[1]]
   tryCatch(
-  end <- min(ends[ends>start]),
-  warning = function(w){
-    "Mismatched brackets"
-  }
+    end <- min(ends[ends>start]),
+    warning = function(w){
+      "Mismatched brackets"
+    }
   )
   list(start = start, end = end)
 }
@@ -410,10 +420,10 @@ has_conditions <- function(expr) {
 
 eval_pattern_cond <- function(expr_in) {
 
-    expr <- gsub(".*[{](.*)[}].*","\\1",expr_in)
+  expr <- gsub(".*[{](.*)[}].*","\\1",expr_in)
 
-    if(grepl(";",expr_in)) {
-      expr <-  gsub("(.*);(.*)","\\1",expr)
+  if(grepl(";",expr_in)) {
+    expr <-  gsub("(.*);(.*)","\\1",expr)
 
 
     if(grepl(" *[=!]= *'",expr)) {
