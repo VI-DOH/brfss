@@ -48,7 +48,8 @@ download_codebook <- function(progress = NULL) {
     return()
   }
 
-  ## if year is not provided then get the year from the my_brfss object
+  ## get params from the my_brfss object, what are we working with at this time
+
   params <- my.brfss.patterns()
 
   ##  URL patterns are stored under the group  "codebook_downloads"

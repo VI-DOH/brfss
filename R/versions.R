@@ -32,7 +32,7 @@ highest_version<-function() {
 
   if(length(files) == 0) {
     if(brfss.param(source) == "sas") {
-      fldr<-apply.pattern("sas_raw_folder", params)
+      fldr<-apply.pattern("sas_raw_data_folder", params)
     } else {
       fldr <- apply.pattern("ascii_path", params)
     }

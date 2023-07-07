@@ -123,12 +123,10 @@ ascii.download.data<-function(destpath = NULL, unzip=TRUE, rmzip=TRUE, progress 
 
   show_progress(progress, message = "Downloading ... ")
 
-
   if(is.null(destpath)) destpath <- apply.pattern("ascii_raw_data_folder",params)
   destpath <- normalizePath(destpath,winslash = "/",mustWork = FALSE)
   #
 
-  browser()
   if(!dir.exists(destpath)) dir.create(destpath,recursive = TRUE)
 
   version <- 0

@@ -21,7 +21,7 @@ unzip.all<-function(rmzip=TRUE) {
 
   params <- my.brfss.patterns()
 
-  folder<-apply.pattern("sas_raw_folder", params)
+  folder<-apply.pattern("sas_raw_data_folder", params)
   files<-list.files(folder,full.names = T)
 
   files<-files[grep("[.]zip$",files)]
@@ -189,8 +189,8 @@ convert_sas <- function(verbose = FALSE, progress = NULL) {
   if(verbose) cat(" ... trying versions\n ")
   while (cont) {
 
-   if(verbose) cat("Converting version=",ivers,"\n")
-   show_progress(progress,
+    if(verbose) cat("Converting version=",ivers,"\n")
+    show_progress(progress,
                   message = paste0("Survey Data ... converting version ", ivers))
 
     cont <- read.xpt(version=ivers,verbose=TRUE)
@@ -209,7 +209,7 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
 
   pttrns<-get.pattern.group("sas_downloads")
   urlfiles<- apply.pattern("brfss_url_files", params)
-  folderout<-apply.pattern("sas_raw_folder", params)
+  folderout<-apply.pattern("sas_raw_data_folder", params)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   to <- getOption("timeout")
@@ -218,7 +218,7 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
 
   sapply(pttrns,function(pttrn) {
 
-    has_vers <- grepl("[VERS]", pttrn, fixed = TRUE)
+    has_vers <- grepl("^VERS^", pttrn, fixed = TRUE)
     cont <- TRUE
     version <- 0
     params["VERS"] <- 0
@@ -274,7 +274,7 @@ sas_download_xpt<-function(progress = NULL) {
   #files<-sas.url.pattern.downloads.versions()
   file_pttrn<-get.pattern("xpt_download_zip_file")
 
-  folderout<-apply.pattern("sas_raw_folder", params)
+  folderout<-apply.pattern("sas_raw_data_folder", params)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   urlfiles<-apply.pattern("brfss_url_files", params)
@@ -328,7 +328,7 @@ sas_download_metadata.versions<-function() {
   #files<-sas.url.pattern.downloads.versions()
   files<-get.pattern.group("sas_version_downloads")
 
-  folderout<-apply.pattern("sas_raw_folder",params)
+  folderout<-apply.pattern("sas_raw_data_folder",params)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   urlfiles<-apply.pattern("brfss_url_files",params)
@@ -555,7 +555,7 @@ cleave.geogs.sas<-function(year = NULL,
 
           fname <- brfss_data_path( rw = 'w')
 
-         #fname <- brfss_data_path(year = year, geog = nm, version = version, rw = 'w')
+          #fname <- brfss_data_path(year = year, geog = nm, version = version, rw = 'w')
 
           if(verbose) cat("Going to save :", fname, "\n")
 
@@ -616,7 +616,7 @@ read.sas.format<-function(folder_pat= NULL, file_pat = NULL) {
 
   params <- my.brfss.patterns()
 
-  if(is.null(folder_pat)) folder_pat <- get.pattern("sas_raw_folder") %>% expand.pattern()
+  if(is.null(folder_pat)) folder_pat <- get.pattern("sas_raw_data_folder") %>% expand.pattern()
   if(is.null(file_pat)) file_pat <- expand.pattern(get.pattern("sas_file_format"))
 
 
