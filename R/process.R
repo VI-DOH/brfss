@@ -98,7 +98,11 @@ split_geogs<-function(main=TRUE, versions=TRUE,
 
   sapply(ver,function(version) {
 
+    browser()
+
     brfss.param(version = version)
+    brfss.param(geog_flag = 'off')
+
     params <- my.brfss.patterns()
 
     rdata_file <- apply.pattern("brfss_annual_data_path",params)
@@ -107,6 +111,8 @@ split_geogs<-function(main=TRUE, versions=TRUE,
                   message = paste0("Splitting ... trying version [", version, "]"))
 
     df_brfss <- readRDS(file = rdata_file)
+
+    brfss.param(geog_flag = 'on')
 
     if(brfss.param(geog) == '*') {
       geogs<-unique(df_brfss$`_STATE`)
@@ -178,13 +184,17 @@ split_geogs<-function(main=TRUE, versions=TRUE,
           # make sure, even if temporarily, extent param is set to local
           #     to make sure we are saving the data under the geog folder
 
-          ext <- brfss.param(extent)
+          # rethinking the above ... locally, you may want to have a
+          #   copy of the public data set ...
+          #   right now, saving it would overwrite your local copy
 
-          brfss.param(extent = "local")
+          # ext <- brfss.param(extent)
+          #
+          # brfss.param(extent = "local")
 
           fname <- brfss_data_path( rw = 'w')
 
-          brfss.param(extent = ext)
+          # brfss.param(extent = ext)
 
           if(verbose) cat("Going to save :", fname, "\n")
 

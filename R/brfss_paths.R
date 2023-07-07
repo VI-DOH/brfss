@@ -179,15 +179,13 @@ brfss_data_path <- function(rw = c("r","w")) {
 
   params <- my.brfss.patterns()
 
-  ## added && FALSE to force all files to be in brfss_geog_folder
+  fldr <- apply.pattern("brfss_annual_data_folder", params)
 
-    fldr <- apply.pattern("brfss_annual_data_folder", params)
+  if(!dir.exists(fldr) && write) {
+    dir.create(fldr, recursive = TRUE)
+  }
 
-
-  if(!dir.exists(fldr) && write) dir.create(fldr, recursive = TRUE)
-
-
-    file <- apply.pattern("brfss_annual_data_file",  params)
+  file <- apply.pattern("brfss_annual_data_file",  params)
 
   path <- paste0(fldr,file)
 
