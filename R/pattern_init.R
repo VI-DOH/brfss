@@ -74,7 +74,7 @@ init.patterns <- function() {
 
     append.pattern("brfss_annual_raw_data_folder",
                    paste0("$brfss_raw_data_folder$^YEAR^/",
-                          "{^EXT^ == 'local';geog/^GEOG^/}",
+                          "{^EXT^ == 'local';local/^GEOG^/}",
                           "{^EXT^ == 'national';public/}"),
                    type = "folder",
 
@@ -93,7 +93,7 @@ init.patterns <- function() {
                    paste0("$brfss_data_folder$^YEAR^/",
 
                           #if it's a local file (NOT public)
-                          "{^EXT^ == 'local';geog/^GEOG^/",
+                          "{^EXT^ == 'local';local/^GEOG^/",
                           "{^SRC^ == 'sas';sas/}",
                           "{^SRC^ == 'ascii';ascii/}}",
 
@@ -135,7 +135,7 @@ init.patterns <- function() {
                    type = "folder",
                    desc ="Standard location of user created metadata") %>%
 
-    append.pattern("brfss_geog_folder","$brfss_data_folder$^YEAR^/geog/",
+    append.pattern("brfss_geog_folder","$brfss_data_folder$^YEAR^/local/",
                    type = "folder",
                    desc = "Folder holding data for specific geographies") %>%
 
@@ -214,7 +214,7 @@ init.patterns <- function() {
 
   append.pattern("layout_folder",
                  paste0("$brfss_data_folder$^YEAR^/",
-                        "{^EXT^ == 'local';geog/^GEOG^/layout/}",
+                        "{^EXT^ == 'local';local/^GEOG^/layout/}",
                         "{^EXT^ == 'national';public/layout/}"),
                  type = "folder") %>%
 
@@ -231,7 +231,7 @@ init.patterns <- function() {
     #                type = "folder") %>%
     append.pattern("brfss_responses_folder",
                    paste0("$brfss_data_folder$^YEAR^/",
-                          "{^EXT^ == 'local';geog/^GEOG^/}",
+                          "{^EXT^ == 'local';local/^GEOG^/}",
                           "{^EXT^ == 'national';public/}"),
                    type = "folder") %>%
 
@@ -247,7 +247,7 @@ init.patterns <- function() {
 
     append.pattern("brfss_modules_folder",
                    paste0("$brfss_data_folder$^YEAR^/",
-                          "{^EXT^ == 'local';geog/^GEOG^/}",
+                          "{^EXT^ == 'local';local/^GEOG^/}",
                           "{^EXT^ == 'national';public/}"),
                    type = "folder") %>%
 
@@ -292,7 +292,7 @@ init.patterns <- function() {
 
     append.pattern("ascii_data_folder",
                    paste0("$brfss_data_folder$^YEAR^/",
-                          "{^EXT^ == 'local';geog/^GEOG^/ascii/}",
+                          "{^EXT^ == 'local';local/^GEOG^/ascii/}",
                           "{^EXT^ == 'national';public/ascii/}"),
                    type = "folder") %>%
 
@@ -374,7 +374,7 @@ init.patterns <- function() {
                    type = "path")%>%
 
     append.pattern("saq_layout_folder",paste0("$brfss_data_folder$^YEAR^/",
-                                              "{^EXT^ == 'local';geog/^GEOG^/saq/}{^EXT^ == 'national';ERROR}"),
+                                              "{^EXT^ == 'local';local/^GEOG^/saq/}{^EXT^ == 'national';ERROR}"),
                    type = "folder",
                    desc = "Folder to store the annual processed BRFSS data") %>%
 
@@ -393,7 +393,7 @@ init.patterns <- function() {
 
     ##  files from merging the saq data with the national data
     append.pattern("merged_layout_folder",paste0("$brfss_data_folder$^YEAR^/",
-                                                 "{^EXT^ == 'local';geog/^GEOG^/layout/}",
+                                                 "{^EXT^ == 'local';local/^GEOG^/layout/}",
                                                  "{^EXT^ == 'national';ERROR}"),
                    type = "folder") %>%
 
