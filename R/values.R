@@ -306,7 +306,6 @@ get.merged.values <- function() {
 
   if(!file.exists(file)) return(NULL)
 
-
   readRDS(file = file)
 
 }
@@ -468,7 +467,7 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 #' df_brfss <- make_factors(df_brfss = df_brfss, df_layout = df_layout, df_vals = df_vals)
 #' }
 #'
-make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL) {
+make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL, verbose = FALSE) {
 
   if(is.null(df_brfss)) df_brfss <- brfss_data()
 
@@ -481,23 +480,38 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL) {
     filter(type == "factor")  %>%
     {row.names(.)<-NULL;.}
 
+  if(verbose) cat("factorizing ... \n")
+
   invisible(
     sapply(df_factors$col_name, function(col) {
 
-      a<- attributes(df_brfss[[col]])
-      df <- df_vals %>% filter(col_name==col)
-      levels <- df %>% pull(value)
-      labels <- df %>% pull(text)
-      x <- df_brfss[[col]]
+      #if(col == "MARJSMOK") browser()
 
-      if(orrr::is.integer_like(levels)) levels <- as.integer(levels)
-      if(orrr::is.integer_like(x)) x <- as.integer(x)
+      if(verbose) cat("  .. ", col)
 
-      f <- factor(x,levels = levels, labels = labels)
-      attributes(f) <- c(attributes(f),a)
-      df_brfss[col] <<- f
+      tryCatch({
+        a<- attributes(df_brfss[[col]])
+        df <- df_vals %>% filter(col_name==col)
+        levels <- df %>% pull(value)
+        labels <- df %>% pull(text)
+        x <- df_brfss[[col]]
+
+        if(orrr::is.integer_like(levels)) levels <- as.integer(levels)
+        if(orrr::is.integer_like(x)) x <- as.integer(x)
+
+        f <- factor(x,levels = levels, labels = labels)
+        attributes(f) <- c(attributes(f),a)
+        df_brfss[col] <<- f
+
+        if(verbose) cat(" OK","\n")
+      }, error = function(e) {
+        if(verbose) cat(" Failed","\n")
+
+      })
     })
   )
+  cat(" ... DONE factorizing  \n")
+
 
   df_brfss
 }
@@ -531,7 +545,7 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL) {
 valid_only <- function(df, coi, other_cols=character(0), invalid = c("don.{0,1}t know|refused")) {
 
   df <- df %>%
-    select({{coi}}, other_cols) %>%
+    select(all_of(coi), other_cols) %>%
     filter(!grepl(invalid,.[[coi]], ignore.case = TRUE)) %>%
     filter(!is.na(.[[coi]]))
 
@@ -687,3 +701,140 @@ print_compare_codebook <- function(coi){
   print(brfss::compare.codebook(coi = coi) %>% select(-col_name), row.names = FALSE)
 }
 
+
+
+#' Get Original Values
+#'
+#' The possible values for each question are used to factorize each column. This hides/removes the original integral value for the question. This function returns a data.frame with the original value and text for each response.
+#'
+#' @param coi - character: column of interest
+#' @export
+#'
+
+original_values <- function(coi) {
+
+  ##  get original values
+  ## if it wasn't a range it will already be a factor
+
+  df <- prepped_data() %>% rename(COI = {{coi}})  %>%
+    select(response = COI) %>%
+    mutate(response = as.character(response))%>%
+    mutate(response = ifelse(is.na(response),"Not eligible/no answer",response))
+
+  attrs<-attributes(df[["response"]])
+
+
+  df_vals_coi <- values() %>%
+    select(col_name, response = text, value, maxval) %>%
+    filter(col_name == {{coi}}) %>%
+    bind_rows(data.frame(col_name = coi, response = "Not eligible/no answer", value = "NA"))
+
+  if(nrow(df_vals_coi)==1) {
+
+    df_vals_coi <- df_vals_coi %>%
+      bind_rows(data.frame(col_name = coi, response = levels(df$response), value = 1:length(levels(df$response))),
+                .)
+    df <- df %>%
+      mutate(response = as.character(response))
+
+  } else if(has_maxval(coi)) {
+
+    mv <- maxval(coi)
+    vals <- 1:mv
+
+    df_vals_coi <- df_vals_coi %>%
+      filter(is.na(maxval)) %>%
+      bind_rows(data.frame(col_name = coi, response = as.character(vals), value =  as.character(vals))) %>%
+     # arrange(as.integer(value)) %>%
+      select(-maxval)
+
+    df <- df %>%
+      rename(value = response) %>%
+      mutate(value = as.character(value)) %>%
+      left_join(df_vals_coi, by = "value")
+
+
+  } else {
+
+    df <- df %>%
+      mutate(response = as.character(response)) %>%
+      left_join(df_vals_coi, by = "response")
+
+
+  }
+
+  order <- df_vals_coi %>% pull(value) %>%  as.integer() %>%  order()
+  resp_levels <- df_vals_coi %>% arrange(order) %>% pull(response)
+
+
+  df <- df %>% mutate(response = factor(response, levels = resp_levels))
+
+  df <- df %>% add_attributes("response", attrs)
+
+  df %>% select(col_name, value, response)
+}
+
+
+#' Get Original Values as Counts
+#'
+#' The possible values for each question are used to factorize each column. This hides/removes the original integral value for the question. This function returns a data.frame with the original value , text and count for each possible value.
+#'
+#' @param coi - character: column of interest
+#'
+#' @export
+#'
+original_values_tbl <- function(coi) {
+
+  original_values(coi) %>% pull(response) %>%
+    table() %>% as.data.frame() %>%
+    rename(n = Freq)
+
+}
+
+
+
+#' Get the maximum value for a column
+#'
+#' The possible values for each question are sometimes a range of values and as such,
+#' not all values are included in the values() data.frame.
+#' If a column of interest contains a range maximum value, it will be returned,
+#' otherwise NULL is returned.
+#'
+#'
+#' @export
+#'
+maxval <- function(coi) {
+
+  maxvals <- values()  %>%
+    filter(col_name == {{coi}}) %>%
+    pull(maxval)
+
+  mv <- which(!is.na(maxvals))
+
+  if(length(mv) == 1) {
+
+    mxval <-  as.integer(maxvals[mv])
+
+  } else {
+
+    mxval <- NULL
+  }
+
+  mxval
+
+}
+#' Is there a maximum value for a column
+#'
+#' The possible values for each question are sometimes a range of values and as such,
+#' not all values are included in the values() data.frame.
+#' If a column of interest contains a range maximum value, it will return TRUE,
+#' otherwise FALSE is returned.
+#'
+#'
+#' @export
+#'
+has_maxval <- function(coi) {
+
+  !is.null(maxval(coi))
+
+}

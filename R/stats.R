@@ -80,9 +80,14 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
   require(survey, quietly = T, warn.conflicts = F)
   require(dplyr, quietly = T, warn.conflicts = F)
 
-  ##    this is a kludgy way to remove the exclude ... NULL would be better and that will be fixed
+  ## make sure that this column exists
 
-  if(is.null(exclude)) exclude <- "DHFHREYDHDMJDNCNJ"
+  if(!has_column(df_data, coi)) return(NULL)
+
+  ##    this is a kludgy way to remove the exclude ...
+  ##      NULL would be better and that will be fixed
+
+  if(is.null(exclude)) exclude <- "^$"
 
   ###########################################################
 
@@ -124,12 +129,45 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
 
   frmla<- reformulate(c(coi) %>% paste0("`",.,"`"))
 
-  des<-survey::svydesign(ids = ~1,
-                         strata = strata,
-                         variables =  frmla,
-                         data = df_brfss,
-                         weights = weighting,
-                         deff=F)
+
+  ## this will fail if there is only one level so
+  ##    we must add a"dummy" response level
+  ##      it will be removed before returning the data
+
+  levels <- levels(df_brfss %>% pull({{coi}}))
+
+  if(length(levels) == 1) {
+    levels(df_brfss[,coi]) <- c(levels , 'dummy')
+  }
+
+  des <- NULL
+
+  des <- tryCatch({
+    survey::svydesign(ids = ~1,
+                      strata = strata,
+                      variables =  frmla,
+                      data = df_brfss,
+                      weights = weighting,
+                      deff=F)
+  }, error = function(e) {
+
+    cat(" I couth an error \n  ----- ", e$message, "\n ------\n")
+    return(NULL)
+
+  }, warning = function(w) {
+
+    cat(" warning", w$message, "\n")
+    return(NULL)
+
+    # }, finally = function() {
+    #   cat(" finally \n")
+    #
+  }  )
+
+  if(is.null(des)) {
+    return(data.frame())
+
+  }
 
   df_stats_main <- stats_no_subs(des, pct = pct, digits = digits)
 
@@ -162,15 +200,17 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
   df_lo <- get.layout() %>%
     filter(col_name == {{coi}})
 
-  attr(df,"question") <- df_lo %>%
-    pull(question)
-
-  attr(df,"label") <- unname(df_lo %>%
-                               pull(label))
-
   attr(df,"coi") <- coi
-
+  attr(df,"question") <- df_lo %>% pull(question)
+  attr(df,"label") <- unname(df_lo %>% pull(label))
   attr(df,"weighted") <- weighted
+  attr(df,"conf") <- conf
+
+  # remove "dummy" response (in case there was only one level)
+
+  df <- df %>% filter(response != "dummy")
+
+  ## return data.frame
 
   df
 }
@@ -185,6 +225,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   coi <- names(des$variables[1])
   subset <- names(des$variables[2])
+  subvar <- names(des$variables[2])
 
   frmla1<- reformulate(c(coi) %>% paste0("`",.,"`"))
   frmla2<- reformulate(c(subset) %>% paste0("`",.,"`"))
@@ -204,6 +245,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   df_stats <- reshape::melt(as.data.frame(mysvymean), id.vars = subset)
 
+
   df_stats <- df_stats %>%
     filter(!grepl("^se[.]",variable)) %>%
     rename(percent = value) %>%
@@ -218,8 +260,9 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(variable = gsub(paste0("^`",coi,"`"),"",variable)) %>%
     rename(subset = {{subset}}) %>%
     rename(response = variable) %>%
-    mutate(subvar = names(des$variables[2])) %>%
-    add_CI(conf) %>%
+    mutate(subvar = {{subvar}}) %>%
+    add_CI(mysvymean = mysvymean, conf = conf, coi) %>%
+    add_CV(mysvymean = mysvymean, coi) %>%
     mutate(across(where(is.numeric), ~ . * mult)) %>%
     mutate(across(where(is.numeric), round, digits))
 
@@ -227,12 +270,16 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
   df_stats <- df_stats %>%
     left_join(df_nums, by = c("subset", "response")) %>%
     replace(is.na(.), 0) %>%
-    select(subvar, subset, response, num, percent, se, starts_with("CI"))
+    select(subvar, subset, response, num, percent, se, starts_with("CI"), cv)
+
+  df_stats <- df_stats %>%
+    left_join(df_dens, by = c("subset"))%>%
+    select(subvar, subset, response, den, num, percent, se, starts_with("CI"), cv) #%>%
+  #    left_join(df_cv, by = c("response", "subset"))
 
 
+  df_stats
 
-  df_stats %>% left_join(df_dens, by = c("subset"))%>%
-    select(subvar, subset, response, den, num, percent, se, starts_with("CI"))
 }
 
 ###########################################################
@@ -244,7 +291,7 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   frmla<- reformulate(names(des$variables) %>% paste0("`",.,"`"))
   mult <- ifelse(pct,100,1)
-
+  #
   mysvymean<-survey::svymean(frmla,des,na.rm = T,deff = F)
   mysvytotal<-survey::svytotal(frmla,des,na.rm = T,deff = F)
   mysvycounts<-survey::svyby(formula = frmla, by = frmla, design = des, FUN = unwtd.count)
@@ -252,28 +299,104 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
   coi <- as.character(frmla)[2]
   names(mysvymean) <- gsub(coi,"",names(mysvymean))
 
+  # df_cv <- as.data.frame(cv(mysvymean))%>%
+  #   rename(cv = 1) %>%
+  #   mutate(response = rownames(.)) %>%
+  #   tibble::remove_rownames() %>%
+  #   mutate(response = gsub(coi,"",response))
+
   df_stats <- as.data.frame(mysvymean) %>%
+    mutate(response = rownames(.))  %>%
+    #    left_join(df_cv, by = "response") %>%
     rename(se = SE) %>%
     rename(percent = mean) %>%
-    add_CI(conf) %>%
+    add_CI(mysvymean = mysvymean, coi, conf = conf) %>%
+    add_CV(mysvymean = mysvymean, coi) %>%
     mutate(across(where(is.numeric), ~ . * mult)) %>%
     mutate(across(where(is.numeric), round, digits)) %>%
     mutate(num = as.integer(mysvycounts$counts)) %>%
-    mutate(response = rownames(.)) %>%
     mutate(den = sum(num)) %>%
     relocate(response, .before = 1) %>%
     relocate(den, .after = 1) %>%
     mutate(subvar = "") %>%
     mutate(subset = "All Respondents") %>%
-    select(subvar, subset, response, den, num, percent, se, starts_with("CI"))
+    select(subvar, subset, response, den, num, percent,
+           se, starts_with("CI"), cv)
 
   rownames(df_stats)<- NULL
-
 
   df_stats
 }
 
-add_CI <- function(df, conf) {
+add_CV <- function(df, mysvymean,coi) {
+
+  has_subs <- !all(is.na(df$subset))
+
+  if(has_subs) {
+    df_cv <- as.data.frame(cv(mysvymean))%>%
+      t() %>%
+      as.data.frame() %>%
+      mutate(response = rownames(.)) %>%
+      mutate(response = gsub(paste0("^se.*",coi),"",response)) %>%
+      mutate(response = gsub("[`]","",response)) %>%
+      tibble::remove_rownames() %>%
+      reshape2::melt(value.name = "cv", id.vars = "response") %>%
+      rename(subset = variable)
+
+  } else {
+    df_cv <- as.data.frame(cv(mysvymean))%>%
+      rename(cv = 1) %>%
+      mutate(response = rownames(.)) %>%
+      tibble::remove_rownames() %>%
+      mutate(response = gsub(coi,"",response))
+  }
+
+
+  join_by = "response"
+
+  if(has_subs) join_by = c(join_by,"subset")
+
+
+  df <- df %>%
+    left_join(df_cv, by = join_by)
+
+  df
+}
+
+add_CI <- function(df, mysvymean, coi, conf) {
+
+  df_ci <- as.data.frame(confint(mysvymean,level = conf))%>%
+    rename(CI_lower = 1, CI_upper = 2) %>%
+    mutate(response = rownames(.)) %>%
+    tibble::remove_rownames() %>%
+    mutate(response = gsub(coi,"",response)) %>%
+    mutate(response = gsub("\`","",response))
+
+  resps <- df_ci %>% pull(response)
+  has_subs <- length(grep(":",resps)) == length(resps)
+
+  df_ci <- df_ci %>%
+    mutate(subset = ifelse(grepl(":",response),
+                           gsub("(.*):(.*)","\\1",response),NA)) %>%
+
+    mutate(response = ifelse(grepl(":",response),
+                             gsub("(.*):(.*)","\\2",response),response))
+
+  join_by = "response"
+
+  if(has_subs) join_by = c(join_by,"subset")
+
+  df <- df %>%
+    left_join(df_ci, by = join_by) %>%
+    mutate(CI_lower = ifelse(CI_lower <0 ,0,CI_lower)) %>%
+    mutate(CI_upper = ifelse(CI_upper>1,1,CI_upper))
+
+  df
+}
+
+
+add_CI_SAVE <- function(df, conf) {
+
   #########################################################
   ##
   ##    calculate confidence interval
@@ -286,9 +409,9 @@ add_CI <- function(df, conf) {
     mutate(CI_lower = ifelse(CI_lower <0 ,0,CI_lower)) %>%
     mutate(CI_upper = ifelse(CI_upper>1,1,CI_upper))
 
-
   df
 }
+
 #################################################################################
 #################################################################################
 ##
@@ -373,7 +496,7 @@ simple_stats <- function(df_brfss = NULL, year = NULL,
     select(Response, percent, starts_with("CI")) %>%
     remove_rownames()
 
-  x %>% left_join(df_counts %>% select({{coi}},n), by=c("Response" = coi)) %>%
+  x %>% left_join(df_counts %>% select(all_of(coi),n), by=c("Response" = coi)) %>%
     relocate(n, .after = Response)
 
 }
@@ -537,4 +660,10 @@ log_reg<-function(df_data = NULL, depvar, exclude = c("Don.*t|Refuse"), indepvar
   df
 }
 
-
+#' Default Exclude Expression
+#'
+#' @return char exclude
+#' @export
+#'
+#' @examples
+exclude_default <- function() {c("Don.*t|Refuse")}

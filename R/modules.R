@@ -86,8 +86,12 @@ modules_used <- function() {
 #' @export
 #'
 #' @examples
-save_module_stats<-function() {
+save_module_stats<-function(progress = NULL) {
   require(dplyr)
+
+  show_progress(progress,
+                message = paste0("Modules ... Saving"))
+
 
   params <- my.brfss.patterns()
 
@@ -107,7 +111,10 @@ save_module_stats<-function() {
 
   df_modules$ratio<-df_modules$responses/df_modules$responses_total
 
-  saveRDS(df_modules, file = apply.pattern("brfss_modules_path",params))
+  file  <-  apply.pattern("brfss_modules_path",params)
+  if(!dir.exists(dirname(file))) dir.create(dirname(file))
+
+  saveRDS(df_modules, file = file)
 
 }
 

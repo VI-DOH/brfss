@@ -42,7 +42,7 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
 
 
     ext <- brfss.param(extent)
-    brfss.param(extent = "local")
+    #brfss.param(extent = "local")
 
     if(brfss.param(geog) == '*') {
       geogs<-unique(df_brfss$`_STATE`)
@@ -85,7 +85,7 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
 
           ##   for now, have to save and (re-)attach the attributes for the columns
 
-            df_state <- df_state %>% make_factors()
+            df_state <- df_state %>% make_factors(verbose = verbose)
           }
 
           # make sure, even if temporarily, extent param is set to local
@@ -105,7 +105,7 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
     },df_geogs$Id,df_geogs$Abbrev)
 
     brfss.param(geog = geog_save)
-    brfss.param(extent = ext)
+    #brfss.param(extent = ext)
 
 
   })

@@ -98,11 +98,20 @@ merge_saq_layout <- function(df_layout = NULL, df_saq_layout = NULL) {
     slice_row <- which(df_layout$col_name == 'STATEQUE')
     saq_size <-  df_layout %>% slice(slice_row) %>% pull(field_size)
 
+
     keep0 <- df_layout %>% slice(1:(slice_row-1)) %>%
+      mutate(sect_num = ifelse(is.na(sect_num),0,sect_num))%>%
+      mutate(sect_num = gsub("[^0-9]","",sect_num)) %>%
+      mutate(question_num = ifelse(is.na(question_num),0,question_num))%>%
+      mutate(question_num = gsub("[^0-9]","",question_num)) %>%
       mutate(sect_num = as.integer(sect_num))%>%
       mutate(question_num = as.integer(question_num))
 
     keep1 <- df_layout %>% slice((slice_row+1):nrow(df_layout)) %>%
+      mutate(sect_num = ifelse(is.na(sect_num),0,sect_num))%>%
+      mutate(sect_num = gsub("[^0-9]","",sect_num)) %>%
+      mutate(question_num = ifelse(is.na(question_num),0,question_num))%>%
+      mutate(question_num = gsub("[^0-9]","",question_num)) %>%
       mutate(sect_num = as.integer(sect_num))%>%
       mutate(question_num = as.integer(question_num))
 

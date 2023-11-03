@@ -98,8 +98,6 @@ split_geogs<-function(main=TRUE, versions=TRUE,
 
   sapply(ver,function(version) {
 
-    browser()
-
     brfss.param(version = version)
     brfss.param(geog_flag = 'off')
 

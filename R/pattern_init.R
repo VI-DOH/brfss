@@ -31,6 +31,11 @@ init.patterns <- function() {
                    type = "folder",
                    desc ="Standard location of data, files, or reports for sharing") %>%
 
+    append.pattern("reports_folder","./reports/",
+                   type = "folder",
+                   desc ="Standard location of user created data") %>%
+
+
     ################################################################################
   ##
   ##    for downloads
@@ -72,6 +77,19 @@ init.patterns <- function() {
                  type = "folder",
                  desc = "Folder to store raw (imported/downloaded from CDC) data") %>%
 
+
+    append.pattern("brfss_annual_raw_data_folder_base",
+                   paste0("$brfss_raw_data_folder$^YEAR^/",
+
+                          #if it's a local file (NOT public)
+                          "{^EXT^ == 'local' || ^EXT^ == 'monthly' ;local/^GEOG^/}",
+
+                          # if it's public
+                          "{^EXT^ == 'national';public/",
+                          "{^GFLAG^ == 'on';state/^GEOG^/}}"),
+                   type = "folder",
+                   desc = "Folder to store raw BRFSS data") %>%
+
     append.pattern("brfss_annual_raw_data_folder",
                    paste0("$brfss_raw_data_folder$^YEAR^/",
                           "{^EXT^ == 'local';local/^GEOG^/}",
@@ -88,6 +106,18 @@ init.patterns <- function() {
   append.pattern("brfss_data_folder","$data_folder$",
                  type = "folder",
                  desc = "Folder to store processed BRFSS data") %>%
+
+    append.pattern("brfss_annual_data_folder_base",
+                   paste0("$brfss_data_folder$^YEAR^/",
+
+                          #if it's a local file (NOT public)
+                          "{^EXT^ == 'local' || ^EXT^ == 'monthly' ;local/^GEOG^/}",
+
+                          # if it's public
+                          "{^EXT^ == 'national';public/",
+                          "{^GFLAG^ == 'on';state/^GEOG^/}}"),
+                   type = "folder",
+                   desc = "Folder to store processed BRFSS data") %>%
 
     append.pattern("brfss_annual_data_folder",
                    paste0("$brfss_data_folder$^YEAR^/",
@@ -107,20 +137,28 @@ init.patterns <- function() {
                           "{^GFLAG^ == 'on';state/^GEOG^/}",
                           "{^SRC^ == 'sas';sas/}",
                           "{^SRC^ == 'ascii';ascii/}}"),
-                   #{^VERS^ == 0;^YEAR^}{^VERS^ > 0;^YR^V^VERS^}.ASC}
+
                    type = "folder",
-                   desc = "Folder to store the annual processed BRFSS data") %>%
+                   desc = "Folder to store the annual processed BRFSS data")
+
+  annual_data_pattern <- paste0("{^EXT^ == 'local';^GEOG^_^YEAR^}",
+                                "{^EXT^ == 'national';",
+                                "{^GFLAG^ == 'on';^GEOG^_^YEAR^}",
+                                "{^GFLAG^ == 'off';",
+                                "{^SRC^ == 'sas';sas_^YEAR^}",
+                                "{^SRC^ == 'ascii';ascii_^YEAR^}}}",
+                                "{^VERS^ > 0;_V^VERS^}")
+
+  naming_patterns  <- naming_patterns %>%
 
     append.pattern("brfss_annual_data_file",
-                   paste0("{^EXT^ == 'local';^GEOG^_^YEAR^}",
-                          "{^EXT^ == 'national';",
-                          "{^GFLAG^ == 'on';^GEOG^_^YEAR^}",
-                          "{^GFLAG^ == 'off';",
-                          "{^SRC^ == 'sas';sas_^YEAR^}",
-                          "{^SRC^ == 'ascii';ascii_^YEAR^}}}",
-                          "{^VERS^ > 0;_V^VERS^}",
-                          ".rds"),
-                   #"^GEOG^_^YEAR^.rds",
+                   paste0(annual_data_pattern, ".rds"),
+                   type = "file",
+                   desc = paste0("File name for annual processed BRFSS data (main survey),
+                   from specific geographies")) %>%
+
+    append.pattern("brfss_annual_data_unfactored_file",
+                   paste0(annual_data_pattern, "_unf.rds"),
                    type = "file",
                    desc = paste0("File name for annual processed BRFSS data (main survey),
                    from specific geographies")) %>%
@@ -131,9 +169,11 @@ init.patterns <- function() {
                    desc = "Full path for annual processed BRFSS data
                    (main survey) from specific geographies") %>%
 
-    append.pattern("annual_metadata_folder","$brfss_annual_data_folder$metadata/",
-                   type = "folder",
-                   desc ="Standard location of user created metadata") %>%
+    append.pattern("brfss_annual_data_unfactored_path",
+                   "$brfss_annual_data_folder$$brfss_annual_data_unfactored_file$",
+                   type = "path",
+                   desc = "Full path for annual processed BRFSS data
+                   (main survey) from specific geographies") %>%
 
     append.pattern("brfss_geog_folder","$brfss_data_folder$^YEAR^/local/",
                    type = "folder",
@@ -143,6 +183,22 @@ init.patterns <- function() {
                    type = "data",
                    desc = "Consistent name for BRFSS data object (data.frame) stored and retrieved") %>%
 
+    #####################################################################
+  ##
+  ##    metadata
+
+  append.pattern("brfss_annual_raw_metadata_folder",
+                 "$brfss_annual_raw_data_folder_base$metadata/",
+
+                 type = "folder",
+                 group = "metadata",
+                 desc = "Folder to store the metadata ... modules and responses") %>%
+
+    append.pattern("brfss_annual_metadata_folder",
+                   paste0("$brfss_annual_data_folder_base$metadata/"),
+                   type = "folder",
+                   group = "metadata",
+                   desc = "Folder to store the metadata ... modules and responses") %>%
 
     #############################################################################
   ##
@@ -173,91 +229,71 @@ init.patterns <- function() {
 
     append.pattern("codebook_folder","$brfss_annual_raw_data_folder$codebook/",
                    type = "folder",
+                   group ="codebook",
                    desc = "location of the annual codebook file") %>%
 
     append.pattern("codebook_file",
                    paste0("{^EXT^ == 'local';^GEOG^^YR^CODE_LLCP}",
                           "{^EXT^ != 'local';CODEBOOK^YR^_LLCP}"),
                    type = "file",
+                   group ="codebook",
                    desc = "file name of the annual codebook file") %>%
 
     append.pattern("codebook_ext","pdf",
                    type = "extension",
+                   group ="codebook",
                    desc = "ext of the annual codebook file (txt, rtf, html, or pdf") %>%
 
     append.pattern("codebook_path","$codebook_folder$$codebook_file$.$codebook_ext$",
                    type = "path",
+                   group ="codebook",
                    desc = "ext of the annual codebook file (.txt, .rtf, or .pdf") %>%
 
     append.pattern("codebook_layout_folder","$layout_folder$",
                    type = "folder",
+                   group ="codebook",
                    desc = "location of the annual codebook layout file") %>%
 
     append.pattern("codebook_layout_file","layout^YR^_CB.rds",
                    type = "file",
+                   group ="codebook",
                    desc = "file name of the annual codebook layout file") %>%
 
     append.pattern("codebook_layout_path","$codebook_layout_folder$$codebook_layout_file$",
                    type = "path",
+                   group ="codebook",
                    desc = "path to the annual codebook layout file") %>%
 
     append.pattern("codebook_values_file","values^YR^_CB.rds",
                    type = "file",
+                   group ="codebook",
                    desc = "file name of the annual codebook values file") %>%
 
     append.pattern("codebook_values_path","$codebook_layout_folder$$codebook_values_file$",
                    type = "path",
+                   group ="codebook",
                    desc = "path to the annual codebook layout file") %>%
 
 
     #########################################################################################
+  ##
+  ##      layout patterns
+  ##
 
   append.pattern("layout_folder",
-                 paste0("$brfss_data_folder$^YEAR^/",
-                        "{^EXT^ == 'local';local/^GEOG^/layout/}",
-                        "{^EXT^ == 'national';public/layout/}"),
+                 paste0("$brfss_annual_metadata_folder$layout/"),
+                 group ="layout",
                  type = "folder") %>%
 
     append.pattern("sas_layout_file","layout^YR^{^VERS^ > 0;_V^VERS^}_sas.rds",
+                   group ="layout",
                    type = "file") %>%
 
     append.pattern("sas_layout_path","$layout_folder$$sas_layout_file$",
+                   group ="layout",
                    type = "path") %>%
 
 
-    ##    data file of response totals
-
-    # append.pattern("brfss_responses_folder","$brfss_data_folder$^YEAR^/",
-    #                type = "folder") %>%
-    append.pattern("brfss_responses_folder",
-                   paste0("$brfss_data_folder$^YEAR^/",
-                          "{^EXT^ == 'local';local/^GEOG^/}",
-                          "{^EXT^ == 'national';public/}"),
-                   type = "folder") %>%
-
-    append.pattern("brfss_responses_file","responses_^YEAR^.rds",
-                   type = "file") %>%
-    append.pattern("brfss_responses_path","$brfss_responses_folder$$brfss_responses_file$",
-                   type = "path") %>%
-
-    append.pattern("brfss_responses_df","df_responses_^YEAR^",
-                   type = "data") %>%
-
-    ##    data file of modules
-
-    append.pattern("brfss_modules_folder",
-                   paste0("$brfss_data_folder$^YEAR^/",
-                          "{^EXT^ == 'local';local/^GEOG^/}",
-                          "{^EXT^ == 'national';public/}"),
-                   type = "folder") %>%
-
-    append.pattern("brfss_modules_file","modules_^YEAR^.rds",
-                   type = "file") %>%
-    append.pattern("brfss_modules_path","$brfss_modules_folder$$brfss_modules_file$",
-                   type = "path") %>%
-
-    append.pattern("brfss_modules_df","df_modules_^YEAR^",
-                   type = "data") %>%
 
 
     #####################
@@ -323,9 +359,6 @@ init.patterns <- function() {
     append.pattern("xpt_folder", "$sas_raw_data_folder$",
                    type = "folder") %>%
 
-    #   set.pattern("xpt_file", "LLCP{^VERS^ == 0;^YEAR^}{^VERS^ > 0;^YR^V^VERS^}.XPT")
-    #   set.pattern("xpt_file","^GEOG^^YR^FINL{^VERS^ > 0;_V^VERS^}.XPT")
-    #
 
     append.pattern("xpt_file",
                    paste0(
@@ -351,14 +384,18 @@ init.patterns <- function() {
                    "SASOUT^YR^_{^EXT^ == 'local';STATES}{^EXT^ == 'national';LLCP}{^VERS^>0;_V^VERS^}.SAS",
                    type = "file") %>%
 
-    append.pattern("sas_sasout_path", "$sas_raw_data_folder$$sas_sasout_file$",
+    # append.pattern("sas_sasout_path", "$sas_raw_data_folder$$sas_sasout_file$",
+    #                type = "path") %>%
+    #
+    append.pattern("sas_sasout_path", "$brfss_annual_raw_metadata_folder$$sas_sasout_file$",
                    type = "path") %>%
 
-    #####################################################################################
-  ##
-  ##    State-Added Questions (SAQ)
 
-  append.pattern("saq_raw_folder","$brfss_annual_raw_data_folder$saq/",
+    #########################################################B############################
+  ##
+  ##    State-Added Questions (SAQ)brfss_annual_raw_data_folder
+
+  append.pattern("saq_raw_folder","$brfss_annual_raw_data_folder_base$saq/",
                  type = "folder") %>%
 
     append.pattern("saq_raw_file","^GEOG^^YR^_layout_SAQ.csv",
@@ -373,8 +410,9 @@ init.patterns <- function() {
     append.pattern("saq_raw_values_path","$saq_raw_folder$$saq_raw_values_file$",
                    type = "path")%>%
 
-    append.pattern("saq_layout_folder",paste0("$brfss_data_folder$^YEAR^/",
-                                              "{^EXT^ == 'local';local/^GEOG^/saq/}{^EXT^ == 'national';ERROR}"),
+    append.pattern("saq_layout_folder", "$layout_folder$",
+                   # paste0("$brfss_data_folder$^YEAR^/",
+                   #        "{^EXT^ == 'local';local/^GEOG^/saq/}{^EXT^ == 'national';ERROR}"),
                    type = "folder",
                    desc = "Folder to store the annual processed BRFSS data") %>%
 
@@ -392,9 +430,8 @@ init.patterns <- function() {
 
 
     ##  files from merging the saq data with the national data
-    append.pattern("merged_layout_folder",paste0("$brfss_data_folder$^YEAR^/",
-                                                 "{^EXT^ == 'local';local/^GEOG^/layout/}",
-                                                 "{^EXT^ == 'national';ERROR}"),
+
+    append.pattern("merged_layout_folder",paste0("$layout_folder$"),
                    type = "folder") %>%
 
     append.pattern("merged_layout_file","layout^YR^_mrg.rds",
@@ -409,25 +446,102 @@ init.patterns <- function() {
     append.pattern("merged_values_path","$merged_layout_folder$$merged_values_file$",
                    type = "path")  %>%
 
-    ## monthly data
 
-    append.pattern("monthly_folder",
-                   paste0("$brfss_annual_raw_data_folder$monthly/",
-                          "{sprintf('%02d',^MONTH^)}_",
-                          "{toupper(month.name[as.integer(^MONTH^)])}/"),
+    ############################################################
+  ##
+  ##    data file of response totals
+
+  append.pattern("brfss_responses_folder",
+                 paste0("$brfss_annual_metadata_folder$"),
+                 type = "fmolder") %>%
+
+    append.pattern("brfss_responses_file","responses_^YEAR^.rds",
+                   type = "file") %>%
+    append.pattern("brfss_responses_path","$brfss_responses_folder$$brfss_responses_file$",
+                   type = "path") %>%
+
+    append.pattern("brfss_responses_df","df_responses_^YEAR^",
+                   type = "data") %>%
+
+
+    #####################################################################
+  ##
+  ##    data file of modules
+
+  append.pattern("brfss_modules_folder","$brfss_annual_metadata_folder$",
+                 type = "folder",
+                 desc = "location of the calculated modules file") %>%
+
+
+    append.pattern("brfss_modules_file","modules_^YEAR^.rds",
+                   type = "file") %>%
+
+    append.pattern("brfss_modules_path","$brfss_modules_folder$$brfss_modules_file$",
+                   type = "path") %>%
+
+    append.pattern("brfss_modules_df","df_modules_^YEAR^",
+                   type = "data") %>%
+
+    ####################################################################
+  ##
+  ## monthly data
+  ##
+
+  append.pattern("monthly_raw_data_folder",
+                 paste0("$brfss_annual_raw_data_folder_base$monthly/",
+                        "{sprintf('%02d',^MONTH^)}_",
+                        "{toupper(month.abb[as.integer(^MONTH^)])}/"),
+                 type = "folder") %>%
+
+    append.pattern("monthly_data_folder",
+                   "$brfss_annual_data_folder_base$monthly/",
                    type = "folder") %>%
 
-    append.pattern("monthly_cell_file",
-                   paste0("$monthly_folder$",
+    append.pattern("monthly_cell_file_raw",
+                   paste0("$monthly_raw_data_folder$",
                           "CEL_^GEOG^",
                           "{toupper(month.abb[as.integer(^MONTH^)])}^YR^1.Dat"),
                    type = "file") %>%
 
-    append.pattern("monthly_ll_file",
-                   paste0("$monthly_folder$",
+    append.pattern("monthly_ll_file_raw",
+                   paste0("$monthly_raw_data_folder$",
                           "LL_^GEOG^",
                           "{toupper(month.abb[as.integer(^MONTH^)])}^YR^1.Dat"),
                    type = "file") %>%
+
+    append.pattern("monthly_file_raw",
+                   paste0("$monthly_raw_data_folder$",
+                          "{^PHON^ == 'cell';cel}{^PHON^ == 'land';ll}_^GEOG^",
+                          "{toupper(month.abb[as.integer(^MONTH^)])}^YR^1.Dat"),
+                   type = "file") %>%
+
+    append.pattern("monthly_data_file_month",
+                   paste0("$monthly_data_folder$",
+                          "^GEOG^_^YEAR^_",
+                          "{sprintf('%02d',^MONTH^)}.rds"),
+                   type = "file") %>%
+
+    append.pattern("monthly_data_file",
+                   paste0("$monthly_data_folder$",
+                          "^GEOG^_^YEAR^.rds"),
+                   type = "file") %>%
+
+    append.pattern("monthly_reports_folder",
+                   "$reports_folder$^YEAR^/monthly/",
+
+                   type = "folder",
+                   group = "reports",
+                   desc = "Folder to store the monthly reports") %>%
+
+    append.pattern("monthly_reports_file",
+                   paste0("monthly_report_^GEOG^_^YEAR^",
+                          "{^MONTH^ > 0;_{sprintf('%02d',^MONTH^)}_{month.abb[^MONTH^]}}",
+                          "{^YTD^ == 'on';_YTD}",
+                          ".pdf"),
+                   type = "folder",
+                   group = "reports",
+                   desc = "Folder to store the monthly reports") %>%
+
 
     ## Miscellaneous
 

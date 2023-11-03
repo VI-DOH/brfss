@@ -11,7 +11,7 @@ save_sas_layout<-function(progress = NULL) {
   require(dplyr)
 
   show_progress(progress,
-                message = "Layout ... saving ")
+                message = "Layout ...  ")
 
   year <- as.integer(brfss.param(year))
 
@@ -27,10 +27,12 @@ save_sas_layout<-function(progress = NULL) {
 
   file<-apply.pattern("sas_sasout_path", params)
 
-
   while(file.exists(file)) {
 
     #  read the sasout file
+
+    show_progress(progress,
+                  message = "Layout ... reading sasout file ")
 
     lines<-readLines(file, warn = F, encoding = "latin1")
 
@@ -86,8 +88,12 @@ save_sas_layout<-function(progress = NULL) {
       as.data.frame() %>%
       fill_dummies()
 
+
     fldr <- apply.pattern("layout_folder", params)
     if(!dir.exists(fldr)) dir.create(fldr, recursive = TRUE)
+
+    show_progress(progress,
+                  message = "Layout ... saving ")
 
     saveRDS(df_layout_sas, file = apply.pattern("sas_layout_path",params))
 

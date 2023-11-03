@@ -200,7 +200,9 @@ get.pattern <- function(name, expand = FALSE) {
 
   pat_name <- name
 
-  pttrn <- get.patterns() %>%
+  pttrn <- get.patterns()
+
+  pttrn <- pttrn %>%
     filter(name=={{pat_name}}) %>%
     pull(pattern)
 
@@ -290,6 +292,7 @@ get.pattern.info <- function(name) {
 #' }
 #'
 apply.pattern <- function(name,  ...) {
+
   require(dplyr,quietly = T, warn.conflicts = F)
 
   pats <- get.pattern(name = name)
@@ -462,8 +465,6 @@ eval_pattern_cond <- function(expr_in) {
 try.patterns <- function(names = ".*", ...) {
   #
   pat_names <- pattern.names() %>% grep(names, ., value = TRUE)
-
-
 
   pats <- sapply(pat_names, function(nm) {
 

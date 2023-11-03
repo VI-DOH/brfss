@@ -1,5 +1,50 @@
 
 
+#' Has Some Valid Data
+#'
+#' Inspects column to see if any values are not NA
+#'
+#' @param df_brfss - data.frame: dataset containing column of interest
+#' @param coi - character: column of interest
+#'
+#' @return logical: TRUE if column contains at least 1 non-NA value
+#' @export
+#'
+#' @examples
+#' dontrun{
+#' if(has_data(coi = "DIABETE4")) df_stats <- survey_stats("DIABETE4", pct = TRUE)
+#' }
+#'
+has_data <- function(df_brfss = NULL, coi) {
+
+  if(is.null(df_brfss)) df_brfss <- brfss::prepped_data()
+
+  x <- df_brfss %>% pull({{coi}})
+  !all(is.na(x))
+}
+
+
+#' Has a Specified Column
+#'
+#' @param df_brfss - data.frame: dataset containing column of interest
+#' @param coi - character: column of interest
+#'
+#' @return logical: TRUE if column exists
+#' @export
+#'
+#' @examples
+#' dontrun{
+#' if(has_column(coi = "DIABETE4")) df_stats <- survey_stats("DIABETE4", pct = TRUE)
+#' }
+#'
+has_column <- function(df_brfss = NULL, coi) {
+
+  if(is.null(df_brfss)) df_brfss <- brfss::prepped_data()
+
+  coi %in% (df_brfss %>% colnames())
+
+}
+
 #' File Patterns for Creating Standard paths
 #'
 #' A dataset containing the information for creating file patterns used to build standardized

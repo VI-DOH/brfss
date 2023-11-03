@@ -62,6 +62,8 @@ brfss.param <- function(..., myself = FALSE) {
 
 set_param <- function(param, value, myself = FALSE) {
 
+  #value <- tolower(value)
+
   my_brfss <- my.brfss.env()
 
   # check to see if any legal values ...
@@ -199,7 +201,6 @@ brfss.param_pats <- function(...) {
 #'}
 brfss.params <- function(... , val_only = TRUE) {
 
-  #    browser()
   args <- list(...)
 
   #cat(" params ... ", paste0(unlist(args),collapse = ", ") ,"\n")
@@ -210,6 +211,12 @@ brfss.params <- function(... , val_only = TRUE) {
   # if has args then save those args to the brfss env
 
   if(length(args) > 0) {
+
+    if(is.list(args[[1]])) {
+
+      # if a list was passed, de-list it back to just the parameters
+      args <- unlist(args[[1]])
+    }
 
     # for each arg save [arg name] as [arg value]
     mapply( function(arg, nm) {
@@ -279,7 +286,7 @@ default.brfss.env <- function() {
 
 
 my.brfss.path <- function() {
-
+  require(dplyr)
   path <- NULL
 
   tryCatch(expr = {
@@ -412,6 +419,14 @@ my.brfss.init <- function() {
 
   }
 
+  my_brfss$month$on_null <- function(year) {
+    brfss.param(month = 0, myself = TRUE)
+  }
+
+  my_brfss$month$on_na <- function(year) {
+    brfss.param(month = 0, myself = TRUE)
+  }
+
   ###################################################
   ##
   ##    geog
@@ -453,6 +468,10 @@ my.brfss.init <- function() {
   my_brfss$extent$values <- c("local","national", "monthly")
 
   my_brfss$extent$on_change <- function(extent) {
+
+    #extent <- tolower(extent)
+    brfss.param(extent = extent, myself=TRUE)
+
     if(extent == "local" && brfss.param(geog) == "") {
       warning("extent is local and geog cannot be blank")
     }
@@ -466,6 +485,24 @@ my.brfss.init <- function() {
   my_brfss$version$pattern <- "VERS"
 
   ###################################################
+  ##
+  ##    ytd
+
+  my_brfss$ytd$value <- "off"
+  my_brfss$ytd$values <- c("on","off")
+  my_brfss$ytd$pattern <- "YTD"
+
+  my_brfss$ytd$on_change <- function(ytd) {
+    if(is.logical(ytd)) {
+
+      ytd <- ifelse(ytd, "on", "off")
+
+      brfss.param(ytd = ytd, myself = TRUE)
+
+    }
+  }
+
+    ###################################################
   ##
   ##    phone
 
@@ -518,7 +555,7 @@ my.brfss.patterns <- function() {
   pats <- sapply(my_brfss, function(myb) {
     x <- as.vector(myb$value)
     pat <- as.character(myb$pattern)
-    if(length(x)>0 && nchar(pat)>0) {
+    if(length(x)>0 && length(pat)>0 && nchar(pat)>0) {
       names(x) <- unname(pat)
     } else x <- NA
     x

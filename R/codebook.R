@@ -119,6 +119,38 @@ codebook_file <- function() {
   return(ret)
 
 }
+
+#############################################################
+##
+##    Determine if Codebook Exists
+##
+#' Find the CDC Provided Codebook File and return success or failure
+#'
+#' Uses the file_pattern data.frame
+#'to figure out and try the try the possible names of the codebook file.
+#'#'
+#' @return logical was the file found
+#' @export
+#'
+#'
+codebook.exists <- function() {
+
+  exts <- c("pdf", "txt", "rtf")
+
+  params <- my.brfss.patterns()
+
+  fldr <- apply.pattern("codebook_folder", params)
+  fil <- apply.pattern("codebook_file", params)
+
+  found <- sapply(exts, function(ext) {
+    file <- paste0(fldr,fil,".",ext)
+
+    file.exists(file)
+  })
+
+  return(any(found))
+
+}
 #############################################################
 ##
 ##    Read Lines from Codebook

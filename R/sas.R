@@ -209,7 +209,12 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
 
   pttrns<-get.pattern.group("sas_downloads")
   urlfiles<- apply.pattern("brfss_url_files", params)
-  folderout<-apply.pattern("sas_raw_data_folder", params)
+
+#  folderout<-apply.pattern("sas_raw_data_folder", params)
+
+  folderout<-apply.pattern("brfss_annual_raw_metadata_folder", params)
+
+
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   to <- getOption("timeout")
@@ -328,7 +333,7 @@ sas_download_metadata.versions<-function() {
   #files<-sas.url.pattern.downloads.versions()
   files<-get.pattern.group("sas_version_downloads")
 
-  folderout<-apply.pattern("sas_raw_data_folder",params)
+  folderout<-apply.pattern("brfss_annual_raw_metadata_folder",params)
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   urlfiles<-apply.pattern("brfss_url_files",params)
@@ -406,6 +411,8 @@ read.xpt<-function(version = 0, verbose = F) {
   brfss.param(version = version)
   params <- my.brfss.patterns()
 
+  params["GFLAG"] <- "off"
+
   ########################################################################%%%%%%%%%
   ##
   ##    If file and folder names not supplied, create them from the file patterns
@@ -428,7 +435,6 @@ read.xpt<-function(version = 0, verbose = F) {
 
   save_file<- apply.pattern("brfss_annual_data_path",params)
 
-
   ##
   ##    read the xpt files
   ##
@@ -442,6 +448,9 @@ read.xpt<-function(version = 0, verbose = F) {
   if(file.exists(xpt_file)) {
     if(verbose) cat("Reading ",xpt_file,"\n")
     df_xpt<- haven::read_xpt(xpt_file)
+
+    # st <- fips::state_fips(geog)
+    # df_xpt <- df_xpt %>% filter(`_STATE` == st)
 
     cat("Getting sasout\n")
 
@@ -480,7 +489,8 @@ read.xpt<-function(version = 0, verbose = F) {
 #'}
 #'
 cleave.geogs.sas<-function(year = NULL,
-                           main=TRUE,versions=TRUE, my_geog=NULL, other_geogs=NULL,verbose=TRUE) {
+                           main=TRUE,versions=TRUE, my_geog=NULL,
+                           other_geogs=NULL,verbose=TRUE) {
 
   if(!(main || versions)) return(NULL)
 

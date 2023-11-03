@@ -72,26 +72,41 @@ add_column_attributes<-function(layout = NULL, main = TRUE,
 add_col_attributes <- function(df_in) {
 
   df_sasout<- get.layout()
+  df_values<- brfss::values()
 
-  #browser()
+  # browser()
 
-  mapply(function(lbl,v,typ,n,i,nm,qu) {
-    #cat(v,"|",typ,"|",n,"|",i,"|",nm)
-    #browser()
-    if(!is.null(df_in[[v]])) {
+  mapply(function(lbl,col_name,typ,n,i,nm,qu) {
+
+#    df_vals <- df_values %>% filter(col_name == {{col_name}})
+
+    if(!is.null(df_in[[col_name]])) {
       if(is.na(typ) || is.null(typ)) typ<=""
       if(is.na(n) || is.null(n)) n<=""
       if(is.na(i) || is.null(i)) i<=""
       if(is.na(nm) || is.null(nm)) nm<=""
       if(is.na(qu) || is.null(qu)) qu<=""
 
-      attr(df_in[[v]],"section_type")<<-typ
-      attr(df_in[[v]],"section_num")<<-n
-      attr(df_in[[v]],"section_index")<<-i
-      attr(df_in[[v]],"section_name")<<-stringr::str_trim(nm)
-      attr(df_in[[v]],"label")<<-lbl
-      attr(df_in[[v]],"question")<<-qu
-      attr(df_in[[v]],"variable")<<-v
+      # attr(df_in[[col_name]],"section_type")<<-typ
+      # attr(df_in[[col_name]],"section_num")<<-n
+      # attr(df_in[[col_name]],"section_index")<<-i
+      # attr(df_in[[col_name]],"section_name")<<-stringr::str_trim(nm)
+      # attr(df_in[[col_name]],"label")<<-lbl
+      # attr(df_in[[col_name]],"question")<<-qu
+      # attr(df_in[[col_name]],"variable")<<-col_name
+
+      atts <-  c(
+        "section_type" = typ,
+        "section_num" = n,
+        "section_index" = i,
+        "section_name" = stringr::str_trim(nm),
+        "label" = lbl,
+        "question" = qu,
+        "variable" = col_name
+      )
+
+      df_in <<- df_in %>% add_attributes(col_name, atts)
+
     } else {
 
     }
@@ -100,5 +115,135 @@ add_col_attributes <- function(df_in) {
   df_sasout$question_num,df_sasout$section, df_sasout$question)
 
   df_in
+
+}
+
+#' Add a List of Attributes to a column
+#'
+#' Adds attributes to a column from a named list
+#'
+#'  The standard attributes for a BRFSS column are:
+#'   section type: Core, Module, SAQ, Non-Survey
+#'   section num: Section number within the section type
+#'   section index: the index of this column within the section
+#'   section name: Name of the section
+#'   label: Label assigned to this column
+#'   question: The actual question asked (if this was a survey question)
+#'   variable: Variable name
+#'
+#' @param df - a data.frame containing the column
+#' @param col - column name
+#' @param atts - list of attributes
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' df <- brfss_data()
+#'
+#' atts <- c(
+#' "section_type" = "Core",
+#' "section_num" = 5,
+#' "section_index" = 6,
+#' "section_name" = "Cancer",
+#' "label" = "Do you have cancer?",
+#' "question"="Has a PCP ever told you that you have cancer",
+#' "variable"="CANCER"
+
+#' )
+
+#' df <- df %>% add_attributes("TESTME", atts)
+#' }
+#'
+add_attributes <- function(df, col, atts) {
+
+  mapply(function(att, nm) {
+    #browser()
+
+    tryCatch(
+      {
+        if(is.null(att)) att <- ""
+        attr(df[[col]], nm) <<- att
+      },
+      error = function(e) {
+
+        cat("\n", e$message,"\n")
+        cat("trying to set column [",col, "] attribute [", nm, "] to value [", att,"]\n", sep = "")
+        if(is.null(df[[col]]))  cat(" ... column ", col, " = NULL", "\n\n", sep = "")
+      }
+    )
+  }, atts, names(atts) )
+  df
+}
+
+#' List of Standard BRFSS Attributes for a column
+#'
+#'  The standard attributes for a BRFSS column are:
+#'   section type: Core, Module, SAQ, Non-Survey
+#'   section num: Section number within the section type
+#'   section index: the index of this column within the section
+#'   section name: Name of the section
+#'   label: Label assigned to this column
+#'   question: The actual question asked (if this was a survey question)
+#'   variable: Variable name
+#' @return the attribute names
+#' @export
+#'
+
+standard_attributes <- function(fmt = FALSE) {
+  require(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+
+  x <-   c(
+    "section_type",
+    "section_num",
+    "section_index",
+    "section_name",
+    "label",
+    "question",
+    "variable"
+  )
+
+
+  if(fmt) cat(x %>%
+                paste0(collapse = " = '',\n") %>%
+                paste0(" = ''\n" ) %>%
+                paste0("c(\n", .,")")) else x
+
+}
+
+
+#' Fetch Column Names from Attributes
+#'
+#'   Get the column names that match a pattern on an attribute
+#' @param df
+#' @param attrib
+#' @param pttrn
+#'
+#' @return character vector with matching column names
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'
+#' # get the columns that are associated with the Diabetes section
+#'
+#' cols_from_attrib("section_name", "^Diab")
+#' }
+#'
+
+cols_from_attrib <- function(df, attrib, pttrn) {
+
+  ok <- sapply(1:ncol(df), function(icol) {
+
+    att <- attributes(df %>% pull(icol))
+
+    return(grepl(pttrn, att[attrib]))
+  })
+
+  cnames <- colnames(df)
+
+  cnames[unlist(ok)]
+
 
 }

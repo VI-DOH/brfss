@@ -135,8 +135,12 @@ responses_by_geog<-function(year,geog) {
 #' \dontrun{
 #' save_response_stats(2018)
 #' }
-save_response_stats<-function() {
+save_response_stats<-function(progress = NULL) {
   require(dplyr)
+
+  show_progress(progress,
+                message = paste0("Responses ... Saving"))
+
 
   params <- my.brfss.patterns()
 
@@ -145,8 +149,11 @@ save_response_stats<-function() {
   nm <- apply.pattern("brfss_responses_df", params)
   assign(nm,df_responses)
 
+  file  <-  apply.pattern("brfss_responses_path",params)
+  if(!dir.exists(dirname(file))) dir.create(dirname(file))
 
-  saveRDS(df_responses, file = apply.pattern("brfss_responses_path", params))
+  saveRDS(df_responses, file = file)
+
 
 }
 

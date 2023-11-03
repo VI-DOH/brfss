@@ -45,6 +45,10 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
   use_progress <- !is.null(progress)
 
+  ####################################################################
+  ##
+  ##    Downloads
+
   if(dl_metadata) {
     if(verbose) cat(" ... downloading ... metadata ... ")
     sas_download_metadata(progress = progress)
@@ -61,6 +65,10 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
     ascii.download.data(progress = progress)
   }
 
+  ####################################################################
+  ##
+  ##    Processing
+
   if (layout) save_sas_layout(progress = progress)
 
   if(codebook) {
@@ -75,13 +83,14 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
 
     build_saq_values()
     merge_saq_values()
-
-
   }
 
   if(convert) {
+
     convert_ascii(verbose=verbose, progress = progress)
   }
+
+  brfss.param(version = 0)
 
   if(attribs) add_column_attributes()
 
@@ -90,8 +99,8 @@ ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
   if(factorize) factorize( progress = progress)
 
   if(responses) {
-    save_response_stats()
-    save_module_stats()
+    save_response_stats( progress = progress)
+    save_module_stats( progress = progress)
   }
   invisible()
 
@@ -236,7 +245,11 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
 #    df <- add_col_attributes(df)
 
     path <- apply.pattern("brfss_annual_data_path",params)
+#    path_unf <-  apply.pattern("brfss_annual_data_unfactored_path",params)
+
+
     if(!dir.exists(dirname(path))) dir.create(dirname(path))
+
 
     if(verbose) cat("... writing ", path,"\n")
 
@@ -244,6 +257,7 @@ convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
                     paste0("Converting ... saving version [", version, "] ", path))
 
     saveRDS(df, file = path)
+#    saveRDS(df, file = path_unf)
 
     version <- version + 1
     brfss.param(version = version)
