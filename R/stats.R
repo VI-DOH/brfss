@@ -201,6 +201,8 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
     filter(col_name == {{coi}})
 
   attr(df,"coi") <- coi
+  attr(df,"population")  <- pop_sex(coi)
+
   attr(df,"question") <- df_lo %>% pull(question)
   attr(df,"label") <- unname(df_lo %>% pull(label))
   attr(df,"weighted") <- weighted

@@ -285,12 +285,21 @@ default.brfss.env <- function() {
 }
 
 
+#' My BRFSS Path
+#'
+#' @return
+#' @export
+#'
+#' @examples
 my.brfss.path <- function() {
   require(dplyr)
   path <- NULL
 
+  folder <- apply.pattern("brfss_data_folder")
+
   tryCatch(expr = {
-    folder <- orrr::convert.dot(apply.pattern("brfss_data_folder"))
+
+    assign("patterned_folder", value = folder, envir = .GlobalEnv)
     path <- paste0(folder, "my_brfss.rds")
   }, error = function(e) {
     return(NULL)

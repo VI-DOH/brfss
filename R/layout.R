@@ -36,6 +36,7 @@ save_sas_layout<-function(progress = NULL) {
 
     lines<-readLines(file, warn = F, encoding = "latin1")
 
+      browser()
     lines <- gsub("—", "-",lines) %>%
       iconv( to = "ASCII//TRANSLIT")
 

@@ -38,7 +38,8 @@ set.pattern <- function(name, pattern= NULL, group="", desc = "") {
 }
 
 pattern.file.name <- function() {
-  orrr::convert.dot("./data/naming_patterns.rds")
+
+  paste0(here::here("data"),"/naming_patterns.rds")
 }
 
 append.pattern <- function(df, name , pattern , type = "", group = "", desc = "") {
@@ -294,7 +295,6 @@ get.pattern.info <- function(name) {
 apply.pattern <- function(name,  ...) {
 
   require(dplyr,quietly = T, warn.conflicts = F)
-
   pats <- get.pattern(name = name)
 
   pats <- sapply(pats, function(pat) {
@@ -326,7 +326,10 @@ apply.pattern <- function(name,  ...) {
 #'
 patternize<-function(strIn, ..., expand = TRUE) {
 
+
   args <- unlist(list(...))
+
+  if(is.null(args)) return(strIn)
 
   #expand <- as.logical(args["expand"])
   ##  remove args with NULL value
@@ -398,7 +401,8 @@ patternize<-function(strIn, ..., expand = TRUE) {
 
   # no more conditions
 
-  if(expand && grepl("./",ret, fixed = T)) ret <- orrr::convert.dot(ret)
+  if(expand && grepl("./",ret, fixed = T)) ret <- gsub("^.",here::here(),ret, fixed = T)
+  #orrr::convert.dot(ret)
 
   # cat("ret (final)=",ret,"\n")
 

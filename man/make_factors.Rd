@@ -4,7 +4,12 @@
 \alias{make_factors}
 \title{Convert BRFSS Columns to Factor}
 \usage{
-make_factors(df_brfss = NULL, df_layout = NULL, df_vals = NULL)
+make_factors(
+  df_brfss = NULL,
+  df_layout = NULL,
+  df_vals = NULL,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{df_brfss}{data.frame BRFSS data file}

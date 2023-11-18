@@ -61,8 +61,13 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
 
     geog_save <- brfss.param(geog)
 
+    if(brfss.param(geog_flag) == "off") df_geogs <- data.frame(Id = 0,Abbrev = "US")
+
+
     mapply(function(id,nm) {
-      if(id%in%geogs) {
+      if(id%in%geogs || id == 0) {
+
+        browser()
 
         brfss.param(geog = nm)
         params <- my.brfss.patterns()

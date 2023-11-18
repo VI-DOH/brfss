@@ -394,7 +394,7 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 
   if(is.null(df_vals)) df_vals <- codebook_values(year = year, ...)
 
-  if(is.null(df_layout)) df_layout <- get.codebook.layout(year = year, ...)
+  if(is.null(df_layout)) df_layout <- get.codebook.layout( )
 
   df_cnt <- df_vals %>% group_by(col_name) %>% summarise(n=n())
 
@@ -490,6 +490,7 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL, verb
       if(verbose) cat("  .. ", col)
 
       tryCatch({
+
         a<- attributes(df_brfss[[col]])
         df <- df_vals %>% filter(col_name==col)
         levels <- df %>% pull(value)

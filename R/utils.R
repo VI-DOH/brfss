@@ -40,7 +40,7 @@ geog_ids<-function(geogs) {
 
 geog_abbs<-function(geogs) {
 
-   ##  get data.frame of geogs
+  ##  get data.frame of geogs
 
   df_geogs<- readRDS(paste0(orrr::dir.project("data"),"geogs.rds"))
 
@@ -163,3 +163,34 @@ brfss_web_files <- function(year) {
   df
 }
 
+
+sex_var <- function(df) {
+
+  cols <- c("Sex", "SEX", "SEXVAR")
+  x <- which(cols %in% colnames(df))
+
+  if(!length(x)==0) x <- cols[min(x)]
+  as.character(x)
+}
+
+pop_sex <- function(df = NULL, coi) {
+
+  if(is.null(df)) df <- prepped_data()
+
+  sexvar <- sex_var(df)
+
+  if(length(sexvar) == 0)  return("Unknown")
+
+  df %>%
+    select(all_of(sexvar,coi)) %>%
+    rename(COI = coi) %>%
+    rename(Sex = sexvar) %>%
+    filter(!is.na(COI)) %>%
+    group_by(Sex) %>%
+    count(COI) %>%
+    pull(Sex) %>%
+    unique() %>%
+    as.character() %>%
+    {ifelse(length(.)>1,"All",.)}
+
+}
