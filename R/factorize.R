@@ -38,7 +38,8 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
     params <- my.brfss.patterns()
 
     show_progress(progress,
-                  message = paste0("Factorizing ... trying version [", version, "]"))
+                  message = paste0("Factorizing ... trying version [",
+                                   version, "]"))
 
 
     ext <- brfss.param(extent)
@@ -66,8 +67,6 @@ factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
 
     mapply(function(id,nm) {
       if(id%in%geogs || id == 0) {
-
-        browser()
 
         brfss.param(geog = nm)
         params <- my.brfss.patterns()

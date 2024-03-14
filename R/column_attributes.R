@@ -94,7 +94,6 @@ add_col_attributes <- function(df_in) {
       # attr(df_in[[col_name]],"label")<<-lbl
       # attr(df_in[[col_name]],"question")<<-qu
       # attr(df_in[[col_name]],"variable")<<-col_name
-
       atts <-  c(
         "section_type" = typ,
         "section_num" = n,
@@ -105,7 +104,8 @@ add_col_attributes <- function(df_in) {
         "variable" = col_name
       )
 
-      df_in <<- df_in %>% add_attributes(col_name, atts)
+
+      df_in <<- df_in %>% add_attributes({{col_name}}, atts = atts)
 
     } else {
 
@@ -156,7 +156,9 @@ add_col_attributes <- function(df_in) {
 #' df <- df %>% add_attributes("TESTME", atts)
 #' }
 #'
-add_attributes <- function(df, col, atts) {
+add_attributes <- function(df, ... , atts) {
+
+  col <- as.character(quosures(...))[1]
 
   mapply(function(att, nm) {
     #browser()

@@ -186,6 +186,7 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
                                weights = weighting,
                                deff=F)
 
+
         df_subs <<- df_subs %>%
           bind_rows(stats_w_subs(des, pct = pct, digits = digits))
 
@@ -200,11 +201,19 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
   df_lo <- get.layout() %>%
     filter(col_name == {{coi}})
 
-  attr(df,"coi") <- coi
-  attr(df,"population")  <- pop_sex(coi)
+  population <- pop_sex(df_data, coi) %>% gsub("ale","ales",.)
 
+  label <- unname(df_lo %>% pull(label))
+  if(length(label) == 0) {
+    label <- attr(df_data[[coi]], "label")
+  }
+
+  attr(df,"coi") <- coi
+  attr(df,"population")  <- population
+
+  attr(df,"section") <- df_lo %>% pull(section)
   attr(df,"question") <- df_lo %>% pull(question)
-  attr(df,"label") <- unname(df_lo %>% pull(label))
+  attr(df,"label") <- label
   attr(df,"weighted") <- weighted
   attr(df,"conf") <- conf
 
@@ -247,7 +256,6 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   df_stats <- reshape::melt(as.data.frame(mysvymean), id.vars = subset)
 
-
   df_stats <- df_stats %>%
     filter(!grepl("^se[.]",variable)) %>%
     rename(percent = value) %>%
@@ -262,7 +270,9 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(variable = gsub(paste0("^`",coi,"`"),"",variable)) %>%
     rename(subset = {{subset}}) %>%
     rename(response = variable) %>%
-    mutate(subvar = {{subvar}}) %>%
+    mutate(subvar = {{subvar}})
+
+  df_stats <- df_stats %>%
     add_CI(mysvymean = mysvymean, conf = conf, coi) %>%
     add_CV(mysvymean = mysvymean, coi) %>%
     mutate(across(where(is.numeric), ~ . * mult)) %>%

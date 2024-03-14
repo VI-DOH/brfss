@@ -28,6 +28,7 @@ widen_stats <- function(df_stats, stats = c("num", "percent", "CI")){
   stat_cols <- colnames(df_stats)[(df_stats %>% colnames() %>% grep("den",.)):ncol(df_stats)]
   rem_cols <- stat_cols[!stat_cols%in%stats]
 
+
   df_stats_wide <- df_stats %>%
 
     # stretch measure horizontally with variable mean
@@ -47,6 +48,7 @@ widen_stats <- function(df_stats, stats = c("num", "percent", "CI")){
 
     rename_with(~ gsub(".x", ".percent",.x, fixed = TRUE)) %>%
     rename_with(~ gsub(".y", ".CI",.x, fixed = TRUE))
+
 
   #########################################################################
   ##

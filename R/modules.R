@@ -36,9 +36,15 @@ modules_used <- function() {
     filter(!grepl("^Calc|^Questionnaire", section)) %>%
     filter(!grepl("^_", col_name)) %>%
     select(col_name, sect_type, sect_num, question_num, section) %>%
-    group_by(sect_num) %>%
+    group_by(section) %>%
     filter(row_number() == 1) %>%
     as.data.frame()
+
+  mods <- df_modules %>% pull(sect_num) %>% as.integer()
+  modmax <- mods %>% max()
+  imax <- which(mods==modmax)
+
+  df_modules <- df_modules %>% head(imax)
 
 
   df_final <- data.frame()

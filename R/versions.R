@@ -25,7 +25,7 @@ highest_version<-function() {
     fldr<-apply.pattern("sas_data_folder", params)
   } else {
 
-    fldr <- apply.pattern("ascii_data_folder", params)
+    fldr <- apply.pattern("brfss_annual_data_folder", params)
   }
 
   files<-list.files(fldr)

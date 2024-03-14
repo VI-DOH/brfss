@@ -467,7 +467,8 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 #' df_brfss <- make_factors(df_brfss = df_brfss, df_layout = df_layout, df_vals = df_vals)
 #' }
 #'
-make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL, verbose = FALSE) {
+make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
+                         verbose = FALSE) {
 
   if(is.null(df_brfss)) df_brfss <- brfss_data()
 
@@ -745,7 +746,8 @@ original_values <- function(coi) {
 
     df_vals_coi <- df_vals_coi %>%
       filter(is.na(maxval)) %>%
-      bind_rows(data.frame(col_name = coi, response = as.character(vals), value =  as.character(vals))) %>%
+      bind_rows(data.frame(col_name = coi, response = as.character(vals),
+                           value =  as.character(vals))) %>%
      # arrange(as.integer(value)) %>%
       select(-maxval)
 
@@ -770,7 +772,7 @@ original_values <- function(coi) {
 
   df <- df %>% mutate(response = factor(response, levels = resp_levels))
 
-  df <- df %>% add_attributes("response", attrs)
+  df <- df %>% add_attributes(response, attrs)
 
   df %>% select(col_name, value, response)
 }

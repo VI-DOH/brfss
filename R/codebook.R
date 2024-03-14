@@ -11,6 +11,7 @@
 #' \dontrun{
 #' process_codebook(2020)
 #' }
+#'
 process_codebook <- function(progress = NULL) {
 
   params <- my.brfss.patterns()
@@ -107,7 +108,14 @@ codebook_file <- function() {
   params <- my.brfss.patterns()
 
   fldr <- apply.pattern("codebook_folder", params)
+
+  files <- list.files(fldr)
+
+  fil_ex <- files %>% gsub("[.].*","",.)
+
   fil <- apply.pattern("codebook_file", params)
+
+  if(!fil %in% fil_ex) fil <- fil_ex[1]
 
   ret <- NULL
 
@@ -212,17 +220,10 @@ read_codebook <- function(file=NULL, ...) {
 
   } else if(grepl("[.]html$", file,ignore.case = TRUE)) {
 
-    lines <- readLines(file)
-    lines <- lines %>%
-      htm2txt::htm2txt(file)
-
-    lines <- lines %>%
-      gsub(" "," ",.)
-
-    lines <- lines %>%
-      grep("^$", ., invert = T, value = T)
-
-    lines <- lines %>%
+    lines <- readLines(file) %>%
+      htm2txt::htm2txt(file) %>%
+      gsub(" "," ",.) %>%
+      grep("^$", ., invert = T, value = T) %>%
       grep("^ *$", ., invert = T, value = T)
 
     comments <- rev(grep("<!--",lines))
@@ -306,7 +307,6 @@ save_codebook_layout <- function(file=NULL) {
   core_lines <- grep("^Core.*Number", lines)
   sect_lines <- grep("^Sect.*Number", lines)
   value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
-
   ##
   columns <- grep("^Column:", lines, value = TRUE)
   col_names <- grep("^SAS.", lines, value = TRUE)
@@ -318,11 +318,12 @@ save_codebook_layout <- function(file=NULL) {
   qnums <- grep("^Question.Number", lines, value = TRUE)
   var_types <- grep("^Type.*Variable:", lines, value = TRUE)
 
-  label <- stringr::str_trim(gsub(".*:(.*)","\\1",labels))
-  question <- stringr::str_trim(gsub(".*:(.*)","\\1",questions))
-  section <- stringr::str_trim(gsub(".*:(.*)","\\1",sections))
+  label <- stringr::str_trim(gsub(".*?:(.*)","\\1",labels))
+  question <- stringr::str_trim(gsub(".*?:(.*)","\\1",questions))
+
+  section <- stringr::str_trim(gsub(".*?:(.*)","\\1",sections))
   question_num <- stringr::str_trim(gsub(".*:(.*)","\\1",qnums))
-  var_type <- stringr::str_trim(gsub(".*:(.*)","\\1",var_types))
+  var_type <- stringr::str_trim(gsub(".*?:(.*)","\\1",var_types))
 
   sect_type <- rep("",length(label_lines))
   sect_num <- rep("",length(label_lines))
@@ -335,7 +336,7 @@ save_codebook_layout <- function(file=NULL) {
     # get section lines values (parse the n)
 
     sects <- sapply(sect_lines, function(sect_ln) {
-      as.integer(stringr::str_trim(gsub(".*:(.*)","\\1",lines[sect_ln])))
+      as.integer(stringr::str_trim(gsub(".*?:(.*)","\\1",lines[sect_ln])))
     })
 
     #remove Section 0 lines
@@ -345,23 +346,26 @@ save_codebook_layout <- function(file=NULL) {
 
     sects_next <- c(sects[-1],999)
 
-    split <- which(sects_next <  sects)[1] + 1
+    splits <- which(sects_next <  sects)
+    split <- splits[1] + 1
+    end_mods <- splits[2]
+
 
     core_lines <- sect_lines[1:(split-1)]
-    mod_lines <- sect_lines[split:length(sect_lines)]
+    mod_lines <- sect_lines[split:end_mods]
 
   }
   ##    get Core Section numbers
 
-    cors<-sapply(core_lines, function(core_ln) {
+  cors<-sapply(core_lines, function(core_ln) {
 
-      max(which(label_lines<core_ln))
-    })
+    max(which(label_lines<core_ln))
+  })
 
 
 
-   sect_type[cors] <- "Core"
-  sect_num[cors] <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[core_lines]))
+  sect_type[cors] <- "Core"
+  sect_num[cors] <- stringr::str_trim(gsub(".*?:(.*)","\\1",lines[core_lines]))
 
 
   ##    get Module Section numbers
@@ -371,8 +375,8 @@ save_codebook_layout <- function(file=NULL) {
     max(which(label_lines<mod_ln))
   })
 
-    sect_type[mods] <- "Module"
-  sect_num[mods] <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[mod_lines]))
+  sect_type[mods] <- "Module"
+  sect_num[mods] <- stringr::str_trim(gsub(".*?:(.*)","\\1",lines[mod_lines]))
 
   ##   Blank Section Name for  Weighting Variables
   ##     for some reason, the state codebook for 2021 has
@@ -383,24 +387,43 @@ save_codebook_layout <- function(file=NULL) {
 
   ##   set blank section types to the 'Non-Survey'
 
+  calculated  <-  grepl("Calculated", section)
   blnks <- nchar(sect_type) == 0
   sect_type[blnks] <- "Non-Survey"
+
+  ##
+  ##    for some reason calculated variables are assigned to Modules instead of Core so we
+  ##     have to change that
+
+  sect_type[calculated] <- "Core"
   sect_num[blnks] <- 0
 
   ## parse column name and column range from text
 
-  col_name <- stringr::str_trim(gsub(".*:(.*)","\\1",col_names))
-  column <- stringr::str_trim(gsub(".*:(.*)","\\1",columns))
+  col_name <- stringr::str_trim(gsub(".*?:(.*)","\\1",col_names))
+  column <- stringr::str_trim(gsub(".*?:(.*)","\\1",columns))
+
 
   ## build data frame for storage and later conversion to column name-column width pairs
   ##  for ASCII file reading
 
-  df <- data.frame(column,col_name, label, question, section, sect_type, sect_num, question_num, var_type) %>%
+  df <- data.frame(column,col_name, label, question, section, sect_type,
+                   sect_num, question_num, var_type, calculated) %>%
     mutate(start = as.integer(gsub("(.*)-(.*)","\\1",column))) %>%
     mutate(end = as.integer(gsub("(.*)-(.*)","\\2",column))) %>%
     mutate(field_size = end - start + 1) %>%
     relocate(sect_num, .after = sect_type) %>%
     select(-column)
+
+  df_core <- df %>%
+    filter(sect_type == "Core" & !calculated) %>%
+    select(sect_type, sect_num, section) %>%
+    distinct()
+
+
+  df <- df %>% left_join(df_core, by = join_by(sect_type == sect_type, sect_num == sect_num)) %>%
+    mutate(section = ifelse(calculated, section.y, section.x)) %>%
+    select(-contains("."))
 
   ##
   ## remove duplicates (overlaps of columns)

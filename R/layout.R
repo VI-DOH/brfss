@@ -34,9 +34,9 @@ save_sas_layout<-function(progress = NULL) {
     show_progress(progress,
                   message = "Layout ... reading sasout file ")
 
-    lines<-readLines(file, warn = F, encoding = "latin1")
+    lines <- readLines(file, warn = F, encoding = "latin1")
 
-      browser()
+    lines <- lines %>% convert_raw_chars()
     lines <- gsub("—", "-",lines) %>%
       iconv( to = "ASCII//TRANSLIT")
 

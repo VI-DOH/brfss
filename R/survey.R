@@ -44,8 +44,9 @@ brfss_data <- function() {
 #'
 brfss_geog_data <- function() {
 
-  extent <- brfss.param(extent)
-  brfss.param(extent = "local")
+#  extent <- brfss.param(extent)
+
+  #  brfss.param(extent = "local")
 
   fname <- brfss_data_path(rw = 'r')
 
@@ -53,7 +54,7 @@ brfss_geog_data <- function() {
 
   df_brfss<- readRDS(fname)
 
-  brfss.param(extent = extent)
+ # brfss.param(extent = extent)
 
   df_brfss
 }
@@ -86,12 +87,12 @@ binary_yes<-function() {
 
 
 coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NULL) {
-
   vwt <- apply.pattern("weight_col",VERS=version)
   stratum <- apply.pattern("stratum_col")
 
   brfss.params(version = version)
   if(is.null(df_data)) df_data <- brfss_geog_data()
+
 
   if(is.null(df_data)) return(data.frame())
 

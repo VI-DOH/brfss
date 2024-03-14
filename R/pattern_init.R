@@ -487,11 +487,15 @@ init.patterns <- function() {
   ## monthly data
   ##
 
-  append.pattern("monthly_raw_data_folder",
-                 paste0("$brfss_annual_raw_data_folder_base$monthly/",
-                        "{sprintf('%02d',^MONTH^)}_",
-                        "{toupper(month.abb[as.integer(^MONTH^)])}/"),
+  append.pattern("monthly_raw_data_folder_base",
+                 paste0("$brfss_annual_raw_data_folder_base$monthly/"),
                  type = "folder") %>%
+
+    append.pattern("monthly_raw_data_folder",
+                   paste0("$monthly_raw_data_folder_base$",
+                          "{sprintf('%02d',^MONTH^)}_",
+                          "{toupper(month.abb[as.integer(^MONTH^)])}/"),
+                   type = "folder") %>%
 
     append.pattern("monthly_data_folder",
                    "$brfss_annual_data_folder_base$monthly/",

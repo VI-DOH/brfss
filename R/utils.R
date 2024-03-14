@@ -181,8 +181,10 @@ pop_sex <- function(df = NULL, coi) {
 
   if(length(sexvar) == 0)  return("Unknown")
 
+  vars <- c(sexvar,coi)
+
   df %>%
-    select(all_of(sexvar,coi)) %>%
+    select(all_of(vars)) %>%
     rename(COI = coi) %>%
     rename(Sex = sexvar) %>%
     filter(!is.na(COI)) %>%
@@ -192,5 +194,23 @@ pop_sex <- function(df = NULL, coi) {
     unique() %>%
     as.character() %>%
     {ifelse(length(.)>1,"All",.)}
+
+}
+########################################################
+##
+##    converts raw bytes to a single character for
+##     converting strange encodings for " " and "'"
+##      that cause problems later on
+
+convert_raw_chars <- function(lines) {
+  sp2 <- rawToChar(as.raw(c(0xc2,0xa0)))
+  hyph2 <- rawToChar(as.raw(c(0x82,0x09)))
+  apost2 <- rawToChar(as.raw(c(0xe2, 0x80, 0x99)))
+
+  browser()
+  lines %>%
+    gsub(sp2, " ", .) %>%
+    gsub(hyph2, "-", .) %>%
+    gsub(apost2, "'", .)
 
 }
