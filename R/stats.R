@@ -198,7 +198,13 @@ survey_stats<-function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subset
 
   df <- bind_rows(df_stats_main, df_subs )
 
-  df_lo <- get.layout() %>%
+  df_lo <- get.layout()
+
+  if(is.null(df_lo)) {
+      df_lo <- layout_from_data(df_data)
+  }
+
+  df_lo <- df_lo %>%
     filter(col_name == {{coi}})
 
   population <- pop_sex(df_data, coi) %>% gsub("ale","ales",.)

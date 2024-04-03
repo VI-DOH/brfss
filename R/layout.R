@@ -361,3 +361,48 @@ column_question <- function(coi) {
     pull(question)
 }
 
+
+
+#' Get Layout from Data
+#'
+#' @param df
+#'
+#' @return
+#' @export
+#'
+#' @examples
+layout_from_data <- function(df = NULL) {
+
+  if(is.null(df)) df <- prepped_data()
+
+  col_names  <-  df %>% colnames()
+
+  df_lo <- data.frame(variable = col_names, section_type = NA, section_num = NA,
+                      section_index = NA, section_name = NA,
+                      label = NA, question = NA)
+
+  atts <- colnames(df_lo)
+
+  for (i in 1:ncol(df)) {
+
+    col <- df[[i]]
+    attrx <- attributes(col) %>% names() %>% {.[!. %in% c("variable")]}
+
+    sapply(atts, function(att) {
+
+      if(att %in% attrx) {
+
+        df_lo[i,att] <<- attr(col,att)
+      }
+
+    })
+  }
+
+  df_lo %>%
+    rename(col_name = variable) %>%
+    rename(sect_type = section_type)%>%
+    rename(sect_num = section_num)%>%
+    rename(section = section_name)
+
+}
+

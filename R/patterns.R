@@ -39,7 +39,8 @@ set.pattern <- function(name, pattern= NULL, group="", desc = "") {
 
 pattern.file.name <- function() {
 
-  paste0(here::here("data"),"/naming_patterns.rds")
+  #paste0(here::here("data"),"/naming_patterns.rds")
+  paste0("./data/naming_patterns.rds")
 }
 
 append.pattern <- function(df, name , pattern , type = "", group = "", desc = "") {

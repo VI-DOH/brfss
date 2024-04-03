@@ -32,11 +32,12 @@ get_vertical_table<-function(coi, binary = FALSE, num_vals,den_vals ,
 
   df <- brfss_data()
 
-
   if(binary) {
 
-    svy1<-survey_stats_binary(df=df,coi=coi, num_vals = num_vals,den_vals = den_vals ,weighted = weighted)
-    svy2<-survey_stats_binary(df=df,coi=coi, num_vals = num_vals,den_vals = den_vals ,subset = subsets[1],weighted = weighted)
+    svy1<-survey_stats_binary(df=df,coi=coi, num_vals = num_vals,den_vals = den_vals ,
+                              weighted = weighted)
+    svy2<-survey_stats_binary(df=df,coi=coi, num_vals = num_vals,den_vals = den_vals ,
+                              subset = subsets[1],weighted = weighted)
   } else {
 
     svy1<-survey_stats(df=df, coi = coi, exclude=exclude,

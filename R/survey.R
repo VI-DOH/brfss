@@ -44,7 +44,7 @@ brfss_data <- function() {
 #'
 brfss_geog_data <- function() {
 
-#  extent <- brfss.param(extent)
+  #  extent <- brfss.param(extent)
 
   #  brfss.param(extent = "local")
 
@@ -54,7 +54,7 @@ brfss_geog_data <- function() {
 
   df_brfss<- readRDS(fname)
 
- # brfss.param(extent = extent)
+  # brfss.param(extent = extent)
 
   df_brfss
 }
@@ -101,7 +101,7 @@ coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NUL
     dplyr::rename(STRATUM = {{stratum}}) %>%
     dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
     dplyr::mutate(vers = {{version}}) #%>%
-    #na.exclude()
+  #na.exclude()
 
 
 }
@@ -124,9 +124,15 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
 
   voi <- df_brfss %>% pull(vers) %>% unique()
 
-  df_resp <- responses_by_geog(year,geog) %>%
-    dplyr::filter(version %in% voi) %>%
-    dplyr::mutate(pct = responses/sum(responses))
+  df_resp <- responses_by_geog()
+
+  if(!is.null(df_resp)) {
+    df_resp <- df_resp %>%
+      dplyr::filter(version %in% voi) %>%
+      dplyr::mutate(pct = responses/sum(responses))
+  } else {
+    df_resp <- data.frame(version = 0, pct = 1.0)
+  }
 
   df_brfss <- df_brfss %>%
     dplyr::left_join(df_resp, by = c("vers" = "version")) %>%

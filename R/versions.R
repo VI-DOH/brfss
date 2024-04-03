@@ -112,11 +112,15 @@ calc_responses <- function() {
 #' @export
 #'
 #' @examples
-responses_by_geog<-function(year,geog) {
+responses_by_geog<-function() {
 
   params <- my.brfss.patterns()
   geog <- brfss.param(geog)
-  readRDS(file = apply.pattern("brfss_responses_path",params)) %>%
+  file <- apply.pattern("brfss_responses_path",params)
+
+  if(!file.exists(file)) return(NULL)
+
+  readRDS(file = file) %>%
     filter(geog == {{geog}})
 
 }
