@@ -207,10 +207,10 @@ convert_raw_chars <- function(lines) {
   hyph2 <- rawToChar(as.raw(c(0x82,0x09)))
   apost2 <- rawToChar(as.raw(c(0xe2, 0x80, 0x99)))
 
-  browser()
+
   lines %>%
     gsub(sp2, " ", .) %>%
-    gsub(hyph2, "-", .) %>%
+    #gsub(hyph2, "-", .) %>%
     gsub(apost2, "'", .)
 
 }

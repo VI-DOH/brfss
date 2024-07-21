@@ -18,6 +18,7 @@ modules_used <- function() {
 
   # ====== get the codebook layout  ===========
 
+
   codebook <- get.codebook.layout()
 
   #  =====   get the brfss data   ==========
@@ -59,6 +60,7 @@ modules_used <- function() {
 
     invisible(
       mapply(function(coi, mod_num, module) {
+       # cat(" ... module: ", module, " ... checking [", coi, "]\n")
 
         df <- df_brfss %>%
           rename(coi = {{coi}}) %>%
@@ -80,7 +82,6 @@ modules_used <- function() {
     )
 
   })
-
 
   df_final %>% mutate(geog = geog_abb(geog))
 
