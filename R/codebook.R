@@ -282,6 +282,30 @@ set_codebook_ext <- function(ext) {
 #'
 #'
 
+resection_codebook <- function(lines) {
+
+
+
+  ## some codebooks (pdf) have Section and Label on same line
+  ##   this splits them
+
+  lntmp <- lines %>% gsub("(.*{5,}) (Section.Name.*)","\\1@@@\\2", .)
+  lntmp <- lntmp %>% gsub("(.*{5,}) (Core.Section.Numb.*)","\\1@@@\\2", .)
+  lntmp <- lntmp %>% gsub("(.*{5,}) (Module.Numb.*)","\\1@@@\\2", .)
+  lntmp <- lntmp %>% gsub("(.*{5,}) (Question:.*)","\\1@@@\\2", .)
+  lntmp <- lntmp %>% gsub("(.*{5,}) (Question Number:.*)","\\1@@@\\2", .)
+  lntmp <- lntmp %>% gsub("(.*{5,}) (SAS Variable Name:.*)","\\1@@@\\2", .)
+  lntmp <- lntmp %>% gsub("(.*{5,}) (Type of Variable:.*)","\\1@@@\\2", .)
+  lntmp <- lntmp %>% gsub("(.*{5,}) (Column:.*)","\\1@@@\\2", .)
+
+  lines <- lntmp %>% stringr::str_split(., "@@@") %>% unlist()
+
+  lines <- lines %>% gsub(" Question Prolo.*","", .)
+
+  unlist(lines)
+
+}
+
 #############################################################
 ##
 ##    layout from codebook
@@ -302,13 +326,35 @@ save_codebook_layout <- function(file=NULL) {
   ##      BRFSS data
   ##    variables below ending in '_lines' are integer vectors with line numbers
 
+  # ## some codebooks (pdf) have Section and Label on same line
+  # ##   this splits them
+  #
+  # lntmp <- lines %>% gsub("(.*{5,}) (Section.Name.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Core.Section.Numb.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Module.Numb.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Question:.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Question Number:.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (SAS Variable Name:.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Type of Variable:.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Column:.*)","\\1@@@\\2", .)
+  #
+  # lines <- lntmp %>% stringr::str_split(., "@@@") %>% unlist()
+  #
+  # lines <- lines %>% gsub(" Question Prolo.*","", .)
+  #
+  # lines <- unlist(lines)
+
+  lines <- resection_codebook(lines)
+
+  #============================================================
+
   label_lines <- grep("^Label:", lines)
   mod_lines <- grep("^Module.*Number", lines)
   core_lines <- grep("^Core.*Number", lines)
   sect_lines <- grep("^Sect.*Number", lines)
   value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
   ##
-  columns <- grep("^Column:", lines, value = TRUE)
+  columns <- grep("^Column:", lines, value = TRUE) %>% gsub(" Type of Variable.*", "", .)
   col_names <- grep("^SAS.", lines, value = TRUE)
 
 
@@ -519,6 +565,8 @@ get.codebook.layout <- function() {
   if(!file.exists(file)) {
 
     params["EXT"] <- "national"
+    params["GFLAG"] <- "off"
+
     file <- apply.pattern("codebook_layout_path", params)
 
     if(!file.exists(file)) return(NULL)

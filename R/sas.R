@@ -107,8 +107,8 @@ fix.missing.columns<-function(year,year2=year-1) {
 
 sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
                              dl_data = FALSE, layout = TRUE,
-                             codebook = TRUE, attribs = TRUE, saq = FALSE,
-                             convert = TRUE, split = TRUE, responses = TRUE,
+                             codebook = TRUE, convert = TRUE, attribs = TRUE, saq = FALSE,
+                             split = TRUE, responses = TRUE,
                              factorize = TRUE, verbose=FALSE, progress = NULL,
                              ...)  {
 
@@ -158,6 +158,8 @@ sas_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
   if(attribs) add_column_attributes()
 
   if(split) split_geogs( factorize = factorize)
+
+  if(factorize) factorize( progress = progress)
 
   if(responses) {
     save_response_stats()

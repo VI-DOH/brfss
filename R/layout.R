@@ -168,7 +168,7 @@ fixed_width_layout<-function(year) {
   # get sas layout provided by CDC
 
   df_sas_layout<-sas_layout()
-#  df_sas_layout<-sas_layout(year)
+  #  df_sas_layout<-sas_layout(year)
 
   # clean up sas layout - remove overlapping vars
   #   and remove the state-added-question columns which are to be added from df_saq
@@ -250,6 +250,10 @@ get.layout <- function() {
   if(is.null(df_layout)) {
     ext <- ifelse(ext=="local","national","local")
     df_layout <- get.layout.ext(ext)
+  }
+
+  if(is.null(df_layout)) {
+
   }
   # df_layout <- get.merged.layout()
   #

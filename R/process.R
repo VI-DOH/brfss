@@ -38,7 +38,7 @@ process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
   }
   # get the path to travel ... sas or ascii
 
-    if(brfss.param(source) == "sas") {
+  if(brfss.param(source) == "sas") {
 
     sas_process_year(dl_metadata = dl_metadata, dl_codebook = dl_codebook,
                      dl_data = dl_data, layout = layout, convert=convert, saq = saq,
@@ -108,6 +108,7 @@ split_geogs<-function(main=TRUE, versions=TRUE,
     show_progress(progress,
                   message = paste0("Splitting ... trying version [", version, "]"))
 
+
     df_brfss <- readRDS(file = rdata_file)
 
     brfss.param(geog_flag = 'on')
@@ -127,90 +128,71 @@ split_geogs<-function(main=TRUE, versions=TRUE,
       }
     }
 
+    df_my_geogs <- data.frame(Id = geogs) %>%
+      left_join(df_geogs, by = join_by(Id))
+
     add_cols<-character(0)
 
     geog_save <- brfss.param(geog)
 
-    mapply(function(id,nm) {
+    geog_type <- df_brfss %>% pull(`_STATE`) %>% class()
 
-      if(id%in%geogs) {
+    mapply(function(id, abb, nm) {
 
-        brfss.param(geog = nm)
-        params <- my.brfss.patterns()
+      brfss.param(geog = abb)
+      params <- my.brfss.patterns()
 
-        # get data for the state of interest and make sure there is data
+      # get data for the state of interest and make sure there is data
 
-        df_state<-df_brfss[df_brfss$`_STATE`==id,]
+      if(geog_type == "numeric") {
+        df_state <- df_brfss %>% filter(`_STATE` == id)
+      }  else {
 
-        if(nrow(df_state)>0) {
-          if(verbose) cat("Saving ",nm,"V",version,"\n")
-
-          show_progress(progress,
-                        message = paste0("Splitting ... ", nm, "V", version))
-
-          ##   for now, have to save and (re-)attach the attributes for the columns
-
-          sapply(1:ncol(df_brfss),function(i) {
-            attrs<-attributes(df_brfss[[i]])
-
-            if(!is.null(attrs)){
-              sapply(1:length(attrs),function(j) {
-
-                attr(df_state[[i]],names(attrs[j]))<<-attr(df_brfss[[i]],names(attrs[j]))
-              })
-            } else {
-              add_cols<<-c(add_cols,colnames(df_brfss)[i])
-            }
-
-          })
-          ##################################################
-          ##################################################
-          #
-          # moved this to a separate function
-
-          # if(factorize) {
-          #
-          #   show_progress(progress,
-          #                 message = paste0("Splitting ... ", nm, "V",
-          #                                  version, " ... adding factors"))
-          #
-          #   df_state <- df_state %>% make_factors()
-          # }
-          #
-
-
-          # make sure, even if temporarily, extent param is set to local
-          #     to make sure we are saving the data under the geog folder
-
-          # rethinking the above ... locally, you may want to have a
-          #   copy of the public data set ...
-          #   right now, saving it would overwrite your local copy
-
-          # ext <- brfss.param(extent)
-          #
-          # brfss.param(extent = "local")
-
-          fname <- brfss_data_path( rw = 'w')
-
-          # brfss.param(extent = ext)
-
-          if(verbose) cat("Going to save :", fname, "\n")
-
-          show_progress(progress,
-                        message = paste0("Splitting ... saving ", fname))
-
-          saveRDS(df_state,file = fname)
-
-        }
+        df_state <- df_brfss %>% filter(`_STATE` == nm)
       }
-    },df_geogs$Id,df_geogs$Abbrev)
 
-    brfss.param(geog = geog_save)
+      if(nrow(df_state)>0) {
+        if(verbose) cat("Saving ",abb,"V",version,"\n")
+
+        show_progress(progress,
+                      message = paste0("Splitting ... ", abb, "V", version))
+
+        ##   for now, have to save and (re-)attach the attributes for the columns
+
+        sapply(1:ncol(df_brfss),function(i) {
+          attrs<-attributes(df_brfss[[i]])
+
+          if(!is.null(attrs)){
+            sapply(1:length(attrs),function(j) {
+
+              attr(df_state[[i]],names(attrs[j]))<<-attr(df_brfss[[i]],names(attrs[j]))
+            })
+          } else {
+            add_cols<<-c(add_cols,colnames(df_brfss)[i])
+          }
+
+        })
+
+        fname <- brfss_data_path( rw = 'w')
+
+        # brfss.param(extent = ext)
+
+        if(verbose) cat("Going to save :", fname, "\n")
+
+        show_progress(progress,
+                      message = paste0("Splitting ... saving ", fname))
+
+        saveRDS(df_state,file = fname)
+
+      }
+    }, df_my_geogs$Id, df_my_geogs$Abbrev, df_my_geogs$Geog)
+
+      brfss.param(geog = geog_save)
 
   })
 
 
-  invisible()
+    invisible()
 }
 
 

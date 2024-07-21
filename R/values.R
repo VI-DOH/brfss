@@ -23,9 +23,21 @@ split_it <- function(str, sep = "=") {
 #' @examples
 save_codebook_values <- function(file = NULL) {
 
+  if(is.null(file)) {
+
+    file <- codebook_file()
+  }
+
   params <- my.brfss.patterns()
 
-  df_values_cb <- parse_codebook_values(file = file)
+  if(grepl("[.]pdf$", file)) {
+    df_values_cb <- parse_codebook_values_pdf(file = file)
+
+  } else {
+
+    df_values_cb <- parse_codebook_values(file = file)
+  }
+
 
   fname <- apply.pattern("codebook_values_path",params)
 
@@ -104,6 +116,7 @@ parse_codebook_values <- function(file=NULL) {
   if(is.null(lines)) return(NULL)
 
   #############################################################################
+
 
   value_lines <- grep(".*Value.*Value.Label", lines)
   if(length(value_lines) == 0) {
@@ -283,6 +296,226 @@ parse_codebook_values <- function(file=NULL) {
   df_final <- df_final %>%
     mutate(count = {{cnt}})  %>%
     mutate(text = gsub("(^.*?) {3,}.*","\\1",text))  %>%
+    select(col_name,value, maxval, text, count) %>%
+    filter(value != "")
+
+  df_final
+
+}
+
+#' Parse Codebook Values
+#'
+#' The annual codebook is parsed for possible values for each variable.
+#'
+#' @param file character - filename of layout file
+#' @param year integer - year of interest for codebook
+#' @param ... other arguments to be passed to apply.pattern()
+#'
+#' @return
+#' @export
+#'
+#' @examples
+parse_codebook_values_pdf <- function(file=NULL) {
+
+  require(dplyr)
+
+  year <- brfss.param(year)
+
+  lines <- read_codebook(file=file)
+  if(is.null(lines)) return(NULL)
+
+
+  lines <- resection_codebook(lines)
+
+  lines <- lines[!grepl("^(Value Label|Frequency|Percentage|Weighted Perc)",lines)] %>%
+    stringr::str_trim()
+
+  #############################################################################
+
+  value_lines <- grep(".*Value.*Value.Label|^Value$", lines)
+  if(length(value_lines) == 0) {
+    lines <- stretch_values(lines)
+    value_lines <- grep(".*Value.*Value.Label|^Value$", lines)
+  }
+
+  lines <- gsub("Notes:.*","",lines)
+
+  label_lines <- grep("^Label:", lines)
+  labels <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[label_lines]))
+  col_name_lines <- grep("^SAS.", lines)
+  col_names <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[col_name_lines]))
+
+  ncols <- length(col_names)
+
+
+  #################################################################
+  ##
+  ##  warn if the variables don't line up (different vector lengths)
+  ##    perhaps from one or more badly formed variable lines
+  ##
+  ##      those lines should look something like this ...
+
+  # Label: Told Had Arthritis
+  # Section Name: Arthritis
+  # Core Section Number: 8
+  # Question Number: 1
+  # Column: 132
+  # Type of Variable: Num
+  # SAS Variable Name: HAVARTH5
+  # Question Prologue:
+  # Question:  Has a doctor, nurse or other health professional ever told you that
+  # Value    Value Label    Frequency    Percentage    Weighted Percentage
+
+
+
+  if(length(col_name_lines) != length(value_lines)){
+    warning("Number of col_names differs from number of value sections")
+  }
+
+  #######################################################################
+  ##
+  ##  remove the beginning junk
+
+  rm_lines <- 1:(label_lines[1]-1)
+  lines <- lines[-rm_lines]
+
+  ## get rid of empty lines and lines with nothing in the first 10 characters
+
+  lines <- grep("^$",lines, value = TRUE, invert = TRUE)
+  lines <- grep("^[[:space:]]{10,}",lines, value = TRUE, invert = TRUE)
+
+  # get the line numbers where the sas variable is and that variable value
+
+  col_name_lines <- grep("^SAS.", lines)
+  col_names <- split_it(lines[col_name_lines], ":")$right
+
+  lines <- lines[!grepl("^(Section|Core.|Type.of|Column|Question|Module)",lines)]
+
+  label_lines <- grep("^Label:", lines)
+  value_lines <- grep(".*Value.*Value.Label|^Value$", lines)
+
+
+  col0 <- ""
+  rm_lines <- integer(0)
+
+  # mapply(function(lbl_ln,val_ln, col_nm_ln,col) {
+  #   if(col == col0) {
+  #
+  #     rm_lines <<- c(rm_lines,lbl_ln:(val_ln+1))
+  #   }
+  #
+  #   rm_lines <<- c(rm_lines,lbl_ln:(col_nm_ln-1),(col_nm_ln+1):val_ln)
+  #
+  #   col0 <<- col
+  #
+  # },label_lines, value_lines, col_name_lines, col_names)
+  #
+  # lines <- lines[-unique(rm_lines)]
+
+  ##
+  ##  get rid of lines starting with HIDDEN or BLANK
+  ##    no useful information
+
+  rm_lines <- grep("^ *HIDDEN|^ *BLANK",lines)
+
+  lines <- lines[-rm_lines]
+
+
+  col_name_lines <- grep("^SAS.", lines)
+  col_names <- split_it(lines[col_name_lines], ":")$right
+
+  value_lines <- grep(".*Value.*Value.Label|^Value$", lines)
+
+  # add notes lines to the end of the previous line
+  notes_lines <- grep("^Notes:", lines)
+  lines[notes_lines-1] <- paste0(lines[notes_lines-1]," ", lines[notes_lines])
+
+  lbl0 <- ""
+
+  lbl <-sapply(1:length(lines),function(lin) {
+
+    if(lin %in% col_name_lines) {
+      lbl0 <<- split_it(lines[lin], ":")$right
+    }
+    lbl0
+  })
+
+  df <- data.frame(col_name = lbl, text = lines)
+
+  df0 <- df %>%
+    #save original as a test for later
+    mutate(text_orig= text) %>%
+
+    mutate(col_name = lbl)%>%
+    filter(!grepl("(SAS.Var.*:|Value {6,}Value Lab)",.$text)) %>%
+    filter(!grepl("Notes:",.$text)) %>%
+    mutate(text = stringr::str_trim(text)) %>%
+
+    # fix no space between YesGo and YesIf
+    mutate(text = gsub("(Yes|No)(Go to|If)(.*)","\\1 \\2\\3",text))
+
+  df_final <- df0 %>%
+    mutate(text = gsub("(^.*?) {8,}.*","\\1",text))  %>%
+
+    ## Get rid of 'go to somewhere' text in line
+    mutate(text = gsub("[—]*Go to.*?(    [0-9].*)","\\1",text))  %>%
+
+    ## Get rid of 'Code' text in line
+    mutate(text = gsub("[—]*Code=.*?(    [0-9].*)","\\1",text))
+
+
+  df_final <- df_final %>%
+
+    ## Get rid of 'If' conditional text in line
+    mutate(text = gsub("If .* is .* go to.*?(    [0-9].*)","\\1",text))  %>%
+
+    mutate(text = gsub("Notes:.*?(    [0-9].*)","\\1",text))  %>%
+
+    mutate(value = gsub("^([[:digit:]]+).*","\\1",text)) %>%
+
+    # get max val if text looks like 1 - 999 or similar
+    mutate(maxval = ifelse(grepl("^[[:digit:]]+ *- *([[:digit:]]+).*",text),
+                           gsub("^[[:digit:]]+ *- *([[:digit:]]+).*","\\1",text), NA)) %>%
+    mutate(text = gsub("^[[:digit:]]+ *- *([[:digit:]]+) +","",text))  %>%
+    mutate(text = gsub("^[[:digit:]]+ *","",text))  %>%
+
+    # special case IDAY ... no need for 31 lines ... make range 1 to 31
+    filter(col_name != "IDAY" | value == "1") %>%
+    mutate(maxval = ifelse(col_name == "IDAY","31", maxval)) %>%
+
+    # special case IYEAR ... usually just survey year and some following year in January
+    #    mutate(text = ifelse(col_name == "IYEAR",gsub("^(.*?) .*","\\1",text), text)) %>%
+    filter(col_name != "IYEAR" | grepl("Interview",text)) %>%
+    mutate(value = ifelse(col_name == "IYEAR",year, value)) %>%
+    mutate(maxval = ifelse(col_name == "IYEAR",year+1, maxval)) %>%
+
+    # special case REPDEPTH ... no need for 30 lines ... make range 1 to 30
+    filter(col_name != "REPDEPTH" | value == "1") %>%
+    mutate(maxval = ifelse(col_name == "REPDEPTH","30", maxval))
+
+  #  used to but now don't get rid of all numerics at end of each value name
+  #         (totals (Frequency) are now being grabbed for comparisons later)
+
+  #  Value	Value Label	           Frequency	Pct	Pct Wtd
+  #      1 Yes	                       222	17.38	10.54
+  #      2 No	                         919	71.97	76.71
+  #      7 Don’t know/Not Sure	       136	10.65	12.75
+  #  BLANK Not asked or Missing	       101    .     .
+
+  cnt <- df_final$text
+
+  cnt <- gsub("(^.*? {3,}.*)","",cnt)
+  cnt <- gsub("(^.*?) {3,}.*","\\1",cnt)
+  cnt[grep("^[A-z$]",cnt)] <- ""
+  cnt <- gsub("^ ","",cnt)
+
+  tryCatch(expr = cnt <- as.integer(cnt),
+           warning = function(w) {})
+
+
+  df_final <- df_final %>%
+    mutate(count = {{cnt}})  %>%
+    mutate(text = gsub("(^.*?) {3,}.*","\\1",text))  %>%
     select(col_name,value, maxval, text, count)
 
   df_final
@@ -341,8 +574,10 @@ values <- function( year = NULL, ...) {
 
       # no codebook-generated values - check on national values
 
-      params["EXT"] = "national"
+      params["EXT"] <-  "national"
+      params["GFLAG"] <-  "off"
       fname <- apply.pattern("codebook_values_path",params)
+
       if(!file.exists(fname)) {
         warning("You are missing a values table ... did you import and process the codebook?")
         return(NULL)
@@ -485,27 +720,31 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
 
   invisible(
     sapply(df_factors$col_name, function(col) {
-
+      #
       #if(col == "MARJSMOK") browser()
 
       if(verbose) cat("  .. ", col)
 
       tryCatch({
+        if(!(is.factor(df_brfss[[col]]))) {
+          a<- attributes(df_brfss[[col]])
+          df <- df_vals %>% filter(col_name==col)
+          levels <- df %>% pull(value)
+          labels <- df %>% pull(text)
+          x <- df_brfss[[col]]
 
-        a<- attributes(df_brfss[[col]])
-        df <- df_vals %>% filter(col_name==col)
-        levels <- df %>% pull(value)
-        labels <- df %>% pull(text)
-        x <- df_brfss[[col]]
+          if(orrr::is.integer_like(levels)) levels <- as.integer(levels)
+          if(orrr::is.integer_like(x)) x <- as.integer(x)
 
-        if(orrr::is.integer_like(levels)) levels <- as.integer(levels)
-        if(orrr::is.integer_like(x)) x <- as.integer(x)
+          f <- factor(x,levels = levels, labels = labels)
+          attributes(f) <- c(attributes(f),a)
+          df_brfss[col] <<- f
 
-        f <- factor(x,levels = levels, labels = labels)
-        attributes(f) <- c(attributes(f),a)
-        df_brfss[col] <<- f
+          if(verbose) cat(" OK","\n")
+        } else {
+          if(verbose) cat(" ... already factorized","\n")
+        }
 
-        if(verbose) cat(" OK","\n")
       }, error = function(e) {
         if(verbose) cat(" Failed","\n")
 
@@ -748,7 +987,7 @@ original_values <- function(coi) {
       filter(is.na(maxval)) %>%
       bind_rows(data.frame(col_name = coi, response = as.character(vals),
                            value =  as.character(vals))) %>%
-     # arrange(as.integer(value)) %>%
+      # arrange(as.integer(value)) %>%
       select(-maxval)
 
     df <- df %>%
