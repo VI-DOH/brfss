@@ -15,7 +15,7 @@
 #'}
 #'
 #'
-factorize<-function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
+factorize <- function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
 
   # make sure some version will be split
 

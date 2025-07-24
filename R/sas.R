@@ -208,7 +208,7 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
 
   show_progress(progress,
                 message = "Metadata ... downloading")
-
+  browser()
   pttrns<-get.pattern.group("sas_downloads")
   urlfiles<- apply.pattern("brfss_url_files", params)
 
@@ -240,12 +240,19 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
       #   set time to 3 minutes and then restore when done
 
       x <- httr::GET(url = url)
+
+      if(x$status_code  > 399) {
+        url <- gsub("SAS$", "zip", url)
+        x <- httr::GET(url = url)
+
+      }
+
       cont <- x$status_code == 200
       if(cont) {
         show_progress(progress,
                       message = paste0("Metadata ... downloading ", filename))
 
-        download.file(url = url,destfile = fileout,
+         download.file(url = url,destfile = fileout,
                       method = "libcurl",quiet = !is.null(progress))
 
         if(grepl("[.]zip$",fileout)) {
@@ -409,7 +416,7 @@ sas_download_metadata.versions<-function() {
 
 read.xpt<-function(version = 0, verbose = F) {
 
-
+  browser()
   brfss.param(version = version)
   params <- my.brfss.patterns()
 
@@ -862,7 +869,8 @@ read_sas_field_ranges<-function() {
     #file<-paste("sasout",sprintf("%02d",year%%100),".sas",sep="")
   }
 
-  lines<-readLines(file, warn=F)
+  lines<-readLines(file, warn=F) %>%
+    iconv(to = "UTF-8")
 
   lines <- gsub("—", "-",lines)
 

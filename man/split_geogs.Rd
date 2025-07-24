@@ -35,7 +35,7 @@ This function splits out the geographies of interest.
 \examples{
 
 \dontrun{
-split_geogs(year = 2020, source = 'sas', main=TRUE, versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
+split_geogs( main=TRUE, versions=TRUE,verbose=TRUE)
 }
 
 

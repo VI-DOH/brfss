@@ -76,7 +76,7 @@ process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
 #' @examples
 #'
 #'\dontrun{
-#' split_geogs(year = 2020, source = 'sas', main=TRUE, versions=TRUE, my_geog="MT", other_geogs=NULL,verbose=TRUE)
+#' split_geogs( main=TRUE, versions=TRUE,verbose=TRUE)
 #'}
 #'
 #'
@@ -97,7 +97,7 @@ split_geogs<-function(main=TRUE, versions=TRUE,
   df_geogs <- get_geogs_all()
 
   sapply(ver,function(version) {
-
+    browser()
     brfss.param(version = version)
     brfss.param(geog_flag = 'off')
 

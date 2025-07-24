@@ -703,7 +703,7 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 #' }
 #'
 make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
-                         verbose = FALSE) {
+                         cols = NULL, verbose = FALSE) {
 
   if(is.null(df_brfss)) df_brfss <- brfss_data()
 
@@ -718,10 +718,13 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
 
   if(verbose) cat("factorizing ... \n")
 
+  if(!is.null(cols)) {
+
+    df_factors <- df_factors %>% filter(col_name %in% cols)
+  }
   invisible(
     sapply(df_factors$col_name, function(col) {
       #
-      #if(col == "MARJSMOK") browser()
 
       if(verbose) cat("  .. ", col)
 
@@ -733,7 +736,7 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
           labels <- df %>% pull(text)
           x <- df_brfss[[col]]
 
-          if(orrr::is.integer_like(levels)) levels <- as.integer(levels)
+          if(all(orrr::is.integer_like(levels))) levels <- as.integer(levels)
           if(orrr::is.integer_like(x)) x <- as.integer(x)
 
           f <- factor(x,levels = levels, labels = labels)
@@ -748,10 +751,11 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
       }, error = function(e) {
         if(verbose) cat(" Failed","\n")
 
+
       })
     })
   )
-  cat(" ... DONE factorizing  \n")
+  if(verbose) cat(" ... DONE factorizing  \n")
 
 
   df_brfss

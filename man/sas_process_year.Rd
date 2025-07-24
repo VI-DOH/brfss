@@ -12,9 +12,9 @@ sas_process_year(
   dl_data = FALSE,
   layout = TRUE,
   codebook = TRUE,
+  convert = TRUE,
   attribs = TRUE,
   saq = FALSE,
-  convert = TRUE,
   split = TRUE,
   responses = TRUE,
   factorize = TRUE,
@@ -28,10 +28,10 @@ sas_process_year(
 
 \item{codebook}{- logical - download and process the annual codebook}
 
-\item{saq}{- logical - are there state-added questions for processing}
-
 \item{convert}{- logical - read the xpt files into data_frames and save? Useful (set = FALSE)
 if you already have the xpt files processed}
+
+\item{saq}{- logical - are there state-added questions for processing}
 
 \item{split}{- logical - split the xpt file by state/geography}
 
