@@ -8,6 +8,7 @@ make_factors(
   df_brfss = NULL,
   df_layout = NULL,
   df_vals = NULL,
+  cols = NULL,
   verbose = FALSE
 )
 }

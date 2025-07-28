@@ -61,7 +61,7 @@ calc_responses <- function() {
     brfss.param(version = version)
     params <- my.brfss.patterns()
 
-    if(brfss.param(extent) == "national") {
+    if(brfss.param(extent) == "public") {
       df_brfss_vers <- brfss_data()
 
     } else {

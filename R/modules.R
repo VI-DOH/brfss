@@ -47,7 +47,6 @@ modules_used <- function() {
 
   df_modules <- df_modules %>% head(imax)
 
-
   df_final <- data.frame()
 
   sapply(0:highest_version(),function(ver){
@@ -60,7 +59,7 @@ modules_used <- function() {
 
     invisible(
       mapply(function(coi, mod_num, module) {
-       # cat(" ... module: ", module, " ... checking [", coi, "]\n")
+      cat(" ... version: ", ver, " ... module: ", module, " ... checking [", coi, "]\n")
 
         df <- df_brfss %>%
           rename(coi = {{coi}}) %>%
@@ -74,6 +73,7 @@ modules_used <- function() {
                  mod_num = mod_num, module = module) %>%
           select(year, version, geog, mod_num, module)
 
+        if(ver == 1) browser()
 
         df_final <<- df_final %>% bind_rows(df)
 

@@ -4,7 +4,7 @@
 #' @param year - int - year of interest
 #' @param geog - character - 2-char geog of interest (ex: "NY")
 #' @param version - survey version; 0 (default) = main survey
-#' @param extent - character - extent of data ("local" or national")
+#' @param extent - character - extent of data ("local" or public")
 #' @param source - character - source of data ("ascii" or sas")
 #'
 #' @return data frame

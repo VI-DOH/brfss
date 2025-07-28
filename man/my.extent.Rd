@@ -7,11 +7,11 @@
 my.extent()
 }
 \value{
-character data extent ('local' or 'national')
+character data extent ('local' or 'public')
 }
 \description{
-Get the extent for the BRFSS data of interest. The extent is either 'local' or 'national'. Generally, data
-downloaded from the publicly available data set are 'national' since they cpontains data from all geographies,
+Get the extent for the BRFSS data of interest. The extent is either 'local' or 'public'. Generally, data
+downloaded from the publicly available data set are 'public' since they contains data from all geographies,
 and data downloaded from the secure CDC state-specific site are 'local' since they only contains data for that
 geography (state or territory)
 }

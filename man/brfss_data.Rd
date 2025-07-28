@@ -13,7 +13,7 @@ brfss_data()
 
 \item{version}{- survey version; 0 (default) = main survey}
 
-\item{extent}{- character - extent of data ("local" or national")}
+\item{extent}{- character - extent of data ("local" or public")}
 
 \item{source}{- character - source of data ("ascii" or sas")}
 }

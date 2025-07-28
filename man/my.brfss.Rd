@@ -21,7 +21,7 @@ my.brfss(
 
 \item{source}{character data source to process, currently "sas" or "ascii"}
 
-\item{extent}{character data source extent, currently "local" or "national"}
+\item{extent}{character data source extent, currently "local" or "public"}
 }
 \value{
 list with year, geography and other geographies (year, geog, other_geogs)

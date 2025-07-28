@@ -1,6 +1,3 @@
-library(survey)
-
-
 
 #' Survey Statistics
 #'

@@ -13,5 +13,5 @@ get.merged.layout()
 data frame with layout data
 }
 \description{
-Get layout created from merging national layout with state-added questions
+Get layout created from merging public layout with state-added questions
 }

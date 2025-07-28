@@ -329,7 +329,7 @@ my.brfss.path <- function() {
 #'  \item{geog}{ - the geography of interest}
 #'  \item{version}{ - the version of interest}
 #'  \item{extent}{ - the extent of the raw data file ... local (one geog) or
-#'  national (all geographies)}
+#'  public (all geographies)}
 #'  \item{source}{ - the file type source of the raw data ... ascii or sas}
 #'}
 #' @return nothing
@@ -474,7 +474,7 @@ my.brfss.init <- function() {
 
   my_brfss$extent$value <- "local"
   my_brfss$extent$pattern <- "EXT"
-  my_brfss$extent$values <- c("local","national", "monthly")
+  my_brfss$extent$values <- c("local","public", "monthly")
 
   my_brfss$extent$on_change <- function(extent) {
 
@@ -559,6 +559,7 @@ my.brfss.init <- function() {
 #'
 #' }
 my.brfss.patterns <- function() {
+
   my_brfss <- brfss.params(val_only = FALSE)
 
   pats <- sapply(my_brfss, function(myb) {

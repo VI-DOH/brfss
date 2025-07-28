@@ -296,6 +296,12 @@ get.pattern.info <- function(name) {
 apply.pattern <- function(name,  ...) {
 
   require(dplyr,quietly = T, warn.conflicts = F)
+
+  args <- list(...)
+  if(is.null(args)) {
+
+    args <- my.brfss.patterns()
+  }
   pats <- get.pattern(name = name)
 
   pats <- sapply(pats, function(pat) {
@@ -305,7 +311,9 @@ apply.pattern <- function(name,  ...) {
 
   pats <- unname(pats)
 
-  patternize(pats,... )
+  req_params <- pattern.requirements(name) %>% pull(params)
+
+  if(nchar(req_params) > 0) patternize(pats, args )
 
 }
 
@@ -327,7 +335,7 @@ apply.pattern <- function(name,  ...) {
 #'
 patternize<-function(strIn, ..., expand = TRUE) {
 
-
+  browser()
   args <- unlist(list(...))
 
   if(is.null(args)) return(strIn)

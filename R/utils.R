@@ -1,4 +1,5 @@
-
+#' @importFrom magrittr %>%
+#'
 show_progress <- function(progress, message) {
 
   if(!is.null(progress)) progress$set(message = message, value = NULL)
@@ -9,7 +10,6 @@ str_something <- function(string) {
   ok <- !is.na(string) && !is.null(string) && length(string)>0 && nchar(string)>0
   ok
 }
-
 
 geog_ids<-function(geogs) {
 

@@ -13,7 +13,7 @@
 #' }
 #'
 process_codebook <- function(progress = NULL) {
-
+browser()
   params <- my.brfss.patterns()
 
   show_progress(progress,
@@ -45,7 +45,7 @@ download_codebook <- function(progress = NULL) {
   show_progress(progress,
                 message = "Codebook ... downloading ")
 
-  if(brfss.param(extent) != "national") {
+  if(brfss.param(extent) != "public") {
     return()
   }
 
@@ -63,7 +63,7 @@ download_codebook <- function(progress = NULL) {
 
   fldrout <- apply.pattern("codebook_folder",params)
   ext <- apply.pattern("codebook_ext",params)
-
+  browser()
   ## create the folder/dir if it does not exist
 
   if(!dir.exists(fldrout)) dir.create(fldrout, recursive = TRUE)
@@ -564,7 +564,7 @@ get.codebook.layout <- function() {
 
   if(!file.exists(file)) {
 
-    params["EXT"] <- "national"
+    params["EXT"] <- "public"
     params["GFLAG"] <- "off"
 
     file <- apply.pattern("codebook_layout_path", params)
@@ -578,7 +578,7 @@ get.codebook.layout <- function() {
 
 #' Get Merged Layout
 #'
-#' Get layout created from merging national layout with state-added questions
+#' Get layout created from merging public layout with state-added questions
 #'
 #' @param year integer - year of interest
 #'

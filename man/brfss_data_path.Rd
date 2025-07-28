@@ -15,7 +15,7 @@ brfss_data_path(rw = c("r", "w"))
 
 \item{version}{integer - survey version (0 = main)}
 
-\item{extent}{character -'local' or 'national'}
+\item{extent}{character -'local' or 'public'}
 
 \item{source}{character - data source ('ascii' or 'sas')}
 }

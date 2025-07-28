@@ -525,7 +525,7 @@ parse_codebook_values_pdf <- function(file=NULL) {
 
 #' Get Merged Values
 #'
-#' Get values created from merging national values with state-added questions
+#' Get values created from merging public values with state-added questions
 #'
 #' @return data frame with values data
 #' @export
@@ -572,9 +572,9 @@ values <- function( year = NULL, ...) {
 
     if(!file.exists(fname)) {
 
-      # no codebook-generated values - check on national values
+      # no codebook-generated values - check on public values
 
-      params["EXT"] <-  "national"
+      params["EXT"] <-  "public"
       params["GFLAG"] <-  "off"
       fname <- apply.pattern("codebook_values_path",params)
 

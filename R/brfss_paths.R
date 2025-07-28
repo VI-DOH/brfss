@@ -164,7 +164,7 @@ brfss_field_values_filename<-function(year) {
 #' @param year integer - year of interest
 #' @param geog character - geography of interest
 #' @param version integer - survey version (0 = main)
-#' @param extent character -'local' or 'national'
+#' @param extent character -'local' or 'public'
 #' @param source character - data source ('ascii' or 'sas')
 #' @param rw character - read/write
 #'

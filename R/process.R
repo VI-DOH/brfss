@@ -32,8 +32,8 @@ process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
 
   # by definition, state-added- questions are local
 
-  if(brfss.param(extent) == 'national' && saq) {
-    warning("Data are national, saq = TRUE is incongruous, setting saq to FALSE")
+  if(brfss.param(extent) == 'public' && saq) {
+    warning("Data are public, saq = TRUE is incongruous, setting saq to FALSE")
     saq <- FALSE
   }
   # get the path to travel ... sas or ascii

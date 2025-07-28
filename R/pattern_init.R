@@ -40,9 +40,17 @@ init.patterns <- function() {
   ##
   ##    for downloads
 
-  append.pattern("brfss_url_files","https://www.cdc.gov/brfss/annual_data/^YEAR^/files/",
+  append.pattern("brfss_url_annual","https://www.cdc.gov/brfss/annual_data/^YEAR^/",
                  type = "url",
-                 desc ="Base URL of BRFSS data") %>%
+                 desc ="Base URL of annual BRFSS data") %>%
+
+    append.pattern("brfss_url_files","$brfss_url_annual$files/",
+                   type = "url",
+                   desc ="Base URL of BRFSS data") %>%
+
+    append.pattern("brfss_url_documentation",
+                   "$brfss_url_annual$pdf/",
+                   type = "url") %>%
 
     append.pattern("sasout_download_file","SASOUT^YR^_LLCP{^VERS^>0;_V^VERS^}.SAS",
                    type = "file",
@@ -65,9 +73,6 @@ init.patterns <- function() {
                    group ="xpt_downloads",
                    desc ="URL filename of BRFSS XPT data") %>%
 
-    append.pattern("brfss_url_documentation",
-                   "https://www.cdc.gov/brfss/annual_data/^YEAR^/pdf/",
-                   type = "url") %>%
 
     ################################################################################
   ##
@@ -85,15 +90,15 @@ init.patterns <- function() {
                           "{^EXT^ == 'local' || ^EXT^ == 'monthly' ;local/^GEOG^/}",
 
                           # if it's public
-                          "{^EXT^ == 'national';public/",
-                          "{^GFLAG^ == 'on';state/^GEOG^/}}"),
+                          "{^EXT^ == 'public';public/",
+                          "{^GFLAG^ == 'on';states/^GEOG^/}}"),
                    type = "folder",
                    desc = "Folder to store raw BRFSS data") %>%
 
     append.pattern("brfss_annual_raw_data_folder",
                    paste0("$brfss_raw_data_folder$^YEAR^/",
                           "{^EXT^ == 'local';local/^GEOG^/}",
-                          "{^EXT^ == 'national';public/}"),
+                          "{^EXT^ == 'public';public/}"),
                    type = "folder",
 
                    desc = paste0("Folder to store the annual raw ",
@@ -114,8 +119,8 @@ init.patterns <- function() {
                           "{^EXT^ == 'local' || ^EXT^ == 'monthly' ;local/^GEOG^/}",
 
                           # if it's public
-                          "{^EXT^ == 'national';public/",
-                          "{^GFLAG^ == 'on';state/^GEOG^/}}"),
+                          "{^EXT^ == 'public';public/",
+                          "{^GFLAG^ == 'on';states/^GEOG^/}}"),
                    type = "folder",
                    desc = "Folder to store processed BRFSS data") %>%
 
@@ -133,8 +138,8 @@ init.patterns <- function() {
                           #  getting the entire public data set before the split into
                           # individual states
 
-                          "{^EXT^ == 'national';public/",
-                          "{^GFLAG^ == 'on';state/^GEOG^/}",
+                          "{^EXT^ == 'public';public/",
+                          "{^GFLAG^ == 'on';states/^GEOG^/}",
                           "{^SRC^ == 'sas';sas/}",
                           "{^SRC^ == 'ascii';ascii/}}"),
 
@@ -142,7 +147,7 @@ init.patterns <- function() {
                    desc = "Folder to store the annual processed BRFSS data")
 
   annual_data_pattern <- paste0("{^EXT^ == 'local';^GEOG^_^YEAR^}",
-                                "{^EXT^ == 'national';",
+                                "{^EXT^ == 'public';",
                                 "{^GFLAG^ == 'on';^GEOG^_^YEAR^}",
                                 "{^GFLAG^ == 'off';",
                                 "{^SRC^ == 'sas';sas_^YEAR^}",
@@ -205,7 +210,7 @@ init.patterns <- function() {
   ##  codebook patterns
 
   append.pattern("brfss_url_codebook",
-                 "https://www.cdc.gov/brfss/annual_data/^YEAR^/pdf/",
+                 "$brfss_url_documentation$",
                  type = "url",
                  desc ="Base URL of BRFSS codebook") %>%
 
@@ -310,13 +315,13 @@ init.patterns <- function() {
     append.pattern("ascii_raw_data_folder",
                    paste0("$brfss_annual_raw_data_folder$",
                           "{^EXT^ == 'local';ascii/}",
-                          "{^EXT^ == 'national';ascii/}"),
+                          "{^EXT^ == 'public';ascii/}"),
                    type = "folder") %>%
 
 
     append.pattern("ascii_filename_raw",
                    paste0(
-                     "{^EXT^ == 'national';LLCP{^VERS^ == 0;^YEAR^}{^VERS^ > 0;^YR^V^VERS^}.ASC}",
+                     "{^EXT^ == 'public';LLCP{^VERS^ == 0;^YEAR^}{^VERS^ > 0;^YR^V^VERS^}.ASC}",
                      "{^EXT^ == 'local';^GEOG^^YR^COMP{^VERS^ > 0;_V^VERS^}.DAT}"),
                    type = "file") %>%
 
@@ -329,7 +334,7 @@ init.patterns <- function() {
     append.pattern("ascii_data_folder",
                    paste0("$brfss_data_folder$^YEAR^/",
                           "{^EXT^ == 'local';local/^GEOG^/ascii/}",
-                          "{^EXT^ == 'national';public/ascii/}"),
+                          "{^EXT^ == 'public';public/ascii/}"),
                    type = "folder") %>%
 
     append.pattern("ascii_filename",
@@ -349,7 +354,7 @@ init.patterns <- function() {
   append.pattern("sas_raw_data_folder",
                  paste0("$brfss_annual_raw_data_folder$",
                         "{^EXT^ == 'local';sas/}",
-                        "{^EXT^ == 'national';sas/}"),
+                        "{^EXT^ == 'public';sas/}"),
                  type = "folder") %>%
 
 
@@ -363,7 +368,7 @@ init.patterns <- function() {
     append.pattern("xpt_file",
                    paste0(
                      "{^EXT^ == 'local';^GEOG^^YR^FINL{^VERS^ > 0;_V^VERS^}}",
-                     "{^EXT^ == 'national';LLCP{^VERS^ == 0;^YEAR^}",
+                     "{^EXT^ == 'public';LLCP{^VERS^ == 0;^YEAR^}",
                      "{^VERS^ > 0;^YR^V^VERS^}}.XPT"),
                    type = "file") %>%
 
@@ -381,7 +386,7 @@ init.patterns <- function() {
 
 
     append.pattern("sas_sasout_file",
-                   "SASOUT^YR^_{^EXT^ == 'local';STATES}{^EXT^ == 'national';LLCP}{^VERS^>0;_V^VERS^}.SAS",
+                   "SASOUT^YR^_{^EXT^ == 'local';STATES}{^EXT^ == 'public';LLCP}{^VERS^>0;_V^VERS^}.SAS",
                    type = "file") %>%
 
     # append.pattern("sas_sasout_path", "$sas_raw_data_folder$$sas_sasout_file$",
@@ -412,7 +417,7 @@ init.patterns <- function() {
 
     append.pattern("saq_layout_folder", "$layout_folder$",
                    # paste0("$brfss_data_folder$^YEAR^/",
-                   #        "{^EXT^ == 'local';local/^GEOG^/saq/}{^EXT^ == 'national';ERROR}"),
+                   #        "{^EXT^ == 'local';local/^GEOG^/saq/}{^EXT^ == 'public';ERROR}"),
                    type = "folder",
                    desc = "Folder to store the annual processed BRFSS data") %>%
 
@@ -429,7 +434,7 @@ init.patterns <- function() {
                    type = "path") %>%
 
 
-    ##  files from merging the saq data with the national data
+    ##  files from merging the saq data with the public data
 
     append.pattern("merged_layout_folder",paste0("$layout_folder$"),
                    type = "folder") %>%

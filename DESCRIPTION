@@ -16,7 +16,6 @@ Imports:
         htm2txt,
         iotools,
         lubridate,
-        magrittr,
         orrr,
         pdftools,
         reshape2,

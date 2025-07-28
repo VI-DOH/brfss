@@ -248,7 +248,7 @@ get.layout <- function() {
   df_layout <- get.layout.ext(ext)
 
   if(is.null(df_layout)) {
-    ext <- ifelse(ext=="local","national","local")
+    ext <- ifelse(ext == "local", "public", "local")
     df_layout <- get.layout.ext(ext)
   }
 

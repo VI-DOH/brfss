@@ -103,7 +103,7 @@ process_app <- function() {
         bs_clr(bs = "source_ascii", bg = "white", fg = "green"),
         bs_clr(bs = "source_sas", bg = "green", fg = "white"),
         bs_clr(bs = "extent_local", bg = "#0000aa50", fg = "white"),
-        bs_clr(bs = "extent_national", bg = "white", fg = "#0044ff"),
+        bs_clr(bs = "extent_public", bg = "white", fg = "#0044ff"),
         bs_clr(bs = "brfss_on", bg = "#ffff44aa", fg = "white"),
 
         tags$head(tags$style(paste0(".shiny-notification ",
@@ -152,7 +152,7 @@ process_app <- function() {
                                    #   onLabel = "Local",
                                    #   offLabel = "National",
                                    #   onStatus = "extent_local",
-                                   #   offStatus = "extent_national",
+                                   #   offStatus = "extent_public",
                                    #   value = (my_brf["extent"] == "local")
                                    # )
                             )
