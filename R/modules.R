@@ -59,7 +59,7 @@ modules_used <- function() {
 
     invisible(
       mapply(function(coi, mod_num, module) {
-      cat(" ... version: ", ver, " ... module: ", module, " ... checking [", coi, "]\n")
+        cat(" ... version: ", ver, " ... module: ", module, " ... checking [", coi, "]\n")
 
         df <- df_brfss %>%
           rename(coi = {{coi}}) %>%
@@ -94,7 +94,7 @@ modules_used <- function() {
 #'
 #' @examples
 save_module_stats<-function(progress = NULL) {
-  require(dplyr)
+
 
   show_progress(progress,
                 message = paste0("Modules ... Saving"))
@@ -122,6 +122,31 @@ save_module_stats<-function(progress = NULL) {
   if(!dir.exists(dirname(file))) dir.create(dirname(file))
 
   saveRDS(df_modules, file = file)
+
+}
+
+#' Title
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_module_stats<-function(year = NULL, progress = NULL) {
+
+
+  show_progress(progress,
+                message = paste0("Modules ... Saving"))
+
+  params <- my.brfss.patterns()
+  if(!is.null(year)) {
+    params["YEAR"] <- year
+    params["YR"] <- year %% 100
+  }
+
+  file  <-  apply.pattern("brfss_modules_path",params)
+  if(!dir.exists(dirname(file))) dir.create(dirname(file))
+
+  readRDS(file = file)
 
 }
 

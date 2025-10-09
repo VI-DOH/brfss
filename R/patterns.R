@@ -20,7 +20,7 @@
 #' }
 #'
 set.pattern <- function(name, pattern= NULL, group="", desc = "") {
-  require(dplyr)
+
 
   df_patterns <- get.patterns()
 
@@ -80,7 +80,7 @@ relocate_by_pattern <- function(name, file, ...) {
 
 
 remove.patterns <- function(names) {
-  require(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+
 
   df_patterns <- get.patterns() %>%
     filter(!name %in% names) %>%
@@ -104,7 +104,7 @@ remove.patterns <- function(names) {
 #' }
 #'
 pattern.names <- function(filter=".*") {
-  require(dplyr)
+
 
   get.patterns() %>%
     filter(grepl(filter,name)) %>%
@@ -198,14 +198,18 @@ expand.pattern <- function(pattern) {
 #' }
 #'
 get.pattern <- function(name, expand = FALSE) {
-  require(dplyr,quietly = T, warn.conflicts = F)
+
 
   pat_name <- name
 
-  pttrn <- get.patterns()
+  df <- get.patterns()
 
-  pttrn <- pttrn %>%
-    filter(name=={{pat_name}}) %>%
+  df <- df %>%
+    filter(name=={{pat_name}})
+
+  if(nrow(df) == 0) return(NULL)
+
+  pttrn <- df %>%
     pull(pattern)
 
   if(expand) {
@@ -230,7 +234,6 @@ get.pattern <- function(name, expand = FALSE) {
 #' }
 #'
 get.pattern.group <- function(group) {
-  require(dplyr,quietly = T, warn.conflicts = F)
 
   naming_patterns <- get.patterns()
 
@@ -263,7 +266,6 @@ get.pattern.group <- function(group) {
 #' }
 #'
 get.pattern.info <- function(name) {
-  require(dplyr,quietly = T, warn.conflicts = F)
 
   naming_patterns <- get.patterns()
 
@@ -295,14 +297,18 @@ get.pattern.info <- function(name) {
 #'
 apply.pattern <- function(name,  ...) {
 
-  require(dplyr,quietly = T, warn.conflicts = F)
-
   args <- list(...)
-  if(is.null(args)) {
 
-    args <- my.brfss.patterns()
-  }
+  #req_params <- pattern.requirements(name) %>% pull(params)
+
   pats <- get.pattern(name = name)
+
+  # if(length(req_params) == 1 && nchar(req_params) == 0) return(pats)
+
+  # if(is.null(args) || length(args) == 0) {
+  #
+  #  return(NULL)
+  # }
 
   pats <- sapply(pats, function(pat) {
     #pat <- get.pattern(name)
@@ -311,9 +317,9 @@ apply.pattern <- function(name,  ...) {
 
   pats <- unname(pats)
 
-  req_params <- pattern.requirements(name) %>% pull(params)
+  pats <- patternize(pats, args )
 
-  if(nchar(req_params) > 0) patternize(pats, args )
+  pats
 
 }
 
@@ -335,7 +341,6 @@ apply.pattern <- function(name,  ...) {
 #'
 patternize<-function(strIn, ..., expand = TRUE) {
 
-  browser()
   args <- unlist(list(...))
 
   if(is.null(args)) return(strIn)

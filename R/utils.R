@@ -1,4 +1,3 @@
-#' @importFrom magrittr %>%
 #'
 show_progress <- function(progress, message) {
 
@@ -175,7 +174,7 @@ sex_var <- function(df) {
 
 pop_sex <- function(df = NULL, coi) {
 
-  if(is.null(df)) df <- prepped_data()
+  if(is.null(df)) df <- brfss_data()
 
   sexvar <- sex_var(df)
 
@@ -212,5 +211,17 @@ convert_raw_chars <- function(lines) {
     gsub(sp2, " ", .) %>%
     #gsub(hyph2, "-", .) %>%
     gsub(apost2, "'", .)
+
+}
+
+#' Find column from Regexp
+#'
+#' @returns data.frame with matching column names and label
+#' @export
+#'
+#' @examples
+find_column <- function(pattern, field = "col_name") {
+
+  get.layout() %>% filter(grepl(pattern, get(field), ignore.case = TRUE)) %>% select(col_name, label)
 
 }

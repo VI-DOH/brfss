@@ -38,10 +38,10 @@ ascii_data_url<-function(year) {
 #' }
 
 ascii_process_year <- function(dl_metadata = FALSE, dl_codebook = FALSE,
-                               dl_data = FALSE, codebook = TRUE, attribs = TRUE,
+                               dl_data = FALSE, codebook = FALSE, attribs = FALSE,
                                saq = FALSE, layout = FALSE,
-                               convert = TRUE, split = TRUE, factorize = TRUE,
-                               responses = TRUE, verbose=FALSE, progress = NULL) {
+                               convert = FALSE, split = FALSE, factorize = FALSE,
+                               responses = FALSE, verbose=FALSE, progress = NULL) {
 
   use_progress <- !is.null(progress)
 

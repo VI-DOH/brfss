@@ -21,7 +21,7 @@ split_it <- function(str, sep = "=") {
 #' @export
 #'
 #' @examples
-save_codebook_values <- function(file = NULL) {
+save_codebook_values <- function(file = NULL, fileout = NULL) {
 
   if(is.null(file)) {
 
@@ -39,8 +39,11 @@ save_codebook_values <- function(file = NULL) {
   }
 
 
-  fname <- apply.pattern("codebook_values_path",params)
-
+  if(is.null(fileout)) {
+    fname <- apply.pattern("codebook_values_path",params)
+  } else {
+    fname= fileout
+  }
   saveRDS(df_values_cb, file = fname)
 }
 
@@ -961,7 +964,7 @@ original_values <- function(coi) {
   ##  get original values
   ## if it wasn't a range it will already be a factor
 
-  df <- prepped_data() %>% rename(COI = {{coi}})  %>%
+  df <- brfss_data() %>% rename(COI = {{coi}})  %>%
     select(response = COI) %>%
     mutate(response = as.character(response))%>%
     mutate(response = ifelse(is.na(response),"Not eligible/no answer",response))

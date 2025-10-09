@@ -26,7 +26,16 @@ brfss_data <- function() {
 
   df_brfss<- readRDS(fname)
 
-  df_brfss
+  params <- my.brfss.patterns()
+
+  structure(df_brfss,
+            class = c("brfss_data", "data.frame"),
+            year = params["YEAR"] %>% as.integer() %>% unname(),
+            geog = params["GEOG"] %>% unname(),
+            source = params["SRC"] %>% unname(),
+            extent = params["EXT"] %>% unname(),
+            version = params["VERS"] %>% unname()
+  )
 }
 
 #' Get BRFSS Geography-Based Survey Data
@@ -140,7 +149,7 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
     dplyr::select(matches(coi), FINAL_WT, STRATUM, all_of(subsets))%>%
     dplyr::rename(coi = {{coi}})%>%
     dplyr::mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
-    na.exclude()
+    filter(!is.na(coi))
 
   if (is.factor(df_brfss %>% pull(coi)))
     df_brfss <- df_brfss %>% dplyr::mutate(coi = droplevels(coi))

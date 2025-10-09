@@ -194,7 +194,7 @@ add_attributes <- function(df, ... , atts) {
 #'
 
 standard_attributes <- function(fmt = FALSE) {
-  require(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+  
 
   x <-   c(
     "section_type",

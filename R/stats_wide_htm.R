@@ -23,7 +23,7 @@
 #' stats_wide <- function(df_stats, stats = c("num", "percent", "CI"),
 #'                            pct_txt = "pct", latex = FALSE) {
 #'
-#'   require(gt)
+#'   
 #'
 #'   params <- brfss.params()
 #'

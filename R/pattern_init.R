@@ -1,8 +1,8 @@
 
 
 init.patterns <- function() {
-  require(dplyr, quietly = TRUE, warn.conflicts = FALSE)
-  require(tibble)
+
+
 
   fname <- "./data/naming_patterns.rds"
   if(file.exists(fname)) file.remove(fname)
@@ -200,7 +200,23 @@ init.patterns <- function() {
                  desc = "Folder to store the metadata ... modules and responses") %>%
 
     append.pattern("brfss_annual_metadata_folder",
-                   paste0("$brfss_annual_data_folder_base$metadata/"),
+                   paste0("$brfss_data_folder$^YEAR^/",
+
+                          #if it's a local file (NOT public)
+                          "{^EXT^ == 'local';local/^GEOG^/",
+                          "{^SRC^ == 'sas';sas/}",
+                          "{^SRC^ == 'ascii';ascii/}}",
+
+                          #if it's a public file (downloaded from CDC public site)
+                          # we must distinguish between the entire public data set and
+                          #  the local data set using GFLAG ... kind of a kludge to handle
+                          #  getting the entire public data set before the split into
+                          # individual states
+
+                          "{^EXT^ == 'public';public/",
+                          "{^GFLAG^ == 'on';states/^GEOG^/}",
+                          "{^SRC^ == 'sas';sas/}",
+                          "{^SRC^ == 'ascii';ascii/}metadata/}"),
                    type = "folder",
                    group = "metadata",
                    desc = "Folder to store the metadata ... modules and responses") %>%

@@ -26,8 +26,8 @@ stats_wide_xl <- function(df_stats, file = NULL,
                           stats = c("num", "percent", "CI"),
                           pct_txt = "pct", append = FALSE, shtnm = NULL) {
 
-  require(gt)
-  require(openxlsx)
+  
+  
 
 
   params <- brfss.params()
@@ -351,8 +351,8 @@ stats_xl <- function(df_stats, file = NULL,
                      stats = c("num", "percent", "CI"),
                      pct_txt = "pct", append = FALSE, shtnm = NULL) {
 
-  require(gt)
-  require(openxlsx)
+  
+  
 
   params <- brfss.params()
 
@@ -463,7 +463,7 @@ stats_xl <- function(df_stats, file = NULL,
 
 xl_add_coi <- function(df_data, coi, subsets, stats, file, append = FALSE) {
 
-  require(brfss)
+  
 
 
   df_stats <-survey_stats(df_data = df_data, coi = coi,

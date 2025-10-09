@@ -7,8 +7,8 @@
 #' @export
 #'
 save_sas_layout<-function(progress = NULL) {
-  require(stringr)
-  require(dplyr)
+
+
 
   show_progress(progress,
                 message = "Layout ...  ")
@@ -117,8 +117,8 @@ save_sas_layout<-function(progress = NULL) {
 #' @export
 #'
 sas_layout<-function() {
-  require(stringr)
-  require(dplyr)
+
+
 
   params <- my.brfss.patterns()
 
@@ -261,7 +261,8 @@ get.layout <- function() {
   #
   # if(is.null(df_layout)) df_layout <- sas_layout()
 
-  df_layout
+  df_layout %>%
+    mutate(across(where(is.character), ~stringi::stri_replace_all_regex(.x, "\\s+", " ")))
 }
 
 get.layout.ext <- function(extent) {
@@ -377,7 +378,7 @@ column_question <- function(coi) {
 #' @examples
 layout_from_data <- function(df = NULL) {
 
-  if(is.null(df)) df <- prepped_data()
+  if(is.null(df)) df <- brfss_data()
 
   col_names  <-  df %>% colnames()
 

@@ -13,7 +13,7 @@
 #' }
 #'
 process_codebook <- function(progress = NULL) {
-browser()
+
   params <- my.brfss.patterns()
 
   show_progress(progress,
@@ -179,7 +179,7 @@ codebook.exists <- function() {
 #'
 #'
 read_codebook <- function(file=NULL, ...) {
-  require(dplyr)
+
 
   args <- list(...)
   #
@@ -311,7 +311,7 @@ resection_codebook <- function(lines) {
 ##    layout from codebook
 ##
 save_codebook_layout <- function(file=NULL) {
-  require(dplyr)
+
 
   params <- my.brfss.patterns()
 

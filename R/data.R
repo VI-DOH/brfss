@@ -17,7 +17,7 @@
 #'
 has_data <- function(df_brfss = NULL, coi) {
 
-  if(is.null(df_brfss)) df_brfss <- brfss::prepped_data()
+  if(is.null(df_brfss)) df_brfss <- brfss::brfss_data()
 
   x <- df_brfss %>% pull({{coi}})
   !all(is.na(x))
@@ -39,7 +39,7 @@ has_data <- function(df_brfss = NULL, coi) {
 #'
 has_column <- function(df_brfss = NULL, coi) {
 
-  if(is.null(df_brfss)) df_brfss <- brfss::prepped_data()
+  if(is.null(df_brfss)) df_brfss <- brfss::brfss_data()
 
   coi %in% (df_brfss %>% colnames())
 

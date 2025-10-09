@@ -1,7 +1,7 @@
 
 
 
-require(dplyr)
+
 
 #' Set/Get BRFSS Parameters
 #'
@@ -292,7 +292,7 @@ default.brfss.env <- function() {
 #'
 #' @examples
 my.brfss.path <- function() {
-  require(dplyr)
+  
   path <- NULL
 
   folder <- apply.pattern("brfss_data_folder")

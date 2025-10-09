@@ -73,7 +73,7 @@ init.alias <- function() {
 #'
 #' @examples
 remove.alias<-function(column) {
-  require(orrr)
+
 
 
   df<- aliases()
@@ -122,7 +122,6 @@ put.alias<-function(columns,aliases, geogs = "", replace = FALSE) {
 #'
 #' @export
 get.alias<-function(columns=NULL) {
-  require(orrr)
 
   aliases() %>% filter(column %in%{{columns}}) %>% pull(alias)
 
@@ -145,7 +144,7 @@ get.alias<-function(columns=NULL) {
 
 
 use_aliases <- function(df) {
-  require(orrr)
+
 
   df_alias <- orrr::get.rdata(alias.file())
 

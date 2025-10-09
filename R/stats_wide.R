@@ -163,7 +163,7 @@ widen_stats <- function(df_stats, stats = c("num", "percent", "CI")){
 stats_wide <- function(df_stats, stats = c("num", "percent", "CI"),
                        pct_txt = "pct", latex = FALSE, title = NULL, subtitle = NULL) {
 
-  require(gt)
+  
 
   params <- brfss.params()
 

@@ -470,7 +470,7 @@ horz_stats_simple<-function(df,coi,subsets = NULL,min_num=0,percent=T, header=T,
 #' @examples
 #'
 prep_stats<-function(df,coi,subsets,min_num=0,percent=T, df_fields) {
-  require(orrr, quietly = T, warn.conflicts = F)
+  
 
   #  if(missing(df_fields)) load(file = paste(orrr::dir.project(),"/data/fields.RData",sep=""),envir = environment())
 

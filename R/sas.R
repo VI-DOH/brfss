@@ -631,7 +631,7 @@ load.sas<-function(year, rdata_file=NULL, version=0) {
 
 
 read.sas.format<-function(folder_pat= NULL, file_pat = NULL) {
-  require(dplyr)
+  
 
   params <- my.brfss.patterns()
 
@@ -810,7 +810,7 @@ sasout.add.override<-function(year,column,label) {
 }
 
 sas.build.geogs <- function() {
-  require(dplyr)
+  
 
   df <- data.frame(Geog = state.name, Abbrev = state.abb) %>%
     mutate(name = rownames(.))
@@ -853,7 +853,7 @@ sas.build.geogs <- function() {
 #'
 #' }
 read_sas_field_ranges<-function() {
-  require(stringr)
+  
 
   params <- my.brfss.patterns()
 
@@ -1001,7 +1001,7 @@ read_sas_field_ranges<-function() {
 }
 
 fill_dummies <- function(df) {
-  require(dplyr)
+  
 
   start <- as.integer(df%>% slice(2:nrow(.)) %>% pull(start))
   last <-  as.integer(df%>% slice(1:(nrow(.)-1)) %>% pull(end))

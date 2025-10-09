@@ -106,7 +106,7 @@ geog_name <- function(geogs) {
 #' }
 #'
 geog_abb <- function(geogs) {
-  require(dplyr)
+  
 
   if(any(is.na(geogs)) ||
      length(geogs) == 0 ||

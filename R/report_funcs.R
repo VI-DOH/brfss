@@ -36,7 +36,7 @@ cleanDesc<-function(desc) {
 #' @export
 
 getMeasureReport<-function(df,meas, title="Var1", order=F ,useNA="ifany", ...) {
-  require(dplyr,quietly = T,warn.conflicts = F)
+  
 
 
   df_field_vals<-read.brfss.field_values(...)
@@ -77,7 +77,7 @@ getMeasureReport<-function(df,meas, title="Var1", order=F ,useNA="ifany", ...) {
 
 getMeasureReportEach<-function(df,meas, alias, title="Desc", order=F,useNA="ifany", debug=F,
                                replace,replace_vals,  format="%d" ,...) {
-  require(dplyr,quietly = T,warn.conflicts = F)
+  
 
   df_field_vals<-read.brfss.field_values(...)
   if(missing(alias)) {
@@ -139,7 +139,7 @@ getMeasureReportEach<-function(df,meas, alias, title="Desc", order=F,useNA="ifan
 
 getMeasureReportBreaks<-function(df,meas, breaks,  title="Desc", order=F,useNA="ifany", debug=F,
                                  replace,replace_vals, ...) {
-  require(dplyr,quietly = T,warn.conflicts = F)
+  
 
   df_field_vals<-read.brfss.field_values(...)
 
