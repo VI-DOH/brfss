@@ -1,55 +1,4 @@
 
-#' Survey Statistics
-#'
-#' Retrieve survey statistics from survey data set for a specific column with optional subsetting by other column(s) and
-#' optional weighting. This coerces the values in num_vals (numerator values) to 'Yes' and all values in den_vals (denominator values)
-#' not in num_vals to 'No'
-#'
-#' Retuns a data.frame containing columns identiying the calculated numerators, denominators, means, standard error, and
-#' confidence interval (lower and upper) for either the entire column of interest, or subsets of that column
-#' #'
-#'
-#' @param df_brfss - data.frame: the survey data
-#' @param year - integer: if missing will calculate from df
-#' @param coi - character: column name of interest
-#' @param num_vals - integer: values from column in the numerator
-#' @param den_vals - integer: values from column in the denominator
-#' @param subset - character: name of column to subset data by
-#' @param conf - numeric: confidence level, default is .95
-#' @param weighting - character: name of column with weighting
-#' @param ... other arguments to be passed to other functions
-#'
-#' @return data.frame: statistics for each subset
-#' @export
-#'
-#' @examples
-#'
-#'
-survey_stats_binary<-function(df_brfss,coi, num_vals,den_vals, ...) {
-
-  #browser()
-  if(nrow(df_brfss)==0) {
-    ret<-data.frame()
-    return (ret)
-  }
-  df_brfss<-as.data.frame(df_brfss)
-  df_brfss<-df_brfss[df_brfss[,coi]%in%den_vals,]
-
-
-  df_brfss$fcoi<-binary_no()
-  df_brfss[df_brfss[,coi]%in%num_vals,"fcoi"]<-binary_yes()
-  #  df_brfss[yn_not_num,coi]<-2
-  df_brfss<-df_brfss[!is.na(df_brfss[coi]),]
-  # df_brfss["fcoi"]<- factor(df_brfss[["fcoi"]],levels = c(-1,-2),
-  #                      labels = c("Yes", "No"))
-  df_brfss[coi]<-NULL
-  colnames(df_brfss)[colnames(df_brfss)=="fcoi"]<-coi
-
-  df<-survey_stats(df_brfss=df_brfss,coi=coi, ...)
-  df[order(df[,coi],decreasing = F),]
-}
-
-
 #'
 #' Survey Statistics
 #'
@@ -75,7 +24,7 @@ survey_stats_binary<-function(df_brfss,coi, num_vals,den_vals, ...) {
 #'
 survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subsets = NULL,
                          subset_by = NULL, sub_exclude = c("Don.*t|Refuse"),
-                         conf=.95, weighted = TRUE, pct = FALSE, digits = 99) {
+                         conf =.95, weighted = TRUE, pct = FALSE, digits = 99) {
 
   require(survey, quietly = T, warn.conflicts = F)
   require(dplyr, quietly = T, warn.conflicts = F)
@@ -170,7 +119,7 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
 
   }
 
-  df_stats_main <- stats_no_subs(des, pct = pct, digits = digits)
+  df_stats_main <- stats_no_subs(des, pct = pct, digits = digits, conf = conf)
 
   df_subs <- data.frame()
 
@@ -188,7 +137,7 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
                                  deff=F)
 
 
-          stats_w_subs(des, pct = pct, digits = digits)
+          stats_w_subs(des, pct = pct, digits = digits, conf = conf)
 
         }) %>% bind_rows()
 
@@ -229,6 +178,50 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
             label = label,
             weighted = weighted,
             conf = conf)
+}
+
+#' Print method for brfss_stats
+#'
+#' @param x A brfss_stats object
+#' @return invisibly
+#' @export
+#' @method print brfss_stats
+print.brfss_stats <- function(x, ...) {
+
+  # Example: header info
+  cat("============= BRFSS Survey Stats ==============\n")
+  cat(sprintf("Column: %s\n", attr(x, "coi")))
+  cat(sprintf("Label: %s\n\n", attr(x, "label")))
+
+  # Drop the extra class so we don't recurse back into print.myclass
+  class(x) <- setdiff(class(x), "myclass")
+
+  # Call the next method (print.data.frame)
+  NextMethod("print", x, ...)
+
+  invisible(x)
+
+}
+
+#' Subset method for brfss_stats
+#'
+#' @param x A brfss_stats object
+#' @param i Row indices
+#' @param j Column indices
+#' @param drop Logical, whether to drop dimensions
+#' @return Subsetted brfss_stats object with attributes preserved
+#' @export
+#' @method [ brfss_stats
+`[.brfss_stats` <- function(x, i, j, drop = FALSE) {
+  out <- NextMethod("[")
+
+  # Preserve attributes
+  attrs <- attributes(x)
+  keep <- setdiff(names(attrs), c("names", "row.names", "class"))
+  for (nm in keep) attr(out, nm) <- attrs[[nm]]
+
+  if (!drop) class(out) <- class(x)
+  out
 }
 
 ###########################################################
@@ -372,7 +365,8 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     relocate(response) %>%
     tibble::remove_rownames()
 
-  mysvycounts <- survey::svyby(formula = frmla, by = frmla, design = des, FUN = unwtd.count)%>%
+  mysvycounts <- survey::svyby(formula = frmla, by = frmla, design = des,
+                               FUN = unwtd.count)%>%
     as.data.frame() %>%
     select(-se) %>%
     rename(response = 1)  %>%

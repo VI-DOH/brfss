@@ -104,7 +104,7 @@ save_module_stats<-function(progress = NULL) {
 
   df_responses<-responses()
 
-  df_mods<-modules_used()
+  df_mods<-compute_modules()  # modules_used()
 
 
   df_modules<-dplyr::left_join(df_mods,df_responses,by = c("year", "geog", "version"))
@@ -248,5 +248,88 @@ module_geogs<-function(year = NULL,modules,versions=FALSE,reduce=TRUE) {
 #' }
 module_data<-function(year) {
 
-  readRDS(orrr::dir.project(c("data",year,paste0("modules_",year,".rda")),slash = F))
+  readRDS(here::here("data",year,paste0("modules_",year,".rds")))
+}
+
+
+#' Compute Modules Used by Geography
+#'#'
+#' @return data frame of module information
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' compute_modules()
+#' }
+#'
+#'
+compute_modules <- function() {
+  # get modules
+
+  df_cols <- module_test_cols()
+  df_geogs <-  get_geogs_all()
+
+  df_modules <- purrr::map(0:3, function(version) {
+
+    brfss.param(version = version)
+
+    df_mods <- brfss_data() %>%
+      select(State =`_STATE`,any_of(df_cols$col_name)) %>%
+      mutate(across(.cols = !matches("State"), ~if_else(is.na(.x), 0,1))) %>%
+      group_by(State) %>%
+      summarise(across(!matches("State"), sum))
+
+    df_mods %>% tidyr::pivot_longer(!State, names_to = "col_name", values_to = "n") %>%
+      filter(n > 0) %>%
+      left_join(df_geogs %>% mutate(State = as.double(Id)), by = join_by(State)) %>%
+      left_join(df_cols, by = join_by(col_name)) %>%
+      mutate(year = {{year}}) %>%
+      mutate(version = {{version}}) %>%
+      select(year, geog = Abbrev, module = section, version) %>%
+      arrange(year, geog, module, version) %>%
+      as.data.frame()
+  }) %>%
+    bind_rows()
+
+  df_modules
+}
+
+#' Get Module Test Column Names
+#'
+#'Use this to get a data.frame containing the columns to query for any non-NA values
+#'
+#' @returns data frame
+#' @export
+#'
+#' @examples
+#' module_test_cols()
+#'
+module_test_cols <- function() {
+  df_lo <-  get.layout()
+
+  df_lo_mods <-  df_lo %>%
+    filter(sect_type == "Module")%>%
+    mutate(sect_num = as.integer(sect_num))
+
+  max_mod <- df_lo_mods  %>%
+    pull(sect_num) %>%
+    max()
+
+  max_row <- df_lo_mods %>%
+    mutate(rn = row_number()) %>%
+    filter(sect_num == max_mod) %>%
+    pull(rn) %>%
+    max()
+
+  df_lo_mods <- df_lo_mods %>%
+    head(max_row)
+
+  df_lo_mods <- df_lo_mods %>% group_by(sect_num) %>%
+    summarize(question_num = min(question_num)) %>%
+    as.data.frame()  %>%
+    left_join(df_lo_mods, by = join_by(sect_num, question_num)) %>%
+    select(col_name, sect_num, section, question_num)
+
+  df_lo_mods
+
 }

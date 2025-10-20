@@ -1,7 +1,7 @@
 
 
 save.geogs <- function(geogs) {
-  file <-paste0(get.pattern("data_folder"),"geogs.rda")
+  file <-apply.pattern("geogs_path")
   save(geogs, file = file)
 }
 
@@ -17,8 +17,6 @@ save.geogs <- function(geogs) {
 #' get_geogs_all()
 #' }
 get_geogs_all <- function() {
-
-
 
   geogs_path <- apply.pattern("geogs_path")
 
@@ -106,7 +104,7 @@ geog_name <- function(geogs) {
 #' }
 #'
 geog_abb <- function(geogs) {
-  
+
 
   if(any(is.na(geogs)) ||
      length(geogs) == 0 ||

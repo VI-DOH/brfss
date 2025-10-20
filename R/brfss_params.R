@@ -292,7 +292,7 @@ default.brfss.env <- function() {
 #'
 #' @examples
 my.brfss.path <- function() {
-  
+
   path <- NULL
 
   folder <- apply.pattern("brfss_data_folder")
@@ -511,7 +511,7 @@ my.brfss.init <- function() {
     }
   }
 
-    ###################################################
+  ###################################################
   ##
   ##    phone
 
@@ -558,7 +558,7 @@ my.brfss.init <- function() {
 #' df_brfss <- apply.pattern
 #'
 #' }
-my.brfss.patterns <- function() {
+pattern_params <- function() {
 
   my_brfss <- brfss.params(val_only = FALSE)
 
@@ -576,3 +576,8 @@ my.brfss.patterns <- function() {
   names(pats) <- gsub("(.*)[.]","",names(pats))
   pats
 }
+
+#' @rdname do_thing
+#' @export
+my.brfss.patterns <- pattern_params
+

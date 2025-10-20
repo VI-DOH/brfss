@@ -4,10 +4,10 @@ Title: Process Statewide BRFSS Data
 Version: 1.1.1
 Author: John Orr
 Maintainer: John Orr <John.Orr@doh.vi.gov>
-Description: Functions to read in raw BRFSS data files and output processed data, reports and graphs.
+Description: Functions to read in raw BRFSS data files, process those raw files, and output processed data, reports and graphs.
 License: CC0
 LazyData: TRUE
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Encoding: UTF-8
 Imports: 
         dplyr,

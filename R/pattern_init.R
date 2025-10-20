@@ -52,6 +52,10 @@ init.patterns <- function() {
                    "$brfss_url_annual$pdf/",
                    type = "url") %>%
 
+    append.pattern("brfss_url_documentation_zip",
+                   "$brfss_url_annual$zip/",
+                   type = "url") %>%
+
     append.pattern("sasout_download_file","SASOUT^YR^_LLCP{^VERS^>0;_V^VERS^}.SAS",
                    type = "file",
                    group ="sas_downloads",
@@ -193,7 +197,7 @@ init.patterns <- function() {
   ##    metadata
 
   append.pattern("brfss_annual_raw_metadata_folder",
-                 "$brfss_annual_raw_data_folder_base$metadata/",
+                 "$brfss_annual_raw_data_folder$metadata/",
 
                  type = "folder",
                  group = "metadata",
@@ -203,27 +207,23 @@ init.patterns <- function() {
                    paste0("$brfss_data_folder$^YEAR^/",
 
                           #if it's a local file (NOT public)
-                          "{^EXT^ == 'local';local/^GEOG^/",
-                          "{^SRC^ == 'sas';sas/}",
-                          "{^SRC^ == 'ascii';ascii/}}",
-
+                          "{^EXT^ == 'local';local/^GEOG^/}",
                           #if it's a public file (downloaded from CDC public site)
                           # we must distinguish between the entire public data set and
                           #  the local data set using GFLAG ... kind of a kludge to handle
                           #  getting the entire public data set before the split into
                           # individual states
 
-                          "{^EXT^ == 'public';public/",
-                          "{^GFLAG^ == 'on';states/^GEOG^/}",
-                          "{^SRC^ == 'sas';sas/}",
-                          "{^SRC^ == 'ascii';ascii/}metadata/}"),
+                          "{^EXT^ == 'public';public/}metadata/"),
                    type = "folder",
                    group = "metadata",
-                   desc = "Folder to store the metadata ... modules and responses") %>%
+                   desc = "Folder to store the metadata ... modules, responses, layout") %>%
 
     #############################################################################
   ##
   ##  codebook patterns
+
+# https://www.cdc.gov/brfss/annual_data/2024/zip/codebook24_llcp-v2-508.zip
 
   append.pattern("brfss_url_codebook",
                  "$brfss_url_documentation$",
@@ -237,12 +237,18 @@ init.patterns <- function() {
                    desc ="Pre-2017 codebook name") %>%
 
     append.pattern("brfss_codebook_file2",
+                   "$brfss_url_documentation_zip$codebook^YR^_llcp-v2-508.zip",
+                   type = "file",
+                   group ="codebook_downloads",
+                   desc ="Post-2021 codebook name") %>%
+
+    append.pattern("brfss_codebook_file3",
                    "$brfss_url_codebook$codebook^YR^_llcp-v2-508.pdf",
                    type = "file",
                    group ="codebook_downloads",
                    desc ="Post-2016 codebook name") %>%
 
-    append.pattern("brfss_codebook_file3",
+    append.pattern("brfss_codebook_file4",
                    "$brfss_url_codebook$codebook^YR^_llcp-v2-508.HTML",
                    type = "file",
                    group ="codebook_downloads",

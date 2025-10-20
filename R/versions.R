@@ -52,6 +52,37 @@ highest_version<-function() {
 }
 
 calc_responses <- function() {
+  #
+  params <- pattern_params()
+  #apply.pattern("brfss_annual_data_folder",params)
+
+  df_geogs <- brfss::get_geogs_all()
+
+  df_responses <- purrr::map(0:highest_version(), function(version) {
+
+    brfss.param(version = version)
+
+    df_data <- brfss_data()
+    df_resp <- NULL
+    if(!is.null(df_data)) {
+      df_resp <- df_data %>%
+        group_by(`_STATE`) %>%
+        summarise(responses = n()) %>%
+        left_join(df_geogs %>% mutate(`_STATE` = as.double(Id)), by = join_by( `_STATE`)) %>%
+        mutate(year = {{year}}, version = {{version}}) %>%
+        as.data.frame() %>%
+        select(year, geog = Abbrev, version, responses)
+    }
+
+    df_resp
+
+  }) %>%
+    bind_rows()
+
+  df_responses
+}
+
+calc_responses_old <- function() {
   params <- my.brfss.patterns()
 
   df_resp <- data.frame()

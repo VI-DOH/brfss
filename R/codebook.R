@@ -18,7 +18,7 @@ process_codebook <- function(progress = NULL) {
 
   show_progress(progress,
                 message = "Codebook ... saving layout")
-
+  browser()
   save_codebook_layout()
 
   show_progress(progress,
@@ -63,7 +63,7 @@ download_codebook <- function(progress = NULL) {
 
   fldrout <- apply.pattern("codebook_folder",params)
   ext <- apply.pattern("codebook_ext",params)
-  browser()
+
   ## create the folder/dir if it does not exist
 
   if(!dir.exists(fldrout)) dir.create(fldrout, recursive = TRUE)
@@ -85,6 +85,7 @@ download_codebook <- function(progress = NULL) {
       destfile <- paste0(fldrout,fileout)
 
       status <- httr::HEAD(url)$status
+
       if(status==200) {
 
         to <- getOption("timeout")
@@ -95,6 +96,12 @@ download_codebook <- function(progress = NULL) {
 
         options(timeout = to)
 
+         if(ext == ".zip") {
+           dir <- dirname(destfile)
+          unzip(destfile, exdir = dir)
+          file.remove(destfile)
+         }
+
         set.pattern("codebook_ext", gsub("[.]","",ext))
       }
     })
@@ -103,7 +110,7 @@ download_codebook <- function(progress = NULL) {
 
 codebook_file <- function() {
 
-  exts <- c("pdf", "txt", "rtf")
+  exts <- c("pdf", "txt", "rtf", "html")
 
   params <- my.brfss.patterns()
 
@@ -143,7 +150,7 @@ codebook_file <- function() {
 #'
 codebook.exists <- function() {
 
-  exts <- c("pdf", "txt", "rtf")
+  exts <- c("pdf", "txt", "rtf","html")
 
   params <- my.brfss.patterns()
 

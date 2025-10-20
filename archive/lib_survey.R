@@ -139,21 +139,6 @@ survey_stats<-function(df0,year,column, num_vals,den_vals,subset,conf=.95, weigh
 
 }
 
-survey_data_subsets<-function(years,measure="Diabetes",subset=NA,conf=.95,weighted=T) {
-
-  df<-data.frame()
-
-  lst<-  sapply(years, function(yr) {
-
-    df1<-survey_data_subset(yr,measure = measure,subset=subset,weighted = weighted)
-    if(nrow(df1)>0) df<<-rbind(df,df1)
-    NULL
-  })
-
-  df
-}
-
-
 #' Survey Statistics
 #'
 #' Retrieve survey statistics from survey data set for a specific column with optional subsetting by other column(s) and
@@ -315,28 +300,6 @@ survey_stats_non_binary<-function(df0, year,coi, ignore,  subset,conf=.95, weigh
   # cbind(df[1:(mean_col-1)],data.frame(total=tot,nums=nums,dens=dens,row.names = NULL),df[mean_col:ncol])
   #  cbind(df[1:(mean_col-1)],data.frame(nums=nums,dens=dens,row.names = NULL),data.frame(yes=num_pos,no=num_neg,n=n,row.names = NULL),df[mean_col:ncol])
   df_new[,c("year","measure",colnames(df_new)[1:(1+nsubs)],"total","num","mean","se","conf","CI_lower","CI_upper")]
-}
-
-
-survey_data_single<-function(years,measure = "Diabetes",subset=NA,subvals=NA,wtd=T) {
-
-
-  if(length(subset)!=length(subvals)) return (NA)
-
-  df<-survey_data_subsets(years,measure,subset,subvals,wtd)
-
-  yn<-rep(T,nrow(df))
-  cols<-grep("subval",colnames(df),value = T)
-
-  if(length(cols)>0) {
-    dummy<-mapply(function(col,val) {
-      yn<<-yn & df[col]==val
-    },cols,subvals)
-  }
-  #  if(length(which(!is.na(yn)))==0)
-  df[yn,]
-
-
 }
 
 whichSubvals<-function(df,subvals) {

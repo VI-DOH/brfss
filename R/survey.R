@@ -16,8 +16,9 @@
 #'
 #' }
 #'
-brfss_data <- function() {
+brfss_data <- function(...) {
 
+  brfss.params(...)
   params <- my.brfss.patterns()
 
   fname <- brfss_data_path(rw = 'r')
@@ -36,6 +37,48 @@ brfss_data <- function() {
             extent = params["EXT"] %>% unname(),
             version = params["VERS"] %>% unname()
   )
+}
+
+#' Subset method for brfss_data
+#'
+#' @param x A brfss_data object
+#' @param i Row indices
+#' @param j Column indices
+#' @param drop Logical, whether to drop dimensions
+#' @return Subsetted brfss_data object with attributes preserved
+#' @export
+#' @method [ brfss_data
+`[.brfss_data` <- function(x, i, j, drop = FALSE) {
+  out <- NextMethod("[")
+
+  # Preserve attributes
+  attrs <- attributes(x)
+  keep <- setdiff(names(attrs), c("names", "row.names", "class"))
+  for (nm in keep) attr(out, nm) <- attrs[[nm]]
+
+  if (!drop) class(out) <- class(x)
+  out
+}
+
+
+#' Subset method for brfss_data
+#'
+#' @param x A brfss_data object
+#' @return Summary for brfss_data object
+#' @export
+#' @method summary brfss_data
+summary.brfss_data <- function(df) {
+
+  x <- brfss:::responses() %>% t() %>% as.data.frame() %>% rename(` ` = 1)
+  print(x)
+
+  cat("\n",
+      "=======================================\n",
+      "  Modules\n",
+      "=======================================\n")
+
+  x <- brfss::get_module_stats() %>% select(Module = mod_num, Name = module)
+  print(x, row.names = F)
 }
 
 #' Get BRFSS Geography-Based Survey Data
@@ -67,33 +110,6 @@ brfss_geog_data <- function() {
 
   df_brfss
 }
-
-#' Value Representing Binary No
-#'
-#' Retrieve the value used to represent 'No' in binary (Yes/No) calculations.
-#' When there are more than 2 possible values in the denominator and/or numerator,
-#' then it is convenient to convert all values in a numerator to Yes/No
-#'
-#' @return integer - value representing 'No'
-#' @export
-#'
-binary_no<-function() {
-  return(-2)
-}
-
-#' Value Representing Binary Yes
-#'
-#' Retrieve the value used to represent 'Yes' in binary (Yes/No) calculations.
-#' When there are more than 2 possible values in the denominator and/or numerator,
-#' then it is convenient to convert all values in a numerator to Yes/No
-#'
-#' @return integer - value representing 'Yes'
-#' @export
-#'
-binary_yes<-function() {
-  return(-1)
-}
-
 
 coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NULL) {
   vwt <- apply.pattern("weight_col",VERS=version)
