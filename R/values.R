@@ -660,7 +660,6 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
       yes1 <- tolower(txt[1]) == "yes"
       fm1 <- grepl("male",tolower(txt[1]))
 
-      #if(col == "DIFFWALK") browser()
 
       #      if(any(!is.na(maxv)) && !calc && !wt) {
       if(any(!is.na(maxv)) && !wt) {
@@ -708,12 +707,12 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
                          cols = NULL, verbose = FALSE) {
 
+
   if(is.null(df_brfss)) df_brfss <- brfss_data()
 
   if(is.null(df_vals)) df_vals <- values()
 
   if(is.null(df_layout)) df_layout <- get.layout()
-
 
   df_factors <- quest_types(df_layout, df_vals) %>%
     filter(type == "factor")  %>%
@@ -734,24 +733,34 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
       tryCatch({
         if(!(is.factor(df_brfss[[col]]))) {
           a<- attributes(df_brfss[[col]])
-          df <- df_vals %>% filter(col_name==col)
-          levels <- df %>% pull(value)
-          labels <- df %>% pull(text)
+
+          df_my_vals <- df_vals %>% filter(col_name==col)
+
+          levels <- df_my_vals %>% pull(value)
+          labels <- df_my_vals %>% pull(text)
+
           x <- df_brfss[[col]]
 
           if(all(orrr::is.integer_like(levels))) levels <- as.integer(levels)
           if(orrr::is.integer_like(x)) x <- as.integer(x)
 
-          f <- factor(x,levels = levels, labels = labels)
-          attributes(f) <- c(attributes(f),a)
-          df_brfss[col] <<- f
 
+          atts_mgr <- Attributes_Mgr$new(a)
+          x <- atts_mgr$modify(x)
+          x <- atts_mgr$factorize(x, levels = levels, labels = labels)
+
+
+#          f <- x %>% add_prep_attrs(a) %>% factor_brfss()
+
+          #attributes(f) <- c(attributes(f),a)
+          df_brfss[col] <<- x
           if(verbose) cat(" OK","\n")
         } else {
           if(verbose) cat(" ... already factorized","\n")
         }
 
       }, error = function(e) {
+
         if(verbose) cat(" Failed","\n")
 
 

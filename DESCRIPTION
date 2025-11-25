@@ -18,6 +18,7 @@ Imports:
         lubridate,
         orrr,
         pdftools,
+        R6,
         reshape2,
         rmarkdown,
         shiny,
@@ -26,6 +27,7 @@ Imports:
         stringr,
         striprtf,
         survey,
-        tibble
+        tibble,
+        vctrs
 Depends: 
     R (>= 3.5.0)

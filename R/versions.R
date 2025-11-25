@@ -64,12 +64,21 @@ calc_responses <- function() {
 
     df_data <- brfss_data()
     df_resp <- NULL
+
     if(!is.null(df_data)) {
+
       df_resp <- df_data %>%
         group_by(`_STATE`) %>%
-        summarise(responses = n()) %>%
-        left_join(df_geogs %>% mutate(`_STATE` = as.double(Id)), by = join_by( `_STATE`)) %>%
-        mutate(year = {{year}}, version = {{version}}) %>%
+        summarise(responses = n())  %>%
+        mutate(year = {{year}}, version = {{version}})
+
+      if(is.factor(df_data$`_STATE`)) df_resp <- df_resp %>%
+          left_join(df_geogs %>% mutate(`_STATE` = Geog), by = join_by( `_STATE`))
+
+      if(is.numeric(df_data$`_STATE`)) df_resp <- df_resp %>%
+          left_join(df_geogs %>% mutate(`_STATE` = as.double(Id)), by = join_by( `_STATE`))
+
+      df_resp <- df_resp %>%
         as.data.frame() %>%
         select(year, geog = Abbrev, version, responses)
     }

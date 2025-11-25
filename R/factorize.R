@@ -15,10 +15,10 @@
 #'}
 #'
 #'
-factorize <- function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
+factorize <- function(main=TRUE, versions=TRUE, verbose=FALSE, progress = NULL) {
 
   # make sure some version will be split
-  browser()
+
   if(!(main || versions)) return(NULL)
   ver<-integer(0)
   if(main) ver<-0
@@ -59,7 +59,7 @@ factorize <- function(main=TRUE, versions=TRUE, verbose=TRUE, progress = NULL) {
         geogs <- unlist(unname(geogs))
       }
     }
-    browser()
+
     geog_save <- brfss.param(geog)
 
     if(brfss.param(geog_flag) == "off") df_geogs <- data.frame(Id = 0,Abbrev = "US")

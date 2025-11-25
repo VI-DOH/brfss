@@ -30,6 +30,16 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
   require(dplyr, quietly = T, warn.conflicts = F)
 
 
+  if(any(grepl("brfss_prepped|brfss_data",class(df_data)))) {
+
+    year <- df_data %>% attr("year")
+    geog <- df_data %>% attr("geog")
+
+  } else {
+    year <- NA
+    geog = NA
+  }
+
   ## make sure that this column exists
 
   if(!has_column(df_data, coi)) return(NULL)
@@ -40,6 +50,8 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
   if(is.null(exclude)) exclude <- "^$"
 
   ###########################################################
+
+  coi_attrs <- df_data %>% pull({{coi}}) %>% attributes()
 
   df_brfss <- coi_data(df_data = df_data, coi = coi, subsets = subsets, exclude = exclude)
 
@@ -123,9 +135,10 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
 
   df_subs <- data.frame()
 
-  if (nsubs > 0) {
+  if (nsubs > 0 ) {
 
     df_subs <- map(subsets, function(subset){
+
       cols <- c(coi,subset)  %>% paste0("`",.,"`")
           frmla<- reformulate(cols)
 
@@ -167,14 +180,27 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
 
   df <- df %>% filter(response != "dummy")
 
+  #  get the actual stat columns
+
+  statcols <- colnames(df)
+  resp <- which(statcols == "response")
+  statcols <-statcols %>%  tail(-resp)
+
   ## return data.frame
 
   structure(df,
             class = c("brfss_stats", "data.frame"),
+            year = year,
+            geog = geog,
             coi = coi,
-            population =population,
+            stat_cols = statcols,
+            population = population,
+            section_type = coi_attrs[["section_type"]],
+            section_num = coi_attrs[["section_num"]],
+            section_index = coi_attrs[["section_index"]],
+            section_name = coi_attrs[["section_name"]],
             section = df_lo %>% pull(section),
-            question = df_lo %>% pull(question),
+            question = coi_attrs[["question"]],
             label = label,
             weighted = weighted,
             conf = conf)
@@ -250,36 +276,30 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
       names_to = "response",
       values_to = "num_wtd"
     )  %>%
-    rename(subset = 1)
+    rename(subset = 1) %>%
+    mutate(subset = as.character(subset))
 
   df_wtd <- mysvytotal  %>%
     group_by(subset) %>%
     summarize(den_wtd = sum(num_wtd)) %>%
-    as.data.frame()
+    as.data.frame() %>%
+    mutate(subset = as.character(subset))
 
   mysvytotal <- mysvytotal %>%
     left_join(df_wtd, by = join_by(subset))
 
   mysvycounts<-survey::svyby(frmla1,frmla2,des,unwtd.count)
 
-  # mysvytotal<-survey::svytotal(frmla,des,na.rm = T,deff = F) %>%
-  #   as.data.frame() %>%
-  #   mutate(response = rownames(.)) %>%
-  #   mutate(response = gsub(coi, "", response))  %>%
-  #   mutate(response = gsub("\`","",response))%>%
-  #   select(-SE) %>%
-  #   rename(num_wtd = total)  %>%
-  #   mutate(den_wtd = sum(num_wtd)) %>%
-  #   relocate(response)
-
   df_dens <- mysvycounts %>% select(-se) %>%
     rename( den = counts) %>%
-    rename(subset = {{subset}})
+    rename(subset = {{subset}}) %>%
+    mutate(subset = as.character(subset))
 
   df_nums <- data.frame(des$variables[1],des$variables[2],check.names = FALSE) %>%
     group_by_at(c(coi, subset)) %>%
     summarise(num=n()) %>%
-    rename(response = {{coi}}, subset = {{subset}})
+    rename(response = {{coi}}, subset = {{subset}}) %>%
+    mutate(subset = as.character(subset))
 
   myci <- svyci(mysvymean, conf = conf) %>%
     remove_coi(coi) %>%
@@ -309,10 +329,12 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     rename(subset = 1) %>%
     mutate(subvar = {{subvar}}) %>%
     relocate(subvar) %>%
+    mutate(subset = as.character(subset)) %>%
     left_join(myci, by = join_by(response, subset)) %>%
     mutate(cv = se/percent) %>%
     left_join(df_dens, by = join_by(subset))%>%
-    left_join(df_nums, by = join_by(subset, response)) %>%
+    left_join(df_nums, by = join_by(subset, response))   %>%
+    mutate(percent_unwtd = round(num/den * mult, digits)) %>%
     left_join(mysvytotal, by = join_by(subset, response)) %>%
     as.data.frame() %>%
     relocate(c(num,den), .after = response)
@@ -351,7 +373,7 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     rename(se = SE) %>%
     rename(percent = mean) %>%
     relocate(response) %>%
-    tibble::remove_rownames()%>%
+    tibble::remove_rownames() %>%
     mutate(across(where(is.numeric), ~ . * mult)) %>%
     mutate(across(where(is.numeric), round, digits))
 
@@ -371,7 +393,8 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     select(-se) %>%
     rename(response = 1)  %>%
     rename(num = counts) %>%
-    mutate(den = sum(num)) %>%
+    mutate(den = sum(num))  %>%
+    mutate(percent_unwtd = round(num/den * mult, digits)) %>%
     relocate(response) %>%
     tibble::remove_rownames()
 
@@ -492,94 +515,95 @@ add_CI_SAVE <- function(df, conf) {
   df
 }
 
-#################################################################################
-#################################################################################
-##
-##      Simple Percents
-##
-
-#' Simple Percents and Confidence Intervals
+#' #################################################################################
+#' #################################################################################
+#' ##
+#' ##      Simple Percents
+#' ##
 #'
-#' Get the percent and CI for a column of data
+#' #' Simple Percents and Confidence Intervals
+#' #'
+#' #' Get the percent and CI for a column of data
+#' #'
+#' #' @param df_brfss data.frame: the data frame with the columns nedded
+#' #' @param year integer: year of interest
+#' #' @param geog character: geography of interest
+#' #' @param coi character: column of interest
+#' #' @param wt character: column name of weights
+#' #' @param strata character: column name of strata
+#' #' @param exclude character: pattern for excludes
+#' #'
+#' #' @return Object of class "svystat"
+#' #' @export
+#' #'
+#' #' @examples
+#' simple_stats <- function(df_brfss = NULL, year = NULL,
+#'                          geog = NULL, extent = NULL, source = NULL,
+#'                          coi, subset = NULL,
+#'                          exclude = c("Don.*t|Refuse")) {
 #'
-#' @param df_brfss data.frame: the data frame with the columns nedded
-#' @param year integer: year of interest
-#' @param geog character: geography of interest
-#' @param coi character: column of interest
-#' @param wt character: column name of weights
-#' @param strata character: column name of strata
-#' @param exclude character: pattern for excludes
+#'   require(dplyr)
+#'   require(magrittr)
+#'   require(survey)
+#'   require(tibble)
 #'
-#' @return Object of class "svystat"
-#' @export
+#'   # if data frame not provided then get it from
+#'   if(is.null(df_brfss)) {
+#'     year <- get.year(year)
+#'     geog <- get.geog(geog)
+#'     extent <- get.extent(extent)
+#'     source <- get.source(source)
 #'
-#' @examples
-simple_stats <- function(df_brfss = NULL, year = NULL,
-                         geog = NULL, extent = NULL, source = NULL,
-                         coi, subset = NULL,
-                         exclude = c("Don.*t|Refuse")) {
-
-  require(dplyr)
-  require(magrittr)
-  require(survey)
-  require(tibble)
-
-  # if data frame not provided then get it from
-  if(is.null(df_brfss)) {
-    year <- get.year(year)
-    geog <- get.geog(geog)
-    extent <- get.extent(extent)
-    source <- get.source(source)
-
-    df_brfss <- coi_data( coi = coi, subset = subset, year = year, geog= geog,
-                          extent = extent, source = source,
-                          exclude = exclude)
-
-  }
-
-  ##
-  ## calc number of subsets
-  ##
-
-  if(is.null(subset)) {
-    nsubs<-0
-  } else {
-    nsubs<-length(subset)
-  }
-
-  df_counts <- df_brfss %>%
-    group_by_at(coi) %>% summarise(n=n(),wt = sum(FINAL_WT)) %>%
-    mutate(pct = round(n/sum(n)*100,2)) %>%
-    mutate(pct_wt = wt/sum(wt)*100)
-
-  options(survey.lonely.psu = "adjust")
-
-  # Create survey design
-  brfssdsgn <- svydesign(
-    id=~1,
-    strata = ~STRATUM,
-    weights = ~FINAL_WT,
-    data = df_brfss)
-
-  frmla1<- as.formula(paste0("~factor(",coi,")"))
-
-  x <- svymean(frmla1,
-               brfssdsgn,
-               na.rm = TRUE) %>%
-    as.data.frame() %>%
-    mutate(Response = gsub("^factor.*?[)]","",row.names(.))) %>%
-    mutate(mean = round(mean*100,2)) %>%
-    mutate(SE = round(SE*100,3)) %>%
-    mutate(CI_L = round(mean - 1.96*SE,2)) %>%
-    mutate(CI_U = round(mean + 1.96*SE,2)) %>%
-    rename(percent = mean) %>%
-    select(Response, percent, starts_with("CI")) %>%
-    remove_rownames()
-
-  x %>% left_join(df_counts %>% select(all_of(coi),n), by=c("Response" = coi)) %>%
-    relocate(n, .after = Response)
-
-}
+#'     #function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
+#'     df_brfss <- coi_data(  # coi = coi, subset = subset, year = year, geog= geog,
+#'                           extent = extent, source = source,
+#'                           exclude = exclude)
+#'
+#'   }
+#'
+#'   ##
+#'   ## calc number of subsets
+#'   ##
+#'
+#'   if(is.null(subset)) {
+#'     nsubs<-0
+#'   } else {
+#'     nsubs<-length(subset)
+#'   }
+#'
+#'   df_counts <- df_brfss %>%
+#'     group_by_at(coi) %>% summarise(n=n(),wt = sum(FINAL_WT)) %>%
+#'     mutate(pct = round(n/sum(n)*100,2)) %>%
+#'     mutate(pct_wt = wt/sum(wt)*100)
+#'
+#'   options(survey.lonely.psu = "adjust")
+#'
+#'   # Create survey design
+#'   brfssdsgn <- svydesign(
+#'     id=~1,
+#'     strata = ~STRATUM,
+#'     weights = ~FINAL_WT,
+#'     data = df_brfss)
+#'
+#'   frmla1<- as.formula(paste0("~factor(",coi,")"))
+#'
+#'   x <- svymean(frmla1,
+#'                brfssdsgn,
+#'                na.rm = TRUE) %>%
+#'     as.data.frame() %>%
+#'     mutate(Response = gsub("^factor.*?[)]","",row.names(.))) %>%
+#'     mutate(mean = round(mean*100,2)) %>%
+#'     mutate(SE = round(SE*100,3)) %>%
+#'     mutate(CI_L = round(mean - 1.96*SE,2)) %>%
+#'     mutate(CI_U = round(mean + 1.96*SE,2)) %>%
+#'     rename(percent = mean) %>%
+#'     select(Response, percent, starts_with("CI")) %>%
+#'     remove_rownames()
+#'
+#'   x %>% left_join(df_counts %>% select(all_of(coi),n), by=c("Response" = coi)) %>%
+#'     relocate(n, .after = Response)
+#'
+#' }
 
 RSE <- function(pct,se) {
   se/pct*100

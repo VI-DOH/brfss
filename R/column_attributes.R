@@ -74,26 +74,19 @@ add_col_attributes <- function(df_in) {
   df_sasout<- get.layout()
   df_values<- brfss::values()
 
-  # browser()
+  mapply(function(lbl,col_name,typ,n,i,nm,qu,calc, saq) {
 
-  mapply(function(lbl,col_name,typ,n,i,nm,qu) {
-
-#    df_vals <- df_values %>% filter(col_name == {{col_name}})
+    #    df_vals <- df_values %>% filter(col_name == {{col_name}})
 
     if(!is.null(df_in[[col_name]])) {
-      if(is.na(typ) || is.null(typ)) typ<=""
-      if(is.na(n) || is.null(n)) n<=""
-      if(is.na(i) || is.null(i)) i<=""
-      if(is.na(nm) || is.null(nm)) nm<=""
-      if(is.na(qu) || is.null(qu)) qu<=""
+      if(is.na(typ) || is.null(typ)) typ <- ""
+      if(is.na(n) || is.null(n)) n <- ""
+      if(is.na(i) || is.null(i)) i <- ""
+      if(is.na(nm) || is.null(nm)) nm <- ""
+      if(is.na(qu) || is.null(qu)) qu <- ""
+      if(is.na(calc) || is.null(calc)) qu <- ""
+      if(is.na(saq) || is.null(saq)) saq <- ""
 
-      # attr(df_in[[col_name]],"section_type")<<-typ
-      # attr(df_in[[col_name]],"section_num")<<-n
-      # attr(df_in[[col_name]],"section_index")<<-i
-      # attr(df_in[[col_name]],"section_name")<<-stringr::str_trim(nm)
-      # attr(df_in[[col_name]],"label")<<-lbl
-      # attr(df_in[[col_name]],"question")<<-qu
-      # attr(df_in[[col_name]],"variable")<<-col_name
       atts <-  c(
         "section_type" = typ,
         "section_num" = n,
@@ -101,21 +94,48 @@ add_col_attributes <- function(df_in) {
         "section_name" = stringr::str_trim(nm),
         "label" = lbl,
         "question" = qu,
-        "variable" = col_name
+        "variable" = col_name,
+        "is_calculated" = as.logical(calc),
+        "is_custom" = FALSE,
+        "is_saq" = as.logical(saq)
       )
 
 
       df_in <<- df_in %>% add_attributes({{col_name}}, atts = atts)
+      class(df_in[[col_name]]) <<- c("brfss", class(df_in[[col_name]]))
 
     } else {
 
     }
 
   }, df_sasout$label, df_sasout$col_name, df_sasout$sect_type, df_sasout$sect_num,
-  df_sasout$question_num,df_sasout$section, df_sasout$question)
+  df_sasout$question_num,df_sasout$section, df_sasout$question, df_sasout$calculated,
+  df_sasout$saq)
 
   df_in
 
+}
+
+add_brfss_class <- function(x, ...) {
+
+  f <- factor(x, ...)
+  class(f) <- c("brfss", class(f))
+  f
+}
+
+quosures <- function(...) {
+
+  quos <- quos(..., .ignore_empty = "all")
+
+  ret <- sapply(quos, function(quo) {
+
+    expr <- rlang::quo_get_expr(quo)
+
+    as.character(expr)
+  })
+  names(ret) <- names(quos)
+
+  ret
 }
 
 #' Add a List of Attributes to a column
@@ -194,7 +214,7 @@ add_attributes <- function(df, ... , atts) {
 #'
 
 standard_attributes <- function(fmt = FALSE) {
-  
+
 
   x <-   c(
     "section_type",
@@ -203,7 +223,9 @@ standard_attributes <- function(fmt = FALSE) {
     "section_name",
     "label",
     "question",
-    "variable"
+    "variable",
+    "calculated",
+    "custom"
   )
 
 

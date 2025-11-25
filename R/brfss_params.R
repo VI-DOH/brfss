@@ -252,6 +252,85 @@ brfss.params <- function(... , val_only = TRUE) {
 
 }
 
+#' Set BRFSS Parameters as Public
+#'
+#' @param year - year of interest
+#' @param geog - geography of interest
+#' @param source - source, 'ascii' or 'sas', defaults to sas
+#'
+#' @returns invisible
+#' @export
+#'
+#' @examples
+#'
+#' brfss.params.public(year = 2022)
+#'
+brfss.params.public <- function(year = NULL, geog = NULL, source = "sas") {
+
+  if(!is.null(year)) {
+    brfss::brfss.params(year = year, extent = "public", source = source, geog_flag = "off")
+
+  }
+
+  if(!is.null(geog)) {
+    brfss::brfss.params(geog = geog, extent = "public", source = source, geog_flag = "on")
+  }
+
+
+  invisible()
+
+}
+
+#' Set or Get Default Geography
+#'
+#' @param geog - two-character abbreviation for my state/territory
+#'
+#' @returns default geography if geog argument is NULL
+#' @export
+#'
+#' @examples
+#' my_geog("VI")
+#' my_geog()
+#'
+my_geog <- function(geog = NULL) {
+
+  file <- paste0(apply.pattern("data_folder"), "my_geog.rds")
+
+  if(is.null(geog)) {
+
+    if(!file.exists(file)) return("")
+
+    return(readRDS("./data/my_geog.rds"))
+
+  } else {
+    geog %>% saveRDS("./data/my_geog.rds")
+  }
+}
+
+#' Set BRFSS Parameters to My Geography
+#'
+#' @param year - year of interest
+#' @param source - source, 'ascii' or 'sas', defaults to 'ascii'
+#'
+#' @returns invisible
+#' @export
+#'
+#' @examples
+#'
+#' brfss.params.public(year = 2022)
+#'
+brfss.params.me <- function(year = NULL, source = "ascii") {
+
+  brfss::brfss.params(geog = my_geog(), extent = "local", source = source, geog_flag = "on")
+
+  if(!is.null(year)) {
+    brfss::brfss.params(year = year)
+
+  }
+
+  invisible()
+
+}
 
 my.brfss.save <- function(my_brfss) {
   path <- my.brfss.path()
@@ -440,7 +519,7 @@ my.brfss.init <- function() {
   ##
   ##    geog
 
-  my_brfss$geog$value <- ""
+  my_brfss$geog$value <- my_geog()
   my_brfss$geog$pattern <- "GEOG"
 
   my_brfss$geog$on_change <- function(geog) {

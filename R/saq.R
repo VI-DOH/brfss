@@ -20,7 +20,7 @@ build_saq_layout<-function() {
   saq_filename_csv <- apply.pattern("saq_raw_path", params)
   saq_layout <- apply.pattern("saq_layout_path", params)
 
-  df_layout_saq<-read.csv(saq_filename_csv)
+  df_layout_saq <- read.csv(saq_filename_csv)
 
   saveRDS(df_layout_saq,file = saq_layout)
 

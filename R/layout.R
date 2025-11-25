@@ -116,7 +116,7 @@ save_sas_layout<-function(progress = NULL) {
 #' @return
 #' @export
 #'
-sas_layout<-function() {
+get.sas.layout <- function() {
 
 
 
@@ -167,8 +167,8 @@ fixed_width_layout<-function(year) {
   df_saq<- saq_data(year)
   # get sas layout provided by CDC
 
-  df_sas_layout<-sas_layout()
-  #  df_sas_layout<-sas_layout(year)
+  df_sas_layout<-get.sas.layout()
+  #  df_sas_layout<-get.sas.layout(year)
 
   # clean up sas layout - remove overlapping vars
   #   and remove the state-added-question columns which are to be added from df_saq
@@ -216,7 +216,7 @@ fixed_width_layout<-function(year) {
 #
 #   year <- get.year(year)
 #
-#   df_layout<-sas_layout(year)
+#   df_layout<-get.sas.layout(year)
 #
 #   df_quest<- df_quest %>%
 #     mutate(index = as.integer(qnumber)) %>%
@@ -259,7 +259,7 @@ get.layout <- function() {
   #
   # if(is.null(df_layout) && version == 0) df_layout <- get.codebook.layout()
   #
-  # if(is.null(df_layout)) df_layout <- sas_layout()
+  # if(is.null(df_layout)) df_layout <- get.sas.layout()
 
   df_layout %>%
     mutate(across(where(is.character), ~stringi::stri_replace_all_regex(.x, "\\s+", " ")))
@@ -275,7 +275,7 @@ get.layout.ext <- function(extent) {
 
   if(is.null(df_layout) && version == 0) df_layout <- get.codebook.layout()
 
-  if(is.null(df_layout)) df_layout <- sas_layout()
+  if(is.null(df_layout)) df_layout <- get.sas.layout()
 
   brfss.params(extent = ext_in)
 
@@ -295,7 +295,7 @@ get.layout.ext <- function(extent) {
 #' @examples
 section_type <- function(year = NULL,col) {
 
-  get.layout(year)   %>%
+  get.layout()   %>%
     filter(col_name == {{col}}) %>%
     pull(sect_type)
 
@@ -411,3 +411,29 @@ layout_from_data <- function(df = NULL) {
 
 }
 
+
+#' Helper to Find Column Names
+#'
+#' @param pttrn - pattern to search for
+#' @param excl - pattern for exclusions
+#'
+#' @returns data.frame
+#' @export
+#'
+#' @examples
+find_column <- function(pttrn = "^$", excl = "^$") {
+
+  df_lo <- get.layout()
+
+  res <- bind_rows(
+    df_lo %>% filter(grepl(pttrn, label, ignore.case = T)),
+    df_lo %>% filter(grepl(pttrn, question, ignore.case = T)),
+    df_lo %>% filter(grepl(pttrn, section, ignore.case = T))
+  )  %>% distinct() %>%
+    arrange(start) %>%
+    filter(!grepl(excl, label))%>%
+    filter(!grepl(excl, question))%>%
+    filter(!grepl(excl, section))
+
+  res %>% select(col_name, label, sect_type, sect_num, section, question)
+}

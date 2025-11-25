@@ -72,12 +72,12 @@ summary.brfss_data <- function(df) {
   x <- brfss:::responses() %>% t() %>% as.data.frame() %>% rename(` ` = 1)
   print(x)
 
-  cat("\n",
-      "=======================================\n",
-      "  Modules\n",
-      "=======================================\n")
-
   x <- brfss::get_module_stats() %>% select(Module = mod_num, Name = module)
+  nc <- (x %>% pull(Name) %>% nchar() %>% max()) + 8
+
+  cat("\n", rep("=", nc), "\n",
+      "  Modules\n", rep("=", nc), "\n", sep = "")
+
   print(x, row.names = F)
 }
 
@@ -112,6 +112,7 @@ brfss_geog_data <- function() {
 }
 
 coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NULL) {
+
   vwt <- apply.pattern("weight_col",VERS=version)
   stratum <- apply.pattern("stratum_col")
 
@@ -125,8 +126,8 @@ coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NUL
     dplyr::rename(FINAL_WT = {{vwt}}) %>%
     dplyr::rename(STRATUM = {{stratum}}) %>%
     dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
-    dplyr::mutate(vers = {{version}}) #%>%
-  #na.exclude()
+    dplyr::mutate(vers = {{version}})
+
 
 
 }
@@ -137,15 +138,28 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
   #df_brfss <- brfss_data(year,geog)
   df_brfss <- data.frame() #   coi_data(coi, year,geog,version = 0)
 
-  invisible(
-    sapply(0:highest_version(),function(ver) {
+  # invisible(
+  #   sapply(0:highest_version(),function(ver) {
+  #     browser()
+  #     df_brfss <<- df_brfss %>%
+  #       bind_rows(coi_data_vers(df_data = df_data,
+  #                               coi = coi, subsets = subsets,
+  #                               version = ver))
+  #   })
+  # )
 
-      df_brfss <<- df_brfss %>%
-        bind_rows(coi_data_vers(df_data = df_data,
-                                coi = coi, subsets = subsets,
-                                version = ver))
-    })
-  )
+
+  df_brfss <- purrr::map(0:highest_version(),function(ver) {
+    coi_data_vers(df_data = df_data,
+                  coi = coi, subsets = subsets,
+                  version = ver)
+  })
+
+
+  df_brfss <- df_brfss %>%
+    bind_rows()
+
+
 
   voi <- df_brfss %>% pull(vers) %>% unique()
 

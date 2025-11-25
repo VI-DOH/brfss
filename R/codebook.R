@@ -18,7 +18,7 @@ process_codebook <- function(progress = NULL) {
 
   show_progress(progress,
                 message = "Codebook ... saving layout")
-  browser()
+
   save_codebook_layout()
 
   show_progress(progress,
@@ -496,7 +496,8 @@ save_codebook_layout <- function(file=NULL) {
     mutate(var_type = ifelse(var_type == "Num","integer",var_type)) %>%
     mutate(var_type = ifelse(var_type == "Char","character",var_type)) %>%
     relocate(field_size, start, end, col_name, sect_type, sect_num, section, label,
-             question_num, var_type, question)
+             question_num, var_type, question) %>%
+    mutate(saq = FALSE)
 
   fldr <- apply.pattern("codebook_layout_folder",params)
   fil <- apply.pattern("codebook_layout_file", params)
