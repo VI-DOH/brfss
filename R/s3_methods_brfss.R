@@ -42,9 +42,10 @@ print.brfss <- function(x, ...) {
       "Population: ", attrs[["population"]],"\n",
       sep = "")
 
+
   if(attrs[["is_custom"]]) {
     cat(" ***  Custom Variable  ***\n", sep = "")
-  } else if("is_saq" %in% names(attrs) && attrs[["is_saq"]]){
+  } else if("is_saq" %in% names(attrs) && as.logical(attrs[["is_saq"]])){
     cat(" ***  State-added  ***\n", sep = "")
   } else {
 

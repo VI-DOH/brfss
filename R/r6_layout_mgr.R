@@ -1,5 +1,6 @@
 
 library(R6)
+
 #' Layout_Mgr R6 Class
 #'
 #' @export
@@ -7,21 +8,41 @@ Layout_Mgr <-
   R6Class(classname = "Layout_Mgr",
           public = list(
 
+            type = "merged",
+
             year = NULL,
 
             # =======================================================================
 
-            initialize = function(year = NULL, type = c("merged", "codebook", "sas")) {
+            set_type = function(type = NULL) {
 
-              type <- match.arg(type,  c("merged", "codebook", "sas"))
+              type <- match.arg(type,  c("merged", "codebook", "sas", "data"))
+
+              self$type <- type
+              private$load_layout()
+
+              if(type == "data") {
+                private$load_layout_from_data()
+                private$df_layout <- private$df_layout_data
+              } else {
+                private$df_layout <- private$df_layout_mrg
+              }
+
+            },
+
+            initialize = function(year = NULL,
+                                  type = c("merged", "codebook", "sas", "data"),
+                                  df_brfss = NULL) {
+
+
+              private$df_brfss <- df_brfss
+
+              type <- match.arg(type,  c("merged", "codebook", "sas", "data"))
 
               if (!requireNamespace("dplyr", quietly = TRUE)) {
                 stop("Package 'dplyr' is required but not installed.")
               }
 
-              if (!requireNamespace("brfss", quietly = TRUE)) {
-                stop("Package 'brfss' is required but not installed.")
-              }
 
               # --- get the year in case it isn't the current working year
 
@@ -34,40 +55,13 @@ Layout_Mgr <-
               }
 
               self$year <- old_year
+              self$set_type(type = type)
 
-              # --------------  create the func name  ---------------
 
-              func  <-  paste0("get.", type,  ".layout")
-
-              # -------------  get the layout  ---------------
-
-              df  <-  do.call(getExportedValue("brfss", func), args = list())|>
-                dplyr::mutate(across(
-                  where(is.character),
-                  ~ gsub("\u00A0", " ", .x)  # non-breaking space → regular space
-                ))
 
               # --- reset the year in case it wasn't the current working year
 
               brfss.params(year = old_year)
-
-              # --------   clean up the data.frame  -----------------
-
-              max_mod <- df %>% filter(sect_type == "Module") %>%
-                pull(sect_num) %>% max()
-
-              last_max <- df %>% pull(sect_num) %>% {which(. == max_mod)} %>%
-                max()
-
-              df <- df %>% mutate(rn = row_number()) %>%
-                mutate(sect_num =
-                         if_else(rn > last_max & sect_type == "Module" & sect_num == 1,
-                                 0, sect_num)) %>%
-                select(-rn)
-
-              # ---------  save the data.frame   --------------------
-
-              private$df_layout <- df
             },
 
             # =======================================================================
@@ -180,12 +174,14 @@ Layout_Mgr <-
 
               ret <- ret %>%
                 filter(grepl({{sec_typ}},sect_type)) %>%
-                filter(grepl({{questn}}, question))
+                filter(grepl({{questn}}, question), ignore.case = TRUE)
 
 
               ret <- ret %>%
                 select(col_name, section, sect_type, sect_num,
-                       question_num, any_of("saq"), question)
+                       question_num, any_of("saq"), question) %>%
+                arrange(sect_type, sect_num,
+                        question_num)
 
 
               if(list) {
@@ -204,12 +200,18 @@ Layout_Mgr <-
               if(sect_type != "")
                 sect_type = match.arg(sect_type, c("Core", "Module", ""))
 
-              private$df_layout  %>%
-                filter(grepl({{sect_type}},sect_type))%>%
-                select(section, sect_type, sect_num) %>%
-                filter(sect_type %in% c("Core", "Module")) %>%
-                distinct() %>%
-                filter(sect_num > 0)
+              tryCatch({
+                private$df_layout_mrg  %>%
+                  filter(grepl({{sect_type}},sect_type))%>%
+                  select(section, sect_type, sect_num) %>%
+                  filter(sect_type %in% c("Core", "Module")) %>%
+                  distinct() %>%
+                  filter(sect_num > 0)
+              }, error = function(e) {
+                browser()
+
+              })
+
 
 
             },
@@ -217,32 +219,73 @@ Layout_Mgr <-
             # =======================================================================
 
             layout = function(basic = TRUE  ) {
+
               df <- private$df_layout
 
               if(basic) df <- df %>%
-                  select(col_name,section_type,section_num, section_name,
-                         label,question,
-                         section_index,any_of("calculated"))
+                  select(any_of(c( "col_name", "sect_type", "sect_num", "section",
+                                   "label",  "question", "calculated", "saq")))
 
               df
+            }
+
+          ),
+
+          # =======================================================================
+          # =======================================================================
+
+          private = list(
+            df_layout = NULL,
+            df_layout_mrg = NULL,
+            df_layout_data = NULL,
+
+            df_brfss = NULL,
+
+            load_layout = function() {
+
+              type <- self$type
+
+              if(type == "data") type <- "merged"
+
+              func  <-  paste0("get.", type,  ".layout")
+
+              # -------------  get the layout  ---------------
+
+              df  <-  do.call(getExportedValue("brfss", func), args = list())|>
+                dplyr::mutate(across(
+                  where(is.character),
+                  ~ gsub("\u00A0", " ", .x)  # non-breaking space → regular space
+                )) %>%
+                filter(!grepl("^DUMMY", sect_type)) %>%
+                filter(!is.na(sect_type))
+
+
+              # --------   clean up the data.frame  -----------------
+
+              max_mod <- df %>% filter(sect_type == "Module") %>%
+                pull(sect_num) %>% max()
+
+              last_max <- df %>% pull(sect_num) %>% {which(. == max_mod)} %>%
+                max()
+
+              df <- df %>% mutate(rn = row_number()) %>%
+                mutate(sect_num =
+                         if_else(rn > last_max & sect_type == "Module" & sect_num == 1,
+                                 0, sect_num)) %>%
+                select(-rn)
+
+              # ---------  save the data.frame   --------------------
+
+              private$df_layout_mrg <- df
             },
 
             # =======================================================================
-            data_layout = function(basic = TRUE  ) {
-              df <- private$df_layout_data
 
-              if(basic) df <- df %>%
-                  select(col_name,sect_type,sect_num, section,label,question,
-                         question_num, any_of(c("calculated", "saq")))
+            load_layout_from_data = function(df = NULL) {
 
-              df
-            },
+              if(is.null(private$df_brfss)) private$df_brfss <- prepped_data() #return(NULL)
 
-            # =======================================================================
-
-            layout_from_data = function(df = NULL) {
-
-              if(is.null(df)) df <- prepped_data()
+              df <- private$df_brfss
 
               col_names  <-  df %>% colnames()
 
@@ -258,6 +301,8 @@ Layout_Mgr <-
                 col <- df[[i]]
                 attrx <- attributes(col) %>% names() %>% {.[!. %in% c("variable")]}
 
+                #var <- attr(col, "variable")
+
                 sapply(atts, function(att) {
 
                   if(att %in% attrx) {
@@ -267,7 +312,6 @@ Layout_Mgr <-
 
                 })
               }
-
 
               private$df_layout_data <- df_lo %>%
 
@@ -282,14 +326,6 @@ Layout_Mgr <-
 
             }
 
-          ),
-
-          # =======================================================================
-          # =======================================================================
-
-          private = list(
-            df_layout = NULL,
-            df_layout_data = NULL
 
           ),
 

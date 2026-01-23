@@ -177,7 +177,7 @@ build_saq_values<-function() {
 #' @export
 #'
 #' @examples
-merge_saq_values <- function(year = NULL, geog = NULL, df_values = NULL, df_saq_values = NULL) {
+merge_saq_values <- function(df_values = NULL, df_saq_values = NULL) {
 
   params <- my.brfss.patterns()
 

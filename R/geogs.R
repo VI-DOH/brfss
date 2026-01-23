@@ -31,6 +31,40 @@ get_geogs_all <- function() {
   geogs
 }
 
+geog_info <- function(geogs) {
+
+  if(is.null(geogs)) return(NULL)
+
+  df_geogs <- brfss::geogs
+
+  if(is.numeric(geogs)) {
+
+    # ---- try matching FIPS  ------
+
+    df_my_geogs <- data.frame(Id = as.character(geogs)) %>%
+      left_join(df_geogs, by = join_by(Id))
+
+  } else {
+
+    # ---- try matching abbreviations  ------
+
+    df_my_geogs <- data.frame(Abbrev = geogs) %>%
+      left_join(df_geogs, by = join_by(Abbrev))
+
+    if(nrow(df_my_geogs) == 0) {
+
+      # ---- try matching full name  ------
+
+      df_my_geogs <- data.frame(Geog = geogs) %>%
+        left_join(df_geogs, by = join_by(Geog))
+
+    }
+
+  }
+
+  df_my_geogs %>%
+    select(all_of(colnames(df_geogs)))
+}
 
 #' Get Geography Name
 #'
@@ -192,3 +226,43 @@ geog_id <- function(geogs) {
 
 }
 
+#' Public Geographies
+#'
+#' Get a vector of current public folders in the public/states folder for a given year.
+#'
+#' @param year - integer - year of interest
+#'
+#' @returns character vector
+#' @export
+#'
+#' @examples
+#' my_public_geogs(2022)
+#'
+my_public_geogs <- function(year = NULL) {
+
+
+  old_year <- brfss.param(year)
+  old_extent <- brfss.param(extent)
+  old_geog_flag <- brfss.param(geog_flag)
+
+  if(is.null(year)) {
+    year <- old_year
+  }
+
+  brfss.params(extent = "public", geog_flag = "off", year = year )
+
+
+  params <- pattern_params()
+
+  dir <- paste0(apply.pattern("brfss_annual_data_folder_base", params), "states")
+
+  if(dir.exists(dir)) {
+    my_geogs <- list.files(dir )
+  } else {
+    my_geogs = character()
+  }
+
+  brfss.params(year = old_year, extent = old_extent, geog_flag = old_geog_flag)
+
+  my_geogs
+}

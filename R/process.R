@@ -64,8 +64,6 @@ process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
 #' is read has data for all geographies, whether the SAS (XPT) file or the ASCII (ASC) file.
 #' This function splits out the geographies of interest.
 #'
-#' @param year integer - year of interest
-#' @param source character - data source ('sas' or 'ascii')
 #' @param main logical - process main XPT file
 #' @param versions logical - process all versioned XPT/ASC files
 #' @param my_geog character - abbreviation for primary state/geography of interest (e. "MT")
@@ -80,56 +78,42 @@ process_year <- function( dl_metadata = FALSE, dl_codebook = FALSE,
 #'}
 #'
 #'
-split_geogs<-function(main=TRUE, versions=TRUE,
-                      factorize = FALSE, verbose=TRUE, progress = NULL) {
+split_geogs<-function(geogs = NULL, main=TRUE, versions=TRUE, col_atts = TRUE,
+                      factorize = TRUE, verbose=TRUE, progress = NULL) {
 
   # make sure some version will be split
 
+  if(brfss.param(extent) != "public") {
+
+    warning("extent must be 'public' to split geographies")
+    return(NULL)
+  }
+
   if(!(main || versions)) return(NULL)
-  ver<-integer(0)
-  if(main) ver<-0
 
-  vermax <- highest_version()
-  if(vermax == 0) versions = FALSE
+  ver <- 0:highest_version()
+  if(!main) ver <- tail(ver,-1)
+  if(!versions) ver = head(ver,1)
 
-  if(versions) ver<-c(ver,1:vermax)
 
-  df_geogs <- get_geogs_all()
+  df_my_geogs <- geog_info(geogs)
 
-  sapply(ver,function(version) {
-    browser()
+  if(is.null(df_my_geogs) || nrow(df_my_geogs) == 0) return(NULL)
+
+  purrr::walk(ver,function(version) {
+
     brfss.param(version = version)
     brfss.param(geog_flag = 'off')
 
     params <- my.brfss.patterns()
 
-    rdata_file <- apply.pattern("brfss_annual_data_path",params)
+    rdata_file <- apply.pattern("brfss_annual_data_path", params)
 
-    show_progress(progress,
-                  message = paste0("Splitting ... trying version [", version, "]"))
-
+    if(verbose) cat(paste0("Splitting ... trying version [", version, "]\n"))
 
     df_brfss <- readRDS(file = rdata_file)
 
     brfss.param(geog_flag = 'on')
-
-    if(brfss.param(geog) == '*') {
-      geogs<-unique(df_brfss$`_STATE`)
-
-    } else {
-
-      geogs <- c(brfss.param(geog),brfss.param(geogs_other))
-      if(is.character(geogs)) {
-        geogs<-sapply(geogs,function(state) {
-          df_geogs[df_geogs$Abbrev==state,"Id"]
-        })
-
-        geogs <- unlist(unname(geogs))
-      }
-    }
-
-    df_my_geogs <- data.frame(Id = geogs) %>%
-      left_join(df_geogs, by = join_by(Id))
 
     add_cols<-character(0)
 
@@ -137,64 +121,94 @@ split_geogs<-function(main=TRUE, versions=TRUE,
 
     geog_type <- df_brfss %>% pull(`_STATE`) %>% class()
 
-    mapply(function(id, abb, nm) {
+    purrr::pwalk(df_my_geogs, function(Geog, Id, Abbrev) {
 
-      brfss.param(geog = abb)
+      brfss.param(geog = Abbrev)
       params <- my.brfss.patterns()
+
+      df_state <- df_brfss %>% split_geog(geog = Abbrev, col_atts = col_atts, factorize = factorize)
 
       # get data for the state of interest and make sure there is data
 
-      if(geog_type == "numeric") {
-        df_state <- df_brfss %>% filter(`_STATE` == id)
-      }  else {
-
-        df_state <- df_brfss %>% filter(`_STATE` == nm)
-      }
-
-      if(nrow(df_state)>0) {
-        if(verbose) cat("Saving ",abb,"V",version,"\n")
-
-        show_progress(progress,
-                      message = paste0("Splitting ... ", abb, "V", version))
-
-        ##   for now, have to save and (re-)attach the attributes for the columns
-
-        sapply(1:ncol(df_brfss),function(i) {
-          attrs<-attributes(df_brfss[[i]])
-
-          if(!is.null(attrs)){
-            sapply(1:length(attrs),function(j) {
-
-              attr(df_state[[i]],names(attrs[j]))<<-attr(df_brfss[[i]],names(attrs[j]))
-            })
-          } else {
-            add_cols<<-c(add_cols,colnames(df_brfss)[i])
-          }
-
-        })
-
+      if(!is.null(df_state) && nrow(df_state) > 0) {
         fname <- brfss_data_path( rw = 'w')
 
         # brfss.param(extent = ext)
 
         if(verbose) cat("Going to save :", fname, "\n")
 
-        show_progress(progress,
-                      message = paste0("Splitting ... saving ", fname))
-
         saveRDS(df_state,file = fname)
-
       }
-    }, df_my_geogs$Id, df_my_geogs$Abbrev, df_my_geogs$Geog)
 
-      brfss.param(geog = geog_save)
+    })
+
+    brfss.param(geog = geog_save)
 
   })
 
+  brfss.param(version = 0)
 
-    invisible()
+  invisible()
 }
 
+
+#' Split one State/Territory from Main File
+#'
+#' @param df_brfss
+#' @param geog
+#' @param verbose
+#'
+#' @returns
+#' @export
+#'
+split_geog<-function(df_brfss, geog = NULL, col_atts = TRUE, factorize = TRUE, verbose=TRUE) {
+
+  # make sure some version will be split
+
+  if(is.null(geog)) return(NULL)
+
+  version <- brfss.param(version)
+
+  brfss.param(geog_flag = 'on')
+
+  if(is.character(geog)) {
+    geog_id <- brfss::geogs %>% filter(Abbrev == {{geog}}) %>% pull(Id)
+    geog_abb <- geog
+  } else if (is.numeric(geog)) {
+    geog_abb <- brfss::geogs %>% filter(Abbrev == {{geog}}) %>% pull(Abbrev)
+    geog_id <- geog
+
+  } else return(NULL)
+
+  brfss.param(geog = geog_abb)
+
+  add_cols<-character(0)
+
+  geog_type <- df_brfss %>% pull(`_STATE`) %>% class()
+
+  # get data for the state of interest and make sure there is data
+
+  if(geog_type == "numeric") {
+    df_state <- df_brfss %>% filter(`_STATE` == {{geog_id}})
+  }  else {
+
+    df_state <- df_brfss %>% filter(`_STATE` == {{geog_abb}})
+  }
+
+  if(nrow(df_state)>0) {
+    if(verbose) cat("Saving ",geog_abb,"V",version,"\n")
+
+    fname <- brfss_data_path( rw = 'w')
+
+    if(col_atts) add_column_attributes()
+
+    if(factorize) df_state <- df_state %>% make_factors(verbose = verbose)
+  } else {
+    df_state <- NULL
+  }
+
+  return(df_state)
+}
 
 #' Save BRFSS Data
 #'

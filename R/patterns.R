@@ -281,7 +281,7 @@ get.pattern.info <- function(name) {
 #' apply.pattern("annual_data_folder", YEAR = 2020)
 #'
 #' There is one special case. If you pass YEAR as a variable, it will also create YR, and the
-#' correesponding 2-digit value.
+#' corresponding 2-digit value.
 #'
 #' @param name character - the pattern name
 #' @param ... variables to insert
@@ -297,7 +297,9 @@ get.pattern.info <- function(name) {
 #'
 apply.pattern <- function(name,  ...) {
 
-  args <- list(...)
+#  if(grepl("annual", name)) browser()
+
+    args <- list(...)
 
   #req_params <- pattern.requirements(name) %>% pull(params)
 
@@ -312,6 +314,7 @@ apply.pattern <- function(name,  ...) {
 
   pats <- sapply(pats, function(pat) {
     #pat <- get.pattern(name)
+
     expand.pattern(pat)
   })
 

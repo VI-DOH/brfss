@@ -71,13 +71,15 @@ add_column_attributes<-function(layout = NULL, main = TRUE,
 
 add_col_attributes <- function(df_in) {
 
-  df_sasout<- get.layout()
-  df_values<- brfss::values()
+  df_layout<- get.layout()
+
+  if(!"saq" %in% colnames(df_layout)) {
+    df_layout$saq <- NA
+  }
 
   mapply(function(lbl,col_name,typ,n,i,nm,qu,calc, saq) {
 
     #    df_vals <- df_values %>% filter(col_name == {{col_name}})
-
     if(!is.null(df_in[[col_name]])) {
       if(is.na(typ) || is.null(typ)) typ <- ""
       if(is.na(n) || is.null(n)) n <- ""
@@ -108,9 +110,9 @@ add_col_attributes <- function(df_in) {
 
     }
 
-  }, df_sasout$label, df_sasout$col_name, df_sasout$sect_type, df_sasout$sect_num,
-  df_sasout$question_num,df_sasout$section, df_sasout$question, df_sasout$calculated,
-  df_sasout$saq)
+  }, df_layout$label, df_layout$col_name, df_layout$sect_type, df_layout$sect_num,
+  df_layout$question_num,df_layout$section, df_layout$question, df_layout$calculated,
+  df_layout$saq)
 
   df_in
 

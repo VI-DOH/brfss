@@ -18,6 +18,7 @@
 #'
 brfss_data <- function(...) {
 
+
   brfss.params(...)
   params <- my.brfss.patterns()
 
@@ -113,7 +114,6 @@ brfss_geog_data <- function() {
 
 coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NULL) {
 
-  vwt <- apply.pattern("weight_col",VERS=version)
   stratum <- apply.pattern("stratum_col")
 
   brfss.params(version = version)
@@ -123,16 +123,14 @@ coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NUL
   if(is.null(df_data)) return(data.frame())
 
   df_data %>%
-    dplyr::rename(FINAL_WT = {{vwt}}) %>%
     dplyr::rename(STRATUM = {{stratum}}) %>%
     dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
     dplyr::mutate(vers = {{version}})
 
-
-
 }
 
-coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$") {
+coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$",
+                     weight_col = "FINAL_WT") {
 
 
   #df_brfss <- brfss_data(year,geog)

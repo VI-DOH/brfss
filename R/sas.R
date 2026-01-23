@@ -202,7 +202,17 @@ convert_sas <- function(verbose = FALSE, progress = NULL) {
   }
 }
 
-sas_download_metadata<-function(year, progress = NULL, ...) {
+#' Download SAS Metadata files
+#'
+#' @param folderout character - folder to store codebook - NULL gets default
+#' @param year integer - year of interest - NULL gets default
+#' @param progress
+#'
+#' @returns invisibly
+#' @export
+#'
+#'
+sas_download_metadata<-function(folderout = NULL, year = NULL, progress = NULL, ...) {
   #  files<-sas.url.pattern.downloads.data()
   params <- my.brfss.patterns()
 
@@ -214,13 +224,16 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
 
 #  folderout<-apply.pattern("sas_raw_data_folder", params)
 
-  folderout<-apply.pattern("brfss_annual_raw_metadata_folder", params)
+  if(!is.null(year)) brfss.param(year = year)
 
+  if(is.null(folderout)) folderout<-apply.pattern("brfss_annual_raw_metadata_folder", params)
+
+  folderout <- gsub("([^[/])$","\\1/",folderout)
 
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   to <- getOption("timeout")
-  options(timeout = 180)
+  options(timeout = 300)
 
 
   sapply(pttrns,function(pttrn) {
@@ -236,7 +249,7 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
       fileout<-paste0(folderout,filename)
 
       #
-      # download will fail on lager files if time to download is > 60 secs
+      # download will fail on larger files if time to download is > 60 secs
       #   set time to 3 minutes and then restore when done
 
       x <- httr::GET(url = url)
@@ -269,6 +282,8 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
 
   options(timeout = to)
 
+  return(invisible(NULL))
+
 }
 
 #' Download SAS XPT files from CDC website
@@ -278,7 +293,7 @@ sas_download_metadata<-function(year, progress = NULL, ...) {
 #'
 #' @export
 #'
-sas_download_xpt<-function(progress = NULL) {
+sas_download_xpt<-function(folderout = NULL, year = NULL, progress = NULL) {
 
 
   show_progress(progress,
@@ -288,7 +303,12 @@ sas_download_xpt<-function(progress = NULL) {
   #files<-sas.url.pattern.downloads.versions()
   file_pttrn<-get.pattern("xpt_download_zip_file")
 
-  folderout<-apply.pattern("sas_raw_data_folder", params)
+  if(!is.null(year)) brfss.param(year = year)
+
+  if(is.null(folderout)) folderout <- apply.pattern("sas_raw_data_folder", params)
+
+  folderout <- gsub("([^[/])$","\\1/",folderout)
+
   if(!dir.exists(folderout)) dir.create(folderout,recursive = T)
 
   urlfiles<-apply.pattern("brfss_url_files", params)
@@ -416,7 +436,6 @@ sas_download_metadata.versions<-function() {
 
 read.xpt<-function(version = 0, verbose = F) {
 
-  browser()
   brfss.param(version = version)
   params <- my.brfss.patterns()
 
@@ -631,7 +650,7 @@ load.sas<-function(year, rdata_file=NULL, version=0) {
 
 
 read.sas.format<-function(folder_pat= NULL, file_pat = NULL) {
-  
+
 
   params <- my.brfss.patterns()
 
@@ -810,7 +829,7 @@ sasout.add.override<-function(year,column,label) {
 }
 
 sas.build.geogs <- function() {
-  
+
 
   df <- data.frame(Geog = state.name, Abbrev = state.abb) %>%
     mutate(name = rownames(.))
@@ -853,7 +872,7 @@ sas.build.geogs <- function() {
 #'
 #' }
 read_sas_field_ranges<-function() {
-  
+
 
   params <- my.brfss.patterns()
 
@@ -1001,7 +1020,7 @@ read_sas_field_ranges<-function() {
 }
 
 fill_dummies <- function(df) {
-  
+
 
   start <- as.integer(df%>% slice(2:nrow(.)) %>% pull(start))
   last <-  as.integer(df%>% slice(1:(nrow(.)-1)) %>% pull(end))

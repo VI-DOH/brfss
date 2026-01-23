@@ -22,9 +22,16 @@
 #'
 #' @examples
 #'
-survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subsets = NULL,
-                         subset_by = NULL, sub_exclude = c("Don.*t|Refuse"),
-                         conf =.95, weighted = TRUE, pct = FALSE, digits = 99) {
+survey_stats <- function(df_data = NULL, coi,
+                         exclude = c("Don.*t|Refuse"),
+                         subsets = NULL,
+                         subset_by = NULL,
+                         sub_exclude = c("Don.*t|Refuse"),
+                         conf =.95,
+                         weighted = TRUE,
+                         weight_col = "_LLCPWT",
+                         pct = FALSE,
+                         digits = 99) {
 
   require(survey, quietly = T, warn.conflicts = F)
   require(dplyr, quietly = T, warn.conflicts = F)
@@ -40,6 +47,8 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
     geog = NA
   }
 
+  df_data <- df_data %>% rename(FINAL_WT = {{weight_col}})
+
   ## make sure that this column exists
 
   if(!has_column(df_data, coi)) return(NULL)
@@ -53,7 +62,8 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
 
   coi_attrs <- df_data %>% pull({{coi}}) %>% attributes()
 
-  df_brfss <- coi_data(df_data = df_data, coi = coi, subsets = subsets, exclude = exclude)
+  df_brfss <- coi_data(df_data = df_data, coi = coi, subsets = subsets,
+                       exclude = exclude)
 
   test <- df_brfss %>% pull({{coi}})
 
@@ -82,7 +92,12 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
   ##  survey package
   ##
   ##
-  if(weighted) weighting<-reformulate("FINAL_WT")   else weighting=NULL
+
+  if(weighted)
+    weighting <- reformulate("FINAL_WT")
+  else
+    weighting=NULL
+
   strata<-reformulate("STRATUM")   #else weights=NULL
 
   #  ids<- reformulate(all_vals)
@@ -140,19 +155,19 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
     df_subs <- map(subsets, function(subset){
 
       cols <- c(coi,subset)  %>% paste0("`",.,"`")
-          frmla<- reformulate(cols)
+      frmla<- reformulate(cols)
 
-          des<-survey::svydesign(ids = ~1,
-                                 strata = strata,
-                                 variables =  frmla,
-                                 data = df_brfss,
-                                 weights = weighting,
-                                 deff=F)
+      des<-survey::svydesign(ids = ~1,
+                             strata = strata,
+                             variables =  frmla,
+                             data = df_brfss,
+                             weights = weighting,
+                             deff=F)
 
 
-          stats_w_subs(des, pct = pct, digits = digits, conf = conf)
+      stats_w_subs(des, pct = pct, digits = digits, conf = conf)
 
-        }) %>% bind_rows()
+    }) %>% bind_rows()
 
   }
 
@@ -174,11 +189,11 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
     label <- attr(df_data[[coi]], "label")
   }
 
-
-
   # remove "dummy" response (in case there was only one level)
 
-  df <- df %>% filter(response != "dummy")
+  df <- df %>%
+    filter(response != "dummy") %>%
+    filter(!grepl(sub_exclude, subset))
 
   #  get the actual stat columns
 
@@ -203,6 +218,7 @@ survey_stats <- function(df_data = NULL, coi, exclude = c("Don.*t|Refuse"), subs
             question = coi_attrs[["question"]],
             label = label,
             weighted = weighted,
+            weight_col = weight_col,
             conf = conf)
 }
 
@@ -279,6 +295,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     rename(subset = 1) %>%
     mutate(subset = as.character(subset))
 
+
   df_wtd <- mysvytotal  %>%
     group_by(subset) %>%
     summarize(den_wtd = sum(num_wtd)) %>%
@@ -286,7 +303,9 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(subset = as.character(subset))
 
   mysvytotal <- mysvytotal %>%
-    left_join(df_wtd, by = join_by(subset))
+    left_join(df_wtd, by = join_by(subset)) %>%
+    mutate(den_wtd = as.integer(den_wtd)) %>%
+    mutate(num_wtd = as.integer(num_wtd))
 
   mysvycounts<-survey::svyby(frmla1,frmla2,des,unwtd.count)
 
@@ -331,7 +350,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     relocate(subvar) %>%
     mutate(subset = as.character(subset)) %>%
     left_join(myci, by = join_by(response, subset)) %>%
-    mutate(cv = se/percent) %>%
+    mutate(cv = round(se/percent * mult, digits)) %>%
     left_join(df_dens, by = join_by(subset))%>%
     left_join(df_nums, by = join_by(subset, response))   %>%
     mutate(percent_unwtd = round(num/den * mult, digits)) %>%
@@ -359,10 +378,14 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
   mysvymean<-survey::svymean(frmla,des,na.rm = T,deff = F)
 
   mycv <- cv(mysvymean)%>% t()
-  mycv <- data.frame(response = dimnames(mycv)[[2]] %>% gsub(coi,"",.), cv = mycv %>% as.numeric())
+  mycv <- data.frame(response = dimnames(mycv)[[2]] %>% gsub(coi,"",.),
+                     cv = mycv %>% as.numeric()) %>%
+    mutate(across(where(is.numeric), ~ . * mult)) %>%
+    mutate(across(where(is.numeric), round, digits))
+
 
   myci <- svyci(mysvymean = mysvymean, conf = conf) %>%
-    remove_coi(coi)%>%
+    remove_coi(coi) %>%
     mutate(across(where(is.numeric), ~ . * mult)) %>%
     mutate(across(where(is.numeric), round, digits))
 
@@ -377,13 +400,14 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(across(where(is.numeric), ~ . * mult)) %>%
     mutate(across(where(is.numeric), round, digits))
 
-  mysvytotal<-survey::svytotal(frmla,des,na.rm = T,deff = F) %>%
+  mysvytotal <- survey::svytotal(frmla,des,na.rm = T,deff = F) %>%
     as.data.frame() %>%
     mutate(response = rownames(.))  %>%
     remove_coi(coi) %>%
     select(-SE) %>%
     rename(num_wtd = total)  %>%
-    mutate(den_wtd = sum(num_wtd)) %>%
+    mutate(den_wtd = as.integer(sum(num_wtd))) %>%
+    mutate(num_wtd = as.integer(num_wtd)) %>%
     relocate(response) %>%
     tibble::remove_rownames()
 
@@ -413,41 +437,6 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   df_stats
 }
-
-# add_CV <- function(df, mysvymean,coi) {
-#
-#   # has_subs <- !all(is.na(df$subset))
-#
-#   if(has_subs) {
-#     df_cv <- as.data.frame(cv(mysvymean))%>%
-#       t() %>%
-#       as.data.frame() %>%
-#       mutate(response = rownames(.)) %>%
-#       mutate(response = gsub(paste0("^se.*",coi),"",response)) %>%
-#       mutate(response = gsub("[`]","",response)) %>%
-#       tibble::remove_rownames() %>%
-#       reshape2::melt(value.name = "cv", id.vars = "response") %>%
-#       rename(subset = variable)
-#
-#   } else {
-#     df_cv <- as.data.frame(cv(mysvymean))%>%
-#       rename(cv = 1) %>%
-#       mutate(response = rownames(.)) %>%
-#       tibble::remove_rownames() %>%
-#       mutate(response = gsub(coi,"",response))
-#   }
-#
-#
-#   join_by = "response"
-#
-#   if(has_subs) join_by = c(join_by,"subset")
-#
-#
-#   df <- df %>%
-#     left_join(df_cv, by = join_by)
-#
-#   df
-# }
 
 remove_coi <- function(df, coi) {
 

@@ -265,17 +265,18 @@ brfss.params <- function(... , val_only = TRUE) {
 #'
 #' brfss.params.public(year = 2022)
 #'
-brfss.params.public <- function(year = NULL, geog = NULL, source = "sas") {
+brfss.params.public <- function(year = NULL, geog = NULL, source = "sas", geog_flag = "off") {
+
+  brfss.params(extent = "public", source = source, geog_flag = geog_flag)
 
   if(!is.null(year)) {
-    brfss::brfss.params(year = year, extent = "public", source = source, geog_flag = "off")
+    brfss.params(year = year)
 
   }
 
   if(!is.null(geog)) {
-    brfss::brfss.params(geog = geog, extent = "public", source = source, geog_flag = "on")
+    brfss.params(geog = geog, geog_flag = "on")
   }
-
 
   invisible()
 
@@ -294,17 +295,29 @@ brfss.params.public <- function(year = NULL, geog = NULL, source = "sas") {
 #'
 my_geog <- function(geog = NULL) {
 
-  file <- paste0(apply.pattern("data_folder"), "my_geog.rds")
+  geog_ret <- tryCatch({
+    file <- paste0(apply.pattern("data_folder"), "my_geog.rds")
 
-  if(is.null(geog)) {
+    if(is.null(geog)) {
 
-    if(!file.exists(file)) return("")
+      if(!file.exists(file)) return("")
 
-    return(readRDS("./data/my_geog.rds"))
+      return(readRDS("./data/my_geog.rds"))
 
-  } else {
-    geog %>% saveRDS("./data/my_geog.rds")
-  }
+    } else {
+      geog %>% saveRDS("./data/my_geog.rds")
+    }
+
+
+  },
+  error = function(e) {
+    return("VI")
+  },
+  warning = function(w) {
+    return("VI")
+  })
+
+  geog_ret
 }
 
 #' Set BRFSS Parameters to My Geography
@@ -612,7 +625,7 @@ my.brfss.init <- function() {
   ##  update/save parameters
 
   if(grepl("[.]rds",path))
-    {
+  {
     saveRDS(my_brfss, file = path)
   } else {
     save(my_brfss,file = path)

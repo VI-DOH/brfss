@@ -32,7 +32,9 @@ process_codebook <- function(progress = NULL) {
 #' Download the CDC prepared codebook for the BRFSS data files. The format of the URL is not consistent by year
 #' so more than one pattern is attempted and all should fail but one for a given year.
 #'
+#' @param fldrout character - folder to store codebook - NULL gets default
 #' @param year integer - year of interest
+#' @param progress progress object
 #'
 #' @export
 #'
@@ -40,13 +42,15 @@ process_codebook <- function(progress = NULL) {
 #' \dontrun{
 #' download_codebook(2020)
 #' }
-download_codebook <- function(progress = NULL) {
+download_codebook <- function(fldrout = NULL, year = NULL, progress = NULL) {
 
   show_progress(progress,
                 message = "Codebook ... downloading ")
 
   if(brfss.param(extent) != "public") {
-    return()
+
+    stop("extent must be 'public'. local codebooks are not downloaded from the CDC BRFSS website.")
+
   }
 
   ## get params from the my_brfss object, what are we working with at this time
@@ -61,7 +65,12 @@ download_codebook <- function(progress = NULL) {
   ##    GEOG is not needed unless the user changes the folder pattern
   ##    but is included here in case
 
-  fldrout <- apply.pattern("codebook_folder",params)
+  if(!is.null(year)) brfss.param(year = year)
+
+  if(is.null(fldrout)) fldrout <- apply.pattern("codebook_folder",params)
+
+  fldrout <- gsub("([^[/])$","\\1/",fldrout)
+
   ext <- apply.pattern("codebook_ext",params)
 
   ## create the folder/dir if it does not exist
@@ -248,7 +257,8 @@ read_codebook <- function(file=NULL, ...) {
     lines <- NULL
   }
 
-  lines
+  lines %>% stringi::stri_trans_general("Latin-ASCII")
+
 }
 
 #' Set Codebook Extension
