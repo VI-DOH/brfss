@@ -986,7 +986,7 @@ process_app <- function() {
         dummy <- rvals$reanalyze
         column <-rvals$coi
 
-        #subvar  subset  response  num   mean   se  CI_lower
+        #variable  subset  response  num   mean   se  CI_lower
         df <- survey_stats(coi = column, subsets = input$subsets_id,
                            pct = TRUE, digits = 1) %>%
           stats_wide_htm(stats = input$stats_id)

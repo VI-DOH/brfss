@@ -23,7 +23,7 @@
 #' @examples
 #'
 #'
-survey_stats<-function(df0,year,column, num_vals,den_vals,subset,conf=.95, weighting) {
+survey_stats<-function(df0, year, column, num_vals, den_vals, subset, conf=.95, weighting) {
 
   require(package = "survey", quietly = T, warn.conflicts = F)
 

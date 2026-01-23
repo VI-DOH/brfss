@@ -13,6 +13,7 @@ survey_stats(
   sub_exclude = c("Don.*t|Refuse"),
   conf = 0.95,
   weighted = TRUE,
+  weight_col = "_LLCPWT",
   pct = FALSE,
   digits = 99
 )

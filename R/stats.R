@@ -276,7 +276,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   coi <- names(des$variables[1])
   subset <- names(des$variables[2])
-  subvar <- names(des$variables[2])
+  variable <- names(des$variables[2])
 
   frmla1<- reformulate(c(coi) %>% paste0("`",.,"`"))
   frmla2<- reformulate(c(subset) %>% paste0("`",.,"`"))
@@ -288,7 +288,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     rename_with(~gsub(coi,"",.x))  %>%
     rename_with(~gsub("`","",.x))  %>%
     tidyr::pivot_longer(
-      cols = -all_of(subvar),
+      cols = -all_of(variable),
       names_to = "response",
       values_to = "num_wtd"
     )  %>%
@@ -333,7 +333,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(across(where(is.numeric), ~ . * mult)) %>%
     mutate(across(where(is.numeric), round, digits))%>%
     tidyr::pivot_longer(
-      cols = -all_of(subvar),
+      cols = -all_of(variable),
       names_to = "response",
       values_to = "value"
     ) %>%
@@ -346,8 +346,8 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
       values_from = value
     ) %>%
     rename(subset = 1) %>%
-    mutate(subvar = {{subvar}}) %>%
-    relocate(subvar) %>%
+    mutate(variable = {{variable}}) %>%
+    relocate(variable) %>%
     mutate(subset = as.character(subset)) %>%
     left_join(myci, by = join_by(response, subset)) %>%
     mutate(cv = round(se/percent * mult, digits)) %>%
@@ -429,9 +429,9 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     left_join(mysvymean, by = join_by(response)) %>%
     left_join(mycv, by = join_by(response)) %>%
     left_join(myci, by = join_by(response))%>%
-    mutate(subvar = "") %>%
+    mutate(variable = "") %>%
     mutate(subset = "All Respondents")  %>%
-    relocate(c(subvar,subset))
+    relocate(c(variable,subset))
 
   rownames(df_stats)<- NULL
 

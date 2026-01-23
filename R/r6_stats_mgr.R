@@ -17,7 +17,7 @@ StatsMgr <-
             data_pvt = NULL,
             data_mgr_pvt = NULL,
             coi_pvt = NULL,
-            stats_pvt = c("subvar","subset","response","num","den",
+            stats_pvt = c("variable","subset","response","num","den",
                           "percent","se","CI_lower","CI_upper","cv",
                           "percent_unwtd","num_wtd","den_wtd"),
             subsets_pvt = NULL,
@@ -180,7 +180,7 @@ StatsMgr <-
 
               nstatic <- length(static_cols)
 
-              has_subvar <- "subvar" %in% static_cols
+              has_variable <- "variable" %in% static_cols
 
               fin_cols <- c(static_cols,
                             expand.grid(stats,vals) %>%
@@ -189,10 +189,10 @@ StatsMgr <-
 
               if(length(stats) == 1) fin_cols <- gsub(".*\\^","", fin_cols)
 
-              if(has_subvar) subvars <- df_stats %>%
-                pull(subvar) %>%
+              if(has_variable) variables <- df_stats %>%
+                pull(variable) %>%
                 unique()
-              else subvars  <-  character(0)
+              else variables  <-  character(0)
 
               df_stats %>%
                 tidyr::pivot_wider(names_from = response,
@@ -380,7 +380,7 @@ MultiYearStatsMgr <-
 
                 df <- super$survey_stats(coi = coi, ...) %>%
                   mutate(year = {{year}})  %>%
-                  select(year, subvar, subset, response, all_of(stat))
+                  select(year, variable, subset, response, all_of(stat))
 
                 multi_attrs <<- df %>% attributes()
 

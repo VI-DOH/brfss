@@ -4,10 +4,14 @@
 \alias{download_codebook}
 \title{Download Codebook}
 \usage{
-download_codebook(progress = NULL)
+download_codebook(fldrout = NULL, year = NULL, progress = NULL)
 }
 \arguments{
+\item{fldrout}{character - folder to store codebook - NULL gets default}
+
 \item{year}{integer - year of interest}
+
+\item{progress}{progress object}
 }
 \description{
 Download the CDC prepared codebook for the BRFSS data files. The format of the URL is not consistent by year

@@ -32,19 +32,19 @@ widen_stats <- function(df_stats, stats = c("num", "percent", "CI")){
   df_stats_wide <- df_stats %>%
 
     # stretch measure horizontally with variable mean
-    reshape2::dcast(subvar + subset + den ~ response, value.var = c("num")) %>%
+    reshape2::dcast(variable + subset + den ~ response, value.var = c("num")) %>%
 
     # add CI_lower to right end
     left_join(df_stats %>%
-                reshape2::dcast(subvar + subset + den ~ response, value.var = c("percent")),
-              by = c("subset", "subvar", "den"))  %>%
+                reshape2::dcast(variable + subset + den ~ response, value.var = c("percent")),
+              by = c("subset", "variable", "den"))  %>%
 
     rename_with(~ gsub(".x", ".num",.x, fixed = TRUE)) %>%
     rename_with(~ gsub(".y", "",.x, fixed = TRUE))%>%
 
     left_join(df_stats %>%
-                reshape2::dcast(subvar + subset + den ~ response, value.var = c("CI")),
-              by = c("subset", "subvar", "den"))  %>%
+                reshape2::dcast(variable + subset + den ~ response, value.var = c("CI")),
+              by = c("subset", "variable", "den"))  %>%
 
     rename_with(~ gsub(".x", ".percent",.x, fixed = TRUE)) %>%
     rename_with(~ gsub(".y", ".CI",.x, fixed = TRUE))
@@ -53,11 +53,11 @@ widen_stats <- function(df_stats, stats = c("num", "percent", "CI")){
   #########################################################################
   ##
   ##    reorder rows back to original
-  ##      dcast is alphabetically ordering the subvars
+  ##      dcast is alphabetically ordering the variables
 
-  df_ord <- df_stats %>% select(subvar, subset) %>% distinct()
+  df_ord <- df_stats %>% select(variable, subset) %>% distinct()
 
-  df_stats_wide <- df_ord %>% left_join(df_stats_wide, by = c("subvar", "subset"))
+  df_stats_wide <- df_ord %>% left_join(df_stats_wide, by = c("variable", "subset"))
 
 
   ##################################################
@@ -203,7 +203,7 @@ stats_wide <- function(df_stats, stats = c("num", "percent", "CI"),
   ##    build the table
 
   gt_stats <- gt::gt(df_stats_wide, id = "stats_wide",
-                     groupname_col= "subvar",
+                     groupname_col= "variable",
                      rowname_col="subset") %>%
     gt::tab_header(title = htmltools::HTML(paste0(geog_name(params["geog"]),
                                                   " BRFSS<br>",

@@ -130,20 +130,20 @@ stats_wide_xl <- function(df_stats, file = NULL,
 
   data_row <- spnnr_row+2
 
-  subvars <- df_stats_wide %>%
-    pull(subvar) %>%
+  variables <- df_stats_wide %>%
+    pull(variable) %>%
     unique()
 
   idata_row <- data_row
 
-  sapply(subvars, function(subvar) {
+  sapply(variables, function(variable) {
 
     #  if it's not the "All respondents" group,
     #    write the row group name in it's own row, style it, and merge it across
 
-    if(nchar(subvar)>0) {
+    if(nchar(variable)>0) {
 
-      lbl <- column_label(subvar) %>% ifelse(length(.)>0,.,subvar)
+      lbl <- column_label(variable) %>% ifelse(length(.)>0,.,variable)
 
       writeData(wb = wb,sheet =  shtnm,x = lbl,
                 startCol = 1,startRow = idata_row, colNames = FALSE,
@@ -162,8 +162,8 @@ stats_wide_xl <- function(df_stats, file = NULL,
     #  in it's own row above
 
     df_sub <- df_stats_wide %>%
-      filter(subvar == {{subvar}}) %>%
-      mutate(subvar = "")
+      filter(variable == {{variable}}) %>%
+      mutate(variable = "")
 
     #   write the data for the row group
 
@@ -181,7 +181,7 @@ stats_wide_xl <- function(df_stats, file = NULL,
 
 
   icol <- data_col
-  irows <- data_row:(data_row+nrows-1 + length(subvars) - as.integer("" %in% subvars))
+  irows <- data_row:(data_row+nrows-1 + length(variables) - as.integer("" %in% variables))
 
   sapply(stats, function(stat) {
 
@@ -428,8 +428,8 @@ stats_xl <- function(df_stats, file = NULL,
 
   data_row <- spnnr_row+2
 
-  subvars <- df_stats %>%
-    pull(subvar) %>%
+  variables <- df_stats %>%
+    pull(variable) %>%
     unique()
 
   idata_row <- data_row
@@ -441,7 +441,7 @@ stats_xl <- function(df_stats, file = NULL,
     rename({{pct_txt}} := percent) %>%
     mutate(CI = paste0(CI_lower, " - ", CI_upper)) %>%
     select(-starts_with("CI_")) %>%
-    select(matches(c("subvar","subset","response",stats, pct_txt)))
+    select(matches(c("variable","subset","response",stats, pct_txt)))
 
   # calculate width of first column
 

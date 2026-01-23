@@ -5,9 +5,11 @@
 \title{Split BRFSS Data by Geography}
 \usage{
 split_geogs(
+  geogs = NULL,
   main = TRUE,
   versions = TRUE,
-  factorize = FALSE,
+  col_atts = TRUE,
+  factorize = TRUE,
   verbose = TRUE,
   progress = NULL
 )
@@ -18,10 +20,6 @@ split_geogs(
 \item{versions}{logical - process all versioned XPT/ASC files}
 
 \item{verbose}{logical - provide details during processing}
-
-\item{year}{integer - year of interest}
-
-\item{source}{character - data source ('sas' or 'ascii')}
 
 \item{my_geog}{character - abbreviation for primary state/geography of interest (e. "MT")}
 

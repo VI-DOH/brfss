@@ -4,12 +4,7 @@
 \alias{merge_saq_values}
 \title{Merge State Specific Question Values with Standard Question Values}
 \usage{
-merge_saq_values(
-  year = NULL,
-  geog = NULL,
-  df_values = NULL,
-  df_saq_values = NULL
-)
+merge_saq_values(df_values = NULL, df_saq_values = NULL)
 }
 \arguments{
 \item{df_saq_values}{}

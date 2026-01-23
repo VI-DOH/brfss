@@ -63,7 +63,7 @@
 #'   ##    build the table
 #'
 #'   gt_stats <- gt::gt(df_stats_wide, id = "stats_wide",
-#'                      groupname_col= "subvar",
+#'                      groupname_col= "variable",
 #'                      rowname_col="subset") %>%
 #'     gt::tab_header(title = htmltools::HTML(paste0(geog_name(params["geog"]),
 #'                                                   " BRFSS<br>",
