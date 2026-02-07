@@ -232,6 +232,8 @@ print.brfss_stats <- function(x, ...) {
 
   # Example: header info
   cat("============= BRFSS Survey Stats ==============\n")
+  cat(sprintf("Year: %s\n", attr(x, "year")))
+  cat(sprintf("Geography: %s\n", attr(x, "geog")))
   cat(sprintf("Column: %s\n", attr(x, "coi")))
   cat(sprintf("Label: %s\n\n", attr(x, "label")))
 

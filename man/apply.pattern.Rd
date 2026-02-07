@@ -22,7 +22,7 @@ apply.pattern("annual_data_folder", YEAR = 2020)
 }
 \details{
 There is one special case. If you pass YEAR as a variable, it will also create YR, and the
-correesponding 2-digit value.
+corresponding 2-digit value.
 }
 \examples{
 \dontrun{

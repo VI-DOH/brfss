@@ -2,12 +2,13 @@
 #' Data_Mgr R6 Class
 #'
 #' @export
-BRFSS_DataMgr <-
+DataMgr <-
   R6::R6Class(
-    classname = "BRFSS_DataMgr",
+    classname = "DataMgr",
 
     private = list(
-      params_mgr_pvt = NULL,
+      layout_mgr_pvt = NULL,
+      dataset_mgr_pvt = NULL,
       patterns_mgr_pvt = NULL,
 
       data_path = function(rw = c("r","w")) {
@@ -17,7 +18,7 @@ BRFSS_DataMgr <-
         read <- rw == 'r'
         write <- rw == 'w'
 
-        params <- p$params_mgr_pvt$patterns
+        params <- p$dataset_mgr_pvt$patterns
 
         fldr <- p$patterns_mgr_pvt$apply("brfss_annual_data_folder")
 
@@ -39,14 +40,98 @@ BRFSS_DataMgr <-
 
     public = list(
 
-      initialize = function(params_mgr = NULL) {
+      initialize = function(dataset_mgr = NULL) {
 
-        if(!is.null(params_mgr)) {
-          if(inherits(params_mgr, "BRFSS_Params")) {
-            private$params_mgr_pvt <-  params_mgr
-            private$patterns_mgr_pvt <- Pattern_Mgr$new(params_mgr)
+        if(!is.null(dataset_mgr)) {
+          if(inherits(dataset_mgr, "DataSetMgr")) {
+            private$dataset_mgr_pvt <-  dataset_mgr
+            private$patterns_mgr_pvt <- BRFSS_FileMgr$new(dataset_mgr)
           }
+        } else {
+          private$dataset_mgr_pvt <-  DataSetMgr$new()
+          private$patterns_mgr_pvt <- BRFSS_FileMgr$new(private$dataset_mgr_pvt)
+
         }
+
+        layout_mgr_pvt <- Layout_Mgr$new()
+      },
+
+      percents = function(..., include_n = TRUE) {
+
+        wt_var <- self$dataset_mgr$get(weight)
+        brfss::percents(df = self$prepped_data, inc_n = include_n, ...)
+
+      },
+
+      col_info = function(section = ".*", label = ".*") {
+
+        df <- self$prepped_data
+
+        ncols <- ncol(df)
+
+        df_atts <- purrr::map(1:ncols, \(icol) {
+
+          df0 <-
+            tryCatch(expr = {
+              attrs <- attributes(df[[icol]])
+
+              if("variable" %in% names(attrs)) {
+
+                section_type  <- attrs[["section_type"]] %||% NA
+                section_num   <- attrs[["section_num"]] %||% NA %>% as.character()
+                section_index <- attrs[["section_index"]] %||% NA %>% as.character()
+                section_name  <- attrs[["section_name"]] %||% NA
+                label         <- attrs[["label"]] %||% NA
+                variable      <- attrs[["variable"]] %||% NA
+
+                data.frame(variable, section_type,
+                           section_num, section_index,
+                           section_name, label)
+              } else {
+
+                data.frame()
+              }
+
+            }, error = function(e) {
+              browser()
+            }
+            )
+
+          df0
+        }) %>%
+          bind_rows()
+
+        df_atts %>%
+          filter(grepl(section, section_name)) %>%
+          filter(grepl({{label}}, label))
+
+      },
+
+      my_public_geogs = function(year = NULL) {
+
+        p <- private
+
+        params <- p$dataset_mgr_pvt$as.list()
+
+        dir <- p$patterns_mgr_pvt$apply("data_folder")
+
+        df <- list.files(dir, recursive = TRUE) %>%
+          grep("^[0-9]{4}/public/states", ., value = TRUE) %>%
+          grep(".*states/../(sas|ascii)",., value = TRUE) %>%
+          gsub("/.._[0-9]{4}.*", "", .)%>%
+          gsub("/public/states", "", .) %>%
+          as.data.frame() %>%
+          rename(dir = 1) %>%
+          mutate(year = gsub("([0-9]{4}).*", "\\1", dir))%>%
+          mutate(geog = gsub("([0-9]{4})/(..)/(.*)", "\\2", dir))%>%
+          mutate(source = gsub("([0-9]{4})/(..)/(.*)", "\\3", dir)) %>%
+          select(-dir)
+
+        if(!is.null(year)) {
+          df <- df %>% filter(year == {{year}})
+        }
+
+        df
       }
 
     ),
@@ -60,32 +145,34 @@ BRFSS_DataMgr <-
           return(NULL)
         }
 
-        params <-  private$params_mgr_pvt$as.list()
+        params <-  private$dataset_mgr_pvt$as.list()
 
         func_any <- paste0("prepped_", params$year)
         func_geog <- paste0("prepped_", params$year, "_", params$geog)
 
         df <- self$data
 
-        if(!is.null(df)) f <- sapply(df, function(col) {is.factor(col)}) %>% which()
+        if(!is.null(df)) f <- sapply(df, function(col) {is.factor(col)}) %>%
+          which()
 
         if(is.null(df) || length(f) == 0) {
 
-          source <- private$params_mgr_pvt$get(source)
+          source <- private$dataset_mgr_pvt$get(source)
 
           try_source <- ifelse (source == "ascii", "sas", "ascii")
 
-          private$params_mgr_pvt$set(source = try_source)
+          private$dataset_mgr_pvt$set(source = try_source)
 
           df <- self$data
 
-          private$params_mgr_pvt$get(source = source)
+          private$dataset_mgr_pvt$get(source = source)
         }
 
         if(is.null(df))  return(NULL)
 
         attribs <-  attributes(df)
-        attribs <-  attribs[!names(attribs) %in% c("row.names", "names", "class")]
+        attribs <-  attribs[!names(attribs) %in% c("row.names", "names",
+                                                   "class")]
 
         if(func_any %in% ls(.GlobalEnv)) {
           df <- do.call(func_any, args = list(df))
@@ -96,7 +183,9 @@ BRFSS_DataMgr <-
           df <- do.call(func_geog,args = list(df))
         }
 
-        do.call(structure, c(list(df, class = c("brfss_prepped", "data.frame")), attribs))
+        do.call(structure,
+                args = c(list(df,
+                              class = c("brfss_prepped", "data.frame")), attribs))
       },
 
       params = function(value) {
@@ -106,25 +195,39 @@ BRFSS_DataMgr <-
           return(NULL)
         }
 
-        private$params_mgr_pvt$as.list()
+        private$dataset_mgr_pvt$as.list()
 
       },
 
-      params_mgr = function(value) {
+      year = function(value) {
 
-        if(!missing(value)) {
-          if(inherits(value, "BRFSS_Params")) {
-            private$params_mgr_pvt <-  value
-            private$patterns_mgr_pvt <- Pattern_Mgr$new(value)
+        if(missing(value)) {
+          return(self$data_mgr$dataset_mgr$get(year))
+          else {
+            if(is.numeric(value)) {
+              self$dataset_mgr$set(year = year)
+            }
           }
         }
-        private$params_mgr_pvt
+
+      },
+
+
+      dataset_mgr = function(value) {
+
+        if(!missing(value)) {
+          if(inherits(value, "DataSetMgr")) {
+            private$dataset_mgr_pvt <-  value
+            private$patterns_mgr_pvt <- BRFSS_FileMgr$new(value)
+          }
+        }
+        private$dataset_mgr_pvt
 
       },
 
       data = function() {
 
-        params <- private$params_mgr_pvt$as.list()
+        params <- private$dataset_mgr_pvt$as.list()
 
         fname <- private$data_path(rw = 'r')
 
@@ -132,7 +235,7 @@ BRFSS_DataMgr <-
 
         df_brfss<- readRDS(fname)
 
-        params <- private$params_mgr_pvt$patterns
+        params <- private$dataset_mgr_pvt$patterns
 
         structure(df_brfss,
                   class = c("brfss_data", "data.frame"),
@@ -147,3 +250,4 @@ BRFSS_DataMgr <-
 
     )
   )
+

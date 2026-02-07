@@ -5,330 +5,345 @@ library(R6)
 #'
 #' @export
 Layout_Mgr <-
-  R6Class(classname = "Layout_Mgr",
-          public = list(
+  R6Class(
+    classname = "Layout_Mgr",
 
-            type = "merged",
+    public = list(
 
-            year = NULL,
+      type = "merged",
 
-            # =======================================================================
+      year = NULL,
 
-            set_type = function(type = NULL) {
+      # =======================================================================
 
-              type <- match.arg(type,  c("merged", "codebook", "sas", "data"))
-
-              self$type <- type
-              private$load_layout()
-
-              if(type == "data") {
-                private$load_layout_from_data()
-                private$df_layout <- private$df_layout_data
-              } else {
-                private$df_layout <- private$df_layout_mrg
-              }
-
-            },
-
-            initialize = function(year = NULL,
-                                  type = c("merged", "codebook", "sas", "data"),
-                                  df_brfss = NULL) {
+      initialize = function(year = NULL,
+                            type = c("merged", "codebook", "sas", "data"),
+                            df_brfss = NULL) {
 
 
-              private$df_brfss <- df_brfss
+        private$df_brfss <- df_brfss
 
-              type <- match.arg(type,  c("merged", "codebook", "sas", "data"))
+        type <- match.arg(type,  c("merged", "codebook", "sas", "data"))
 
-              if (!requireNamespace("dplyr", quietly = TRUE)) {
-                stop("Package 'dplyr' is required but not installed.")
-              }
-
-
-              # --- get the year in case it isn't the current working year
-
-              if(!is.null(year)) {
-                old_year <- year
-                brfss.params(year = year)
-
-              } else {
-                old_year <- brfss.param(year)
-              }
-
-              self$year <- old_year
-              self$set_type(type = type)
+        if (!requireNamespace("dplyr", quietly = TRUE)) {
+          stop("Package 'dplyr' is required but not installed.")
+        }
 
 
+        # --- get the year in case it isn't the current working year
 
-              # --- reset the year in case it wasn't the current working year
+        df_params <- DataSetMgr$new()
+        old_year <- df_params$get(year)
 
-              brfss.params(year = old_year)
-            },
+        if(is.null(year)) {
+          self$year <- old_year
+        } else {
+          self$year <- year
+        }
 
-            # =======================================================================
+        self$set_type(type = type)
 
-            find_section = function(section = "", sect_type = "", sect_num = NULL,
-                                    list = FALSE) {
+      },
 
-              ret <- private$df_layout_data
-              if(is.null(ret)) ret <- private$df_layout
+      # =======================================================================
+      set_type = function(type = NULL) {
 
-              ret <- private$df_layout %>%
-                filter(sect_type %in% c("Core", "Module", "SAQ"))
+        type <- match.arg(type,  c("merged", "codebook", "sas", "data"))
 
-              sect <- ifelse(is.null(section),"", section)
-              sec_typ <- ifelse(is.null(sect_type),"", sect_type)
+        self$type <- type
+        private$load_layout()
 
-              ret <- ret %>%
-                filter(grepl({{sect}},section))  %>%
-                filter(grepl({{sec_typ}},sect_type))
+        if(type == "data") {
+          private$load_layout_from_data()
+          private$df_layout <- private$df_layout_data
+        } else {
+          private$df_layout <- private$df_layout_mrg
+        }
 
-              if(!is.null(sect_num)) {
-                ret <- ret %>%
-                  filter(sect_num == {{sect_num}})
-              }
-
-              ret <- ret %>%
-                group_by(section, sect_type, sect_num) %>%
-                summarise(nquestions = n(), .groups = "drop") %>%
-                as.data.frame()
+      },
 
 
-              if(list) {
-                ret <- lapply(seq_len(nrow(ret)), function(i) as.list(ret[i, ]))
-                if(length(ret) == 1) ret <- ret[[1]]
-              }
 
-              ret
+      find_section = function(section = "", sect_type = "", sect_num = NULL,
+                              list = FALSE) {
 
-            },
+        ret <- private$df_layout_data
+        if(is.null(ret)) ret <- private$df_layout
 
-            # =======================================================================
+        ret <- private$df_layout %>%
+          filter(sect_type %in% c("Core", "Module", "SAQ"))
 
-            section_questions = function(section = "", sect_type = "",
-                                         sect_num = NULL,
-                                         list = FALSE,
-                                         mult_ok = FALSE) {
+        sect <- ifelse(is.null(section),"", section)
+        sec_typ <- ifelse(is.null(sect_type),"", sect_type)
 
-              ret <- private$df_layout_data
-              if(is.null(ret)) ret <- private$df_layout
+        ret <- ret %>%
+          filter(grepl({{sect}},section))  %>%
+          filter(grepl({{sec_typ}},sect_type))
 
-              sect <- section
-              sec_typ <- sect_type
+        if(!is.null(sect_num)) {
+          ret <- ret %>%
+            filter(sect_num == {{sect_num}})
+        }
 
-              ret <- ret %>%
-                filter(grepl({{sect}},section))  %>%
-                filter(grepl({{sec_typ}},sect_type))
+        ret <- ret %>%
+          group_by(section, sect_type, sect_num) %>%
+          summarise(nquestions = n(), .groups = "drop") %>%
+          as.data.frame()
 
-              if(!is.null(sect_num)) {
-                ret <- ret %>%
-                  filter(sect_num == {{sect_num}})
-              }
 
-              ret <- ret %>%
-                select(col_name, section, sect_type, sect_num,
-                       question_num, any_of("saq"), question) %>%
-                arrange(question_num)
+        if(list) {
+          ret <- lapply(seq_len(nrow(ret)), function(i) as.list(ret[i, ]))
+          if(length(ret) == 1) ret <- ret[[1]]
+        }
 
-              if(!mult_ok) {
-                matches <- ret %>% pull(section) %>% unique()
-                if(length(matches) > 1) {
-                  matches <- paste0(matches, collapse = ", ")
-                  warning(paste0("More than 1 section matches your section pattern",
-                                 "\n ... ", matches))
-                  return(NULL)
-                }
-              }
+        ret
 
-              if(list) {
-                ret <- lapply(seq_len(nrow(ret)), function(i) as.list(ret[i, ]))
-                if(length(ret) == 1) ret <- ret[[1]]
-              }
+      },
 
-              ret
+      # =======================================================================
 
-            },
+      section_questions = function(section = "", sect_type = "",
+                                   sect_num = NULL,
+                                   list = FALSE,
+                                   mult_ok = FALSE) {
 
-            # =======================================================================
+        ret <- private$df_layout_data
+        if(is.null(ret)) ret <- private$df_layout
 
-            section_col_names = function(section = "", sect_type = "",
-                                         sect_num = NULL) {
+        sect <- section
+        sec_typ <- sect_type
 
-              df <- self$section_questions(section = section, sect_type = sect_type,
-                                           sect_num = sect_num,
-                                           list = FALSE,
-                                           mult_ok = FALSE)
+        ret <- ret %>%
+          filter(grepl({{sect}},section))  %>%
+          filter(grepl({{sec_typ}},sect_type))
 
-              df %>% pull(col_name)
+        if(!is.null(sect_num)) {
+          ret <- ret %>%
+            filter(sect_num == {{sect_num}})
+        }
 
-            },
+        ret <- ret %>%
+          select(col_name, section, sect_type, sect_num,
+                 question_num, any_of("saq"), question) %>%
+          arrange(question_num)
 
-            # =======================================================================
+        if(!mult_ok) {
+          matches <- ret %>% pull(section) %>% unique()
+          if(length(matches) > 1) {
+            matches <- paste0(matches, collapse = ", ")
+            warning(paste0("More than 1 section matches your section pattern",
+                           "\n ... ", matches))
+            return(NULL)
+          }
+        }
 
-            find_question = function(quest = "", sect_type = "",
+        if(list) {
+          ret <- lapply(seq_len(nrow(ret)), function(i) as.list(ret[i, ]))
+          if(length(ret) == 1) ret <- ret[[1]]
+        }
+
+        ret
+
+      },
+
+      # =======================================================================
+
+      section_col_names = function(section = "", sect_type = "",
+                                   sect_num = NULL) {
+
+        df <- self$section_questions(section = section, sect_type = sect_type,
+                                     sect_num = sect_num,
                                      list = FALSE,
-                                     mult_ok = FALSE) {
+                                     mult_ok = FALSE)
 
-              ret <- private$df_layout
-              sec_typ <- sect_type
-              questn <- quest
+        df %>% pull(col_name)
 
-              ret <- ret %>%
-                filter(grepl({{sec_typ}},sect_type)) %>%
-                filter(grepl({{questn}}, question), ignore.case = TRUE)
+      },
 
+      # =======================================================================
 
-              ret <- ret %>%
-                select(col_name, section, sect_type, sect_num,
-                       question_num, any_of("saq"), question) %>%
-                arrange(sect_type, sect_num,
-                        question_num)
+      find_question = function(quest = "", sect_type = "",
+                               list = FALSE,
+                               mult_ok = FALSE) {
 
+        ret <- private$df_layout
+        sec_typ <- sect_type
+        questn <- quest
 
-              if(list) {
-                ret <- lapply(seq_len(nrow(ret)), function(i) as.list(ret[i, ]))
-                if(length(ret) == 1) ret <- ret[[1]]
-              }
-
-              ret
-
-            },
-
-            # =======================================================================
-
-            sections = function(sect_type = "") {
-
-              if(sect_type != "")
-                sect_type = match.arg(sect_type, c("Core", "Module", ""))
-
-              tryCatch({
-                private$df_layout_mrg  %>%
-                  filter(grepl({{sect_type}},sect_type))%>%
-                  select(section, sect_type, sect_num) %>%
-                  filter(sect_type %in% c("Core", "Module")) %>%
-                  distinct() %>%
-                  filter(sect_num > 0)
-              }, error = function(e) {
-                browser()
-
-              })
+        ret <- ret %>%
+          filter(grepl({{sec_typ}},sect_type)) %>%
+          filter(grepl({{questn}}, question), ignore.case = TRUE)
 
 
+        ret <- ret %>%
+          select(col_name, section, sect_type, sect_num,
+                 question_num, any_of("saq"), question) %>%
+          arrange(sect_type, sect_num,
+                  question_num)
 
-            },
 
-            # =======================================================================
+        if(list) {
+          ret <- lapply(seq_len(nrow(ret)), function(i) as.list(ret[i, ]))
+          if(length(ret) == 1) ret <- ret[[1]]
+        }
 
-            layout = function(basic = TRUE  ) {
+        ret
 
-              df <- private$df_layout
+      },
 
-              if(basic) df <- df %>%
-                  select(any_of(c( "col_name", "sect_type", "sect_num", "section",
-                                   "label",  "question", "calculated", "saq")))
+      # =======================================================================
 
-              df
+      sections = function(sect_type = "") {
+
+        if(sect_type != "")
+          sect_type = match.arg(sect_type, c("Core", "Module", ""))
+
+        tryCatch({
+          private$df_layout_mrg  %>%
+            filter(grepl({{sect_type}},sect_type))%>%
+            select(section, sect_type, sect_num) %>%
+            filter(sect_type %in% c("Core", "Module")) %>%
+            distinct() %>%
+            filter(sect_num > 0)
+        }, error = function(e) {
+          browser()
+
+        })
+
+
+
+      },
+
+      # =======================================================================
+
+      layout = function(basic = TRUE  ) {
+
+        df <- private$df_layout
+
+        if(basic) df <- df %>%
+            select(any_of(c( "col_name", "sect_type", "sect_num", "section",
+                             "label",  "question", "calculated", "saq")))
+
+        df
+      }
+
+    ),
+
+    # =======================================================================
+    # =======================================================================
+
+    private = list(
+      df_layout = NULL,
+      df_layout_mrg = NULL,
+      df_layout_data = NULL,
+
+      df_brfss = NULL,
+
+      load_layout = function() {
+
+        type <- self$type
+
+        if(type == "data") type <- "merged"
+
+        func  <-  paste0("get.", type,  ".layout")
+
+        # -------------  get the layout  ---------------
+
+        df  <-  do.call(getExportedValue("brfss", func), args = list())|>
+          dplyr::mutate(across(
+            where(is.character),
+            ~ gsub("\u00A0", " ", .x)  # non-breaking space → regular space
+          )) %>%
+          filter(!grepl("^DUMMY", sect_type)) %>%
+          filter(!is.na(sect_type))
+
+
+        # --------   clean up the data.frame  -----------------
+
+        max_mod <- df %>% filter(sect_type == "Module") %>%
+          pull(sect_num) %>% max()
+
+        last_max <- df %>% pull(sect_num) %>% {which(. == max_mod)} %>%
+          max()
+
+        df <- df %>% mutate(rn = row_number()) %>%
+          mutate(sect_num =
+                   if_else(rn > last_max & sect_type == "Module" & sect_num == 1,
+                           0, sect_num)) %>%
+          select(-rn)
+
+        # ---------  save the data.frame   --------------------
+
+        private$df_layout_mrg <- df
+      },
+
+      get_sas_layout = function() {
+
+        file_mgr <- BRFSS_FileMgr$new()
+        ds_mgr <- DataSetMgr$new()
+
+        params <- ds_mgr$patterns
+
+        file_mgr$
+        file  <-  apply.pattern("sas_layout_path",params)
+
+        if(file.exists(file)) {
+          df_layout =readRDS(file = file)
+        } else
+          return(NULL)
+
+        df_layout
+      },
+      # =======================================================================
+
+      load_layout_from_data = function(df = NULL) {
+
+        if(is.null(private$df_brfss)) private$df_brfss <- prepped_data() #return(NULL)
+
+        df <- private$df_brfss
+
+        col_names  <-  df %>% colnames()
+
+        df_lo <- data.frame(variable = col_names, section_type = NA,
+                            section_num = NA,
+                            section_index = NA, section_name = NA,
+                            label = NA, question = NA)
+
+        atts <- colnames(df_lo)
+
+        for (i in 1:ncol(df)) {
+
+          col <- df[[i]]
+          attrx <- attributes(col) %>% names() %>% {.[!. %in% c("variable")]}
+
+          #var <- attr(col, "variable")
+
+          sapply(atts, function(att) {
+
+            if(att %in% attrx) {
+
+              df_lo[i,att] <<- attr(col,att)
             }
 
-          ),
+          })
+        }
 
-          # =======================================================================
-          # =======================================================================
+        private$df_layout_data <- df_lo %>%
 
-          private = list(
-            df_layout = NULL,
-            df_layout_mrg = NULL,
-            df_layout_data = NULL,
+          rename(col_name = variable,
+                 section = section_name,
+                 question_num = section_index) %>%
 
-            df_brfss = NULL,
+          filter(section_type %in% c("Core","Module","SAQ")) %>%
+          inner_join(self$sections() %>% select(section, sect_type, sect_num),
+                     by = join_by(section)) %>%
+          select(-c(section_type, section_num))
 
-            load_layout = function() {
-
-              type <- self$type
-
-              if(type == "data") type <- "merged"
-
-              func  <-  paste0("get.", type,  ".layout")
-
-              # -------------  get the layout  ---------------
-
-              df  <-  do.call(getExportedValue("brfss", func), args = list())|>
-                dplyr::mutate(across(
-                  where(is.character),
-                  ~ gsub("\u00A0", " ", .x)  # non-breaking space → regular space
-                )) %>%
-                filter(!grepl("^DUMMY", sect_type)) %>%
-                filter(!is.na(sect_type))
+      }
 
 
-              # --------   clean up the data.frame  -----------------
+    ),
 
-              max_mod <- df %>% filter(sect_type == "Module") %>%
-                pull(sect_num) %>% max()
-
-              last_max <- df %>% pull(sect_num) %>% {which(. == max_mod)} %>%
-                max()
-
-              df <- df %>% mutate(rn = row_number()) %>%
-                mutate(sect_num =
-                         if_else(rn > last_max & sect_type == "Module" & sect_num == 1,
-                                 0, sect_num)) %>%
-                select(-rn)
-
-              # ---------  save the data.frame   --------------------
-
-              private$df_layout_mrg <- df
-            },
-
-            # =======================================================================
-
-            load_layout_from_data = function(df = NULL) {
-
-              if(is.null(private$df_brfss)) private$df_brfss <- prepped_data() #return(NULL)
-
-              df <- private$df_brfss
-
-              col_names  <-  df %>% colnames()
-
-              df_lo <- data.frame(variable = col_names, section_type = NA,
-                                  section_num = NA,
-                                  section_index = NA, section_name = NA,
-                                  label = NA, question = NA)
-
-              atts <- colnames(df_lo)
-
-              for (i in 1:ncol(df)) {
-
-                col <- df[[i]]
-                attrx <- attributes(col) %>% names() %>% {.[!. %in% c("variable")]}
-
-                #var <- attr(col, "variable")
-
-                sapply(atts, function(att) {
-
-                  if(att %in% attrx) {
-
-                    df_lo[i,att] <<- attr(col,att)
-                  }
-
-                })
-              }
-
-              private$df_layout_data <- df_lo %>%
-
-                rename(col_name = variable,
-                       section = section_name,
-                       question_num = section_index) %>%
-
-                filter(section_type %in% c("Core","Module","SAQ")) %>%
-                inner_join(self$sections() %>% select(section, sect_type, sect_num),
-                           by = join_by(section)) %>%
-                select(-c(section_type, section_num))
-
-            }
-
-
-          ),
-
-          active = list(
-          )
+    active = list(
+    )
   )

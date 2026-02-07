@@ -28,6 +28,8 @@ Imports:
         striprtf,
         survey,
         tibble,
-        vctrs
+        vctrs,
+        magrittr,
+        purrr
 Depends: 
-    R (>= 3.5.0)
+    R (>= 4.1.0)

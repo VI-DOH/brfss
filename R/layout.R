@@ -255,11 +255,7 @@ get.layout <- function() {
   if(is.null(df_layout)) {
 
   }
-  # df_layout <- get.merged.layout()
-  #
-  # if(is.null(df_layout) && version == 0) df_layout <- get.codebook.layout()
-  #
-  # if(is.null(df_layout)) df_layout <- get.sas.layout()
+
 
   df_layout %>%
     mutate(across(where(is.character), ~stringi::stri_replace_all_regex(.x, "\\s+", " ")))

@@ -1,8 +1,8 @@
 
 #' @export
-Pattern_Mgr <-
+BRFSS_FileMgr <-
   R6::R6Class(
-    classname = "Pattern_Mgr",
+    classname = "BRFSS_FileMgr",
 
     private = list(
       params_mgr_pvt = NULL,
@@ -56,9 +56,12 @@ Pattern_Mgr <-
       initialize = function(params_mgr = NULL) {
 
         if(!is.null(params_mgr)) {
-          if(inherits(params_mgr, "BRFSS_Params")) {
+          if(inherits(params_mgr, "DataSetMgr")) {
             private$params_mgr_pvt <-  params_mgr
           }
+        } else {
+
+          private$params_mgr_pvt <-  DataSetMgr$new()
         }
 
         private$filename_pvt <- here::here("data/naming_patterns.rds")
@@ -114,20 +117,37 @@ Pattern_Mgr <-
 
       },
 
-      apply = function(name,  ...) {
+      # apply = function(name,  ...) {
+      #
+      #   pats <- self$get(name = name)
+      #
+      #   pats <- sapply(pats, function(pat) {
+      #     #pat <- get.pattern(name)
+      #     browser()
+      #     self$expand(pat)
+      #   })
+      #
+      #   pats <- unname(pats)
+      #
+      #   pats <- self$patternize(pats)
+      #
+      #   pats
+      #
+      # },
 
-        pats <- self$get(name = name)
+      apply = function(name) {
 
-        pats <- sapply(pats, function(pat) {
-          #pat <- get.pattern(name)
-          self$expand(pat)
-        })
+        pat <- self$get(name = name)
 
-        pats <- unname(pats)
 
-        pats <- self$patternize(pats)
+        pat_exp <- self$expand(pat) %>% unname()
 
-        pats
+
+        pat_exp <- unname(pat_exp)
+
+        pat_filled <- self$patternize(pat_exp)
+
+        pat_filled
 
       },
 
@@ -207,6 +227,33 @@ Pattern_Mgr <-
 
         private$patterns_pvt <- e$naming_patterns
 
+      },
+
+      requirements = function(names = ".*") {
+
+        df_pats<- self$find(names)
+
+        df <- purrr::map2(df_pats$name, df_pats$pattern, \(nm,pat) {
+
+          pat <- self$expand(pat)
+
+          pat0 <- unname(pat)
+          pat0 <- gsub("^^","^ ^",pat0,fixed=TRUE) # helps sub work right
+
+          params <- character(0)
+
+          while(grepl("\\^", pat0)) {
+            x <- gsub(".*?\\^(.*?)\\^.*","\\1",pat0)
+            params <- c(params,x)
+            pat0 <- sub("?\\^(.*?)\\^","", pat0)
+          }
+          params <- params %>% stringr::str_replace("YR","YEAR") %>% unique()
+
+          data.frame(name = nm, params = paste0(params, collapse = ", "))
+        }) %>%
+          bind_rows()
+
+        df
       }
 
     ),
@@ -235,7 +282,7 @@ Pattern_Mgr <-
 
       params_mgr = function(value) {
         if(!missing(value)) {
-          if(inherits(value, "BRFSS_Params")) {
+          if(inherits(value, "DataSetMgr")) {
             private$params_mgr_pvt <- value
           }
         }

@@ -27,10 +27,11 @@ StatsMgr <-
             conf_pvt =.95,
             weighted_pvt = TRUE,
             weight_col_pvt = "_LLCPWT",
-            pct_pvt = FALSE,
+            pct_pvt = TRUE,
             digits_pvt = 99,
             my_stats_pvt = NULL,
-            reduce_pvt = FALSE
+            reduce_pvt = FALSE,
+            subsets_only_pvt = FALSE
 
           ),
 
@@ -41,7 +42,9 @@ StatsMgr <-
           ################################################################################
 
           public = list(
-            initialize = function(data = NULL, data_mgr = NULL, coi = "",
+
+            initialize = function(data_mgr = NULL, data = NULL,
+                                  coi = "",
                                   exclude = c("Don.*t|Refuse"),
                                   subsets = NULL,
                                   sub_exclude = c("Don.*t|Refuse"),
@@ -49,12 +52,25 @@ StatsMgr <-
                                   conf =.95,
                                   weighted = TRUE,
                                   weight_col = "_LLCPWT",
-                                  pct = FALSE,
-                                  digits = 99,
-                                  reduce = FALSE) {
+                                  pct = TRUE,
+                                  digits = 2,
+                                  reduce = FALSE,
+                                  subsets_only = FALSE) {
+
 
               private$data_pvt <- data
-              private$data_mgr_pvt <- data_mgr
+
+              if(!is.null(data_mgr)) {
+
+                if(inherits(data_mgr, "DataMgr")) private$data_mgr_pvt <- data_mgr
+
+              } else {
+
+                private$data_mgr_pvt <- DataMgr$new()
+
+              }
+
+
               private$coi_pvt <- coi
               private$exclude_pvt <- exclude
               private$subsets_pvt <-subsets
@@ -66,6 +82,7 @@ StatsMgr <-
               private$pct_pvt <- pct
               private$digits_pvt <- digits
               private$reduce_pvt <- reduce
+              private$subsets_only_pvt <-subsets_only
 
               private$my_stats_pvt <- private$stats_pvt
 
@@ -95,11 +112,17 @@ StatsMgr <-
               private$my_stats_pvt <- private$stats_pvt
             },
 
-            survey_stats = function(coi = NULL, weighted = NULL, reduce = NULL, wide = FALSE) {
+            survey_stats = function(coi = NULL, weighted = NULL, subsets = NULL,
+                                    pct = NULL, digits = NULL, subsets_only = NULL,
+                                    reduce = NULL, wide = FALSE) {
 
               pvt <- private
 
-              coi <- ifelse(is.null(coi), pvt$coi_pvt,coi)
+              coi <- coi %||% pvt$coi_pvt
+              pct <- pct %||% pvt$pct_pvt
+              digits <- digits %||% pvt$digits_pvt
+              subsets <- subsets %||% pvt$subsets_pvt
+              subsets_only <- subsets_only %||% pvt$subsets_only_pvt
 
               if(is.null(coi) || nchar(coi) == 0 || length(coi) == 0) {
                 message("must select a valid column of interest (coi)")
@@ -115,14 +138,14 @@ StatsMgr <-
                 df_data = pvt$data_pvt,
                 coi = coi,
                 exclude = pvt$exclude_pvt,
-                subsets = pvt$subsets_pvt,
+                subsets = subsets,
                 subset_by = pvt$subset_by_pvt,
                 sub_exclude = pvt$sub_exclude_pvt,
                 conf = pvt$conf_pvt,
                 weighted = weighted,
                 weight_col = pvt$weight_col_pvt,
-                pct = pvt$pct_pvt,
-                digits = pvt$digits_pvt)
+                pct = pct,
+                digits = digits)
 
 
 
@@ -140,8 +163,11 @@ StatsMgr <-
 
               if(wide) df <- self$widen(df)
 
-              return(df)
+              if(subsets_only) {
+                df <- df %>% filter(subvar != "")
+              }
 
+              return(df)
 
             },
 
@@ -215,6 +241,35 @@ StatsMgr <-
           ################################################################################
 
           active = list(
+
+            year = function(value) {
+
+              if(missing(value)) {
+                return(self$data_mgr$dataset_mgr$get(year))
+                else {
+                  if(is.numeric(value)) {
+                    self$data_mgr$dataset_mgr$set(year = year)
+                  }
+                }
+
+
+              }
+
+            },
+
+            data_mgr = function(value) {
+
+              if(!missing(value)) {
+
+                if(inherits(value, "DataMgr")) private$data_mgr_pvt <- data_mgr
+
+              } else {
+
+                return(private$data_mgr_pvt)
+
+              }
+
+            },
 
             survey_data = function(value) {
 
@@ -296,6 +351,14 @@ StatsMgr <-
 
             },
 
+            subsets_only = function(value) {
+
+              if(missing(value)) return(private$subsets_only_pvt)
+
+              private$subsets_only_pvt <- value
+
+            },
+
             digits = function(value) {
 
               if(missing(value)) return(private$digits_pvt)
@@ -361,7 +424,8 @@ MultiYearStatsMgr <-
             },
 
 
-            survey_stats = function(years = NULL, cois = NULL, value = "Yes", stat = "percent", ... ){
+            survey_stats = function(years = NULL, cois = NULL, value = "Yes",
+                                    stat = "percent", ... ){
 
               cois <- private$cois_pvt
               years <- private$years_pvt

@@ -1,9 +1,9 @@
-#' BRFSS_Params R6 Class
+#' DataSetMgr R6 Class
 #'
 #' @export
-BRFSS_Params <-
+DataSetMgr <-
   R6::R6Class(
-    classname = "BRFSS_Params",
+    classname = "DataSetMgr",
 
     private = list(
       p_names = character(0),
@@ -12,8 +12,8 @@ BRFSS_Params <-
       params = list(),
       dependencies = list(),
 
-      filename_pvt = "brfss_params.rds",
-      dir_pvt = "./data/params/",
+      filename_pvt = "recent.rds",
+      dir_pvt = "./data/datasets/",
 
       resolve_filename = function(filename, create_dir = FALSE) {
 
@@ -27,7 +27,7 @@ BRFSS_Params <-
         }
 
         # --- does it begin with a dot ... replace it with the default project dir
-        #      that dir is not exposed in a package without rstudioapi
+        #
 
         if(substring(filename,1,1) == ".") {
 
@@ -94,6 +94,12 @@ BRFSS_Params <-
 
     public = list(
 
+      initialize = function(filename = NULL) {
+
+        self$load(filename = filename)
+
+      },
+
       add = function(p) {
 
         private$params <- append(private$params, p)
@@ -108,6 +114,12 @@ BRFSS_Params <-
 
 
         private$get_d_names()
+      },
+
+      as.vector = function() {
+
+        self$as.list() %>% unlist()
+
       },
 
       as.list = function() {
@@ -171,6 +183,8 @@ BRFSS_Params <-
         } else {
           do.call(p$on_change,list(val))
         }
+
+        self$save()
       },
 
       patterize = function(str_in) {
@@ -270,9 +284,9 @@ BRFSS_Params <-
   )
 
 
-BRFSS_Param <-
+Dataset_Param <-
   R6::R6Class(
-    classname = "BRFSS_Param",
+    classname = "Dataset_Param",
 
     private = list(
       name_pvt = "",
@@ -420,7 +434,7 @@ BRFSS_Param <-
 BRFSS_DependentParam <-
   R6::R6Class(
     classname = "BRFSS_DependentParam",
-    inherit = BRFSS_Param,
+    inherit = Dataset_Param,
 
     private = list(
       expression_pvt = ""
@@ -463,7 +477,7 @@ Yr_Param <-
 
 Year_Param <- R6::R6Class(
   classname = "Year_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
   public = list(
 
@@ -508,7 +522,7 @@ Year_Param <- R6::R6Class(
 
 Extent_Param <- R6::R6Class(
   classname = "Extent_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -553,7 +567,7 @@ Extent_Param <- R6::R6Class(
 
 Source_Param <- R6::R6Class(
   classname = "Source_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -598,7 +612,7 @@ Source_Param <- R6::R6Class(
 
 Weight_Param <- R6::R6Class(
   classname = "Weight_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -640,7 +654,7 @@ Weight_Param <- R6::R6Class(
 
 GeogFlag_Param <- R6::R6Class(
   classname = "GeogFlag_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -693,7 +707,7 @@ GeogFlag_Param <- R6::R6Class(
 
 Weighting_Param <- R6::R6Class(
   classname = "Weighting_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -744,7 +758,7 @@ Weighting_Param <- R6::R6Class(
 
 Version_Param <- R6::R6Class(
   classname = "Version_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -793,7 +807,7 @@ Version_Param <- R6::R6Class(
 
 Month_Param <- R6::R6Class(
   classname = "Month_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -862,7 +876,7 @@ Month_Param <- R6::R6Class(
 
 YTD_Param <- R6::R6Class(
   classname = "YTD_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -914,7 +928,7 @@ YTD_Param <- R6::R6Class(
 
 Phone_Param <- R6::R6Class(
   classname = "Phone_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -962,7 +976,7 @@ Phone_Param <- R6::R6Class(
 
 Geog_Param <- R6::R6Class(
   classname = "Geog_Param",
-  inherit = BRFSS_Param,
+  inherit = Dataset_Param,
 
 
   public = list(
@@ -1025,17 +1039,19 @@ Geog_Param <- R6::R6Class(
 #'
 #'
 
-#' BRFSS_Params DataR6 Class
+#' DataSetMgr DataR6 Class
 #'
 #' @export
-BRFSS_DataParams <-
+DataSetParams <-
   R6::R6Class(
-    classname = "BRFSS_DataParams",
-    inherit = BRFSS_Params,
+    classname = "DataSetParams",
+    inherit = DataSetMgr,
 
     public = list(
-      initialize = function(year = NULL, geog = NULL, extent = NULL, source = NULL, version = 0,
+      initialize = function(year = NULL, geog = NULL, extent = NULL,
+                            source = NULL, version = 0,
                             weight = NULL, weighting = NULL) {
+
         super$add(Year_Param$new(year = year))
         super$add(Extent_Param$new(extent = extent))
         super$add(Source_Param$new(source = source))
@@ -1046,21 +1062,24 @@ BRFSS_DataParams <-
         super$add(GeogFlag_Param$new())
         super$add_dependency(Yr_Param$new())
 
+        super$save()
       }
     )
   )
 
-#' BRFSS_Params DataR6 Class
+#' DataSetMgr DataR6 Class
 #'
 #' @export
-BRFSS_LocalDataParams <-
+LocalDataSetMgr <-
   R6::R6Class(
-    classname = "BRFSS_LocalDataParams",
-    inherit = BRFSS_DataParams,
+    classname = "LocalDataSetMgr",
+    inherit = DataSetParams,
 
     public = list(
-      initialize = function(year = NULL) {
-        super$initialize(year = year, extent = "local", source = "ascii", geog = "VI")
+      initialize = function(year = NULL, version = 0) {
+
+        super$initialize(year = year, extent = "local", source = "ascii",
+                         geog = "VI", version = version)
 
 
       }
@@ -1068,31 +1087,33 @@ BRFSS_LocalDataParams <-
 
   )
 
-#' BRFSS_Params DataR6 Class
+#' DataSetMgr DataR6 Class
 #'
 #' @export
-BRFSS_PublicDataParams <-
+PublicDataSetMgr <-
   R6::R6Class(
-    classname = "BRFSS_PublicDataParams",
-    inherit = BRFSS_DataParams,
+    classname = "PublicDataSetMgr",
+    inherit = DataSetParams,
 
     public = list(
 
-      initialize = function(year = NULL, geog = NULL, source = "sas") {
-        super$initialize(year = year, extent = "public", source = source, geog = geog)
+      initialize = function(year = NULL, geog = NULL, source = "sas", version = 0) {
+
+        super$initialize(year = year, extent = "public", source = source,
+                         version = version, geog = geog)
 
       }
     )
 
   )
 
-#' BRFSS_Params Data R6 Class
+#' DataSetMgr Data R6 Class
 #'
 #' @export
-BRFSS_Monthly_Params <-
+MonthlyDataSetMgr <-
   R6::R6Class(
-    classname = "BRFSS_Monthly_Params",
-    inherit = BRFSS_Params,
+    classname = "MonthlyDataSetMgr",
+    inherit = DataSetMgr,
 
     public = list(
       initialize = function() {
@@ -1101,6 +1122,7 @@ BRFSS_Monthly_Params <-
         super$add(Month_Param$new())
         super$add(YTD_Param$new())
         super$add(Phone_Param$new())
+
 
       }
     )
