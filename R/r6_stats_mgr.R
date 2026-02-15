@@ -17,11 +17,13 @@ StatsMgr <-
             data_pvt = NULL,
             data_mgr_pvt = NULL,
             coi_pvt = NULL,
-            stats_pvt = c("subvar","subset","response","num","den",
+            cols_req_pvt = c("subvar","subset","response"),
+            stats_pvt = c("num","den",
                           "percent","se","CI_lower","CI_upper","cv",
                           "percent_unwtd","num_wtd","den_wtd"),
             subsets_pvt = NULL,
             subpopulation_pvt = NULL,
+            responses_pvt = ".*",
             exclude_pvt = c("Don?t|Refuse"),
             sub_exclude_pvt = c("Don?t|Refuse"),
             conf_pvt =.95,
@@ -29,9 +31,35 @@ StatsMgr <-
             weight_col_pvt = "_LLCPWT",
             pct_pvt = TRUE,
             digits_pvt = 99,
+            combine_ci_pvt = TRUE,
             my_stats_pvt = NULL,
             reduce_pvt = FALSE,
-            subsets_only_pvt = FALSE
+            subsets_only_pvt = FALSE,
+
+            select_cols = function(df) {
+
+
+              if(private$combine_ci_pvt && "ci" %in% colnames(df)) {
+                df <- df %>%
+                  mutate(ci = paste0(CI_lower, "-", CI_upper)) %>%
+                  relocate(ci, .before = CI_lower) %>%
+                  select(-starts_with("CI_"))
+              }
+
+              if("ci" %in% private$my_stats_pvt) {
+                stats_cmp <- c(private$my_stats_pvt, "CI_lower", "CI_upper")
+              } else {
+                stats_cmp <- private$my_stats_pvt
+              }
+
+              rm <- setdiff(private$stats_pvt, stats_cmp)
+
+              df <- df %>% filter(response != "dummy") %>%
+                select(-all_of(rm))
+
+              df
+
+            }
 
           ),
 
@@ -45,6 +73,8 @@ StatsMgr <-
 
             initialize = function(data_mgr = NULL, data = NULL,
                                   coi = "",
+                                  stats = NULL,
+                                  responses = ".*",
                                   exclude = c("Don.*t|Refuse"),
                                   subsets = NULL,
                                   sub_exclude = c("Don.*t|Refuse"),
@@ -53,6 +83,7 @@ StatsMgr <-
                                   weighted = TRUE,
                                   weight_col = "_LLCPWT",
                                   pct = TRUE,
+                                  combine_ci = FALSE,
                                   digits = 2,
                                   reduce = FALSE,
                                   subsets_only = FALSE) {
@@ -72,19 +103,30 @@ StatsMgr <-
 
 
               private$coi_pvt <- coi
+              private$responses_pvt <- responses
               private$exclude_pvt <- exclude
               private$subsets_pvt <-subsets
               private$subpopulation_pvt <- subpopulation
-              private$sub_exclude_pvt <-sub_exclude
+              private$sub_exclude_pvt <- sub_exclude
               private$conf_pvt <-conf
               private$weighted_pvt <- weighted
               private$weight_col_pvt <- weight_col
               private$pct_pvt <- pct
+              private$combine_ci_pvt <- combine_ci
               private$digits_pvt <- digits
               private$reduce_pvt <- reduce
               private$subsets_only_pvt <-subsets_only
 
-              private$my_stats_pvt <- private$stats_pvt
+              if(is.null(stats))
+                private$my_stats_pvt <- private$stats_pvt
+              else
+                private$my_stats_pvt <- stats
+
+            },
+
+            add_subset = function(subset) {
+
+              self$subsets <- c(self$subsets, subset)
 
             },
 
@@ -96,6 +138,7 @@ StatsMgr <-
 
             show_all_responses = function() {
 
+              self$responses <- ".*"
               self$exclude <- "^$"
 
             },
@@ -114,7 +157,7 @@ StatsMgr <-
 
             survey_stats = function(coi = NULL, weighted = NULL, subsets = NULL,
                                     pct = NULL, digits = NULL, subsets_only = NULL,
-                                    reduce = NULL, wide = FALSE) {
+                                    reduce = NULL, combine_ci = NULL, wide = FALSE) {
 
               pvt <- private
 
@@ -147,8 +190,6 @@ StatsMgr <-
                 pct = pct,
                 digits = digits)
 
-
-
               if(reduce) {
 
                 df <- df %>%
@@ -156,10 +197,8 @@ StatsMgr <-
                   rename_with(.fn = ~gsub("_wtd","", .x))
               }
 
-              rm <- setdiff(pvt$stats_pvt, pvt$my_stats_pvt)
-
-              df <- df %>% filter(response != "dummy") %>%
-                select(-all_of(rm))
+              df <- df %>% private$select_cols()
+              df <- df %>% filter(grepl(self$responses, response))
 
               if(wide) df <- self$widen(df)
 
@@ -171,9 +210,11 @@ StatsMgr <-
 
             },
 
-            widen = function(df_stats = NULL, coi = NULL,
-                             wide_stats = c("den", "num", "percent"), sep_char = "^") {
+            widen = function(df_stats = NULL, coi = NULL, sep_char = "^") {
 
+              stats <- StatsMgr$stats_names() %>%
+                paste0(., collapse = "$|^") %>%
+                paste0("^", ., "$")
 
               if(is.null(df_stats)) {
 
@@ -181,51 +222,15 @@ StatsMgr <-
 
               }
 
-              if("ci" %in% wide_stats && "CI_lower" %in% colnames(df_stats)) {
-                df_stats <- df_stats %>%
-                  mutate(ci = paste0(CI_lower, "-", CI_upper))
-              }
-              # get the set of valid values
 
-              # vals <- values() %>% filter(col_name == coi) %>% pull(text)
+              df_wide <- df_stats %>%
+                tidyr::pivot_wider(names_from = c(matches("response|year")),
+                                   id_cols = c(subvar, subset),
+                                   values_from =  c(matches(stats)), names_vary = "slowest",
+                                   names_sep = "^") %>%
+                as.data.frame()
 
-              vals <- df_stats %>% pull(response) %>% unique()
-              nvals <- length(vals)
-
-              stats_in <- df_stats %>% select( where(is.numeric), matches("^ci$")) %>% colnames()
-              stats_rm <- stats_in %>% {.[!. %in% wide_stats]}
-
-              df_stats <- df_stats %>% select(-all_of(stats_rm))
-
-              stats <- wide_stats %>% {.[!. %in% "den"]} %>% {.[.%in% stats_in]}
-
-              cnames <- df_stats %>% colnames()
-              nstats <- length(stats)
-
-              static_cols <- cnames %>% {.[!. %in% c(stats, "response")]}
-
-              nstatic <- length(static_cols)
-
-              has_subvar <- "subvar" %in% static_cols
-
-              fin_cols <- c(static_cols,
-                            expand.grid(stats,vals) %>%
-                              mutate(col = paste0(Var1,sep_char,Var2)) %>%
-                              pull(col))
-
-              if(length(stats) == 1) fin_cols <- gsub(".*\\^","", fin_cols)
-
-              if(has_subvar) subvars <- df_stats %>%
-                pull(subvar) %>%
-                unique()
-              else subvars  <-  character(0)
-
-              df_stats %>%
-                tidyr::pivot_wider(names_from = response,
-                                   values_from = all_of(stats),
-                                   names_sep = sep_char) %>%
-                as.data.frame() %>%
-                select(all_of(fin_cols))
+              df_wide
 
             }
 
@@ -246,13 +251,10 @@ StatsMgr <-
 
               if(missing(value)) {
                 return(self$data_mgr$dataset_mgr$get(year))
-                else {
-                  if(is.numeric(value)) {
-                    self$data_mgr$dataset_mgr$set(year = year)
-                  }
+              } else {
+                if(is.numeric(value)) {
+                  self$data_mgr$dataset_mgr$set(year = year)
                 }
-
-
               }
 
             },
@@ -284,6 +286,14 @@ StatsMgr <-
               if(missing(value)) return(private$coi_pvt)
 
               private$coi_pvt <- value
+
+            },
+
+            responses = function(value) {
+
+              if(missing(value)) return(private$responses_pvt)
+
+              private$responses_pvt <- value
 
             },
 
@@ -367,11 +377,26 @@ StatsMgr <-
 
             },
 
+            combine_ci = function(value) {
+
+              if(missing(value)) return(private$combine_ci_pvt)
+
+              if(!is.logical(value)) {
+                message("This property requires a logical value")
+                return(NULL)
+
+              }
+              private$combine_ci_pvt <- value
+
+            },
+
+
+
             stats = function(value) {
 
-              if(missing(value)) return(private$stats_pvt)
+              if(missing(value)) return(private$my_stats_pvt)
 
-              private$stats_pvt <- value
+              private$my_stats_pvt <- value
 
             },
 
@@ -424,8 +449,7 @@ MultiYearStatsMgr <-
             },
 
 
-            survey_stats = function(years = NULL, cois = NULL, value = "Yes",
-                                    stat = "percent", ... ){
+            survey_stats = function(years = NULL, cois = NULL, value = ".*", ... ){
 
               cois <- private$cois_pvt
               years <- private$years_pvt
@@ -440,25 +464,20 @@ MultiYearStatsMgr <-
 
               df_stats <- purrr::map2(years, cois, function(year, coi) {
 
-                private$data_mgr_pvt$params_mgr$set(year = year)
+                private$data_mgr_pvt$dataset_mgr$set(year = year)
 
-                df <- super$survey_stats(coi = coi, ...) %>%
-                  mutate(year = {{year}})  %>%
-                  select(year, subvar, subset, response, all_of(stat))
+                df <- super$survey_stats(coi = coi, ...)
+
+                df <- df %>%
+                  mutate(year = {{year}})
 
                 multi_attrs <<- df %>% attributes()
 
                 df
-              }) %>% bind_rows
+              }) %>% bind_rows() %>%
+                relocate(year)
 
-
-              df_stats <- df_stats %>%
-                filter(grepl(value, response))
-
-              response <- df_stats %>% pull(response) %>% tail(1)
-
-              df_stats <- df_stats %>% mutate(response = as.character(year)) %>%
-                select(-year)
+              response <- df_stats %>% pull(response) %>% unique()
 
               structure(df_stats,
                         class = c("brfss_stats", "data.frame"),
@@ -493,6 +512,14 @@ MultiYearStatsMgr <-
 
           active = list(
 
+            coi = function(value) {
+
+              if(missing(value)) return(private$cois_pvt)
+
+              private$cois_pvt <- value
+
+            },
+
             cois = function(value) {
 
               if(missing(value)) return(private$cois_pvt)
@@ -511,3 +538,9 @@ MultiYearStatsMgr <-
 
           )
   )
+
+#' @export
+StatsMgr$stats_names <- function() {
+
+  c("num", "den", "percent", "se", "ci","CI_lower", "CI_upper", "cv")
+}

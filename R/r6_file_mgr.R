@@ -5,7 +5,7 @@ BRFSS_FileMgr <-
     classname = "BRFSS_FileMgr",
 
     private = list(
-      params_mgr_pvt = NULL,
+      dataset_mgr_pvt = NULL,
       filename_pvt = NULL,
       patterns_pvt = NULL,
 
@@ -53,15 +53,15 @@ BRFSS_FileMgr <-
 
     public = list(
 
-      initialize = function(params_mgr = NULL) {
+      initialize = function(dataset_mgr = NULL) {
 
-        if(!is.null(params_mgr)) {
-          if(inherits(params_mgr, "DataSetMgr")) {
-            private$params_mgr_pvt <-  params_mgr
+        if(!is.null(dataset_mgr)) {
+          if(inherits(dataset_mgr, "DataSetMgr")) {
+            private$dataset_mgr_pvt <-  dataset_mgr
           }
         } else {
 
-          private$params_mgr_pvt <-  DataSetMgr$new()
+          private$dataset_mgr_pvt <-  DataSetMgr$new()
         }
 
         private$filename_pvt <- here::here("data/naming_patterns.rds")
@@ -153,12 +153,12 @@ BRFSS_FileMgr <-
 
       patternize = function(strIn, expand = TRUE) {
 
-        if(is.null(private$params_mgr_pvt)) return(strIn)
+        if(is.null(private$dataset_mgr_pvt)) return(strIn)
 
         #expand <- as.logical(args["expand"])
         ##  remove args with NULL value
 
-        args <- self$params_mgr$patterns
+        args <- self$dataset_mgr$patterns
 
         nms <- names(args)
         vals <- unlist(unname(args))
@@ -280,14 +280,14 @@ BRFSS_FileMgr <-
         private$patterns_pvt$name
       },
 
-      params_mgr = function(value) {
+      dataset_mgr = function(value) {
         if(!missing(value)) {
           if(inherits(value, "DataSetMgr")) {
-            private$params_mgr_pvt <- value
+            private$dataset_mgr_pvt <- value
           }
         }
 
-        return(private$params_mgr_pvt)
+        return(private$dataset_mgr_pvt)
 
       }
     )

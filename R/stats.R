@@ -173,7 +173,11 @@ survey_stats <- function(df_data = NULL, coi,
 
   df <- bind_rows(df_stats_main, df_subs )
 
-  df_lo <- get.layout()
+  df_lo <- tryCatch(get.layout(),
+                    error = function(e) {
+                      return(NULL)
+                    }
+  )
 
   if(is.null(df_lo)) {
     df_lo <- layout_from_data(df_data)
@@ -429,8 +433,8 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
   df_stats <- mysvycounts  %>%
     left_join(mysvytotal, by = join_by(response)) %>%
     left_join(mysvymean, by = join_by(response)) %>%
-    left_join(mycv, by = join_by(response)) %>%
     left_join(myci, by = join_by(response))%>%
+    left_join(mycv, by = join_by(response)) %>%
     mutate(subvar = "") %>%
     mutate(subset = "All Respondents")  %>%
     relocate(c(subvar,subset))

@@ -96,7 +96,20 @@ DataSetMgr <-
 
       initialize = function(filename = NULL) {
 
-        self$load(filename = filename)
+        self$read(filename = filename)
+
+      },
+
+      load = function(from) {
+
+        if(!inherits(from, "brfss_dataset")) return(FALSE)
+
+        purrr::iwalk(from, \(x, nm) {
+
+          index <- which(private$p_names == nm)
+          if(length(index) > 0) private$params[[index]]$set(x)
+
+        })
 
       },
 
@@ -118,8 +131,12 @@ DataSetMgr <-
 
       as.vector = function() {
 
-        self$as.list() %>% unlist()
+        x <- self$as.list() %>% unlist()
 
+        structure(
+          x,
+          class = c(class(x),"brfss_dataset")
+        )
       },
 
       as.list = function() {
@@ -130,7 +147,6 @@ DataSetMgr <-
 
         names(vals) <- private$p_names
 
-        vals
 
         deps <- purrr::map(private$dependencies, \(dep) {
           dep$evaluate(vals)
@@ -138,8 +154,12 @@ DataSetMgr <-
 
         names(deps) <- private$d_names
 
+        x <- c(vals, deps)
 
-        c(vals, deps)
+        structure(
+          x,
+          class = c(class(x),"brfss_dataset")
+        )
 
       },
 
@@ -175,14 +195,7 @@ DataSetMgr <-
         }
         p <- private$params[[index]]
 
-
-        if(is.null(val) && !is.null(p$on_null)) {
-          do.call( p$on_null, list())
-        } else if(is.na(val) && !is.null(p$on_na)) {
-          do.call( p$on_na, list())
-        } else {
-          do.call(p$on_change,list(val))
-        }
+        p$set(val)
 
         self$save()
       },
@@ -193,7 +206,7 @@ DataSetMgr <-
 
       },
 
-      load = function(filename = NULL) {
+      read = function(filename = NULL) {
 
         filename <- private$resolve_filename(filename)
 
@@ -294,9 +307,20 @@ Dataset_Param <-
       values_pvt = NULL,
       pattern_pvt = "",
 
-      on_change_pvt = NULL,
-      on_null_pvt = NULL,
-      on_na_pvt = NULL
+      on_change = function(value) {
+        private$value_pvt <- value
+      },
+
+      on_null  = function() {
+        private$value_pvt <- NULL
+      },
+
+      on_na = function() {
+        private$value_pvt <- NA
+      }
+
+
+
 
     ),
 
@@ -305,28 +329,26 @@ Dataset_Param <-
       initialize = function(name = NULL,
                             value = NULL,
                             pattern = "",
-                            values = NULL,
-                            on_change = NULL,
-                            on_null = NULL,
-                            on_na = NULL) {
+                            values = NULL) {
 
 
         private$name_pvt = name
         private$values_pvt = values
         private$pattern_pvt = pattern
 
-        private$on_change_pvt = on_change
-        private$on_null_pvt = on_null
-        private$on_na_pvt = on_na
+        #
+        self$set(value)
+      },
 
-        if(is.null(value) && !is.null(on_null)) {
-          do.call( on_null, list())
-        } else if(is.na(value) && !is.null(on_na)) {
-          do.call( on_na, list())
+      set = function(value) {
+
+        if(is.null(value)) {
+          private$on_null()
+        } else if(is.na(value)) {
+          private$on_na()
         } else {
-          do.call(on_change,list(value))
+          private$on_change(value)
         }
-
 
       }
 
@@ -375,54 +397,6 @@ Dataset_Param <-
         }
 
         return(private$pattern_pvt)
-
-
-      },
-
-      on_change = function(f) {
-
-        if(!missing(f)) {
-          if(!is.function(f)) {
-            message("<f> must be a function")
-            return(NULL)
-          }
-          private$on_change_pvt <-  f
-          return(invisible(NULL))
-        }
-
-        return(private$on_change_pvt)
-
-
-      },
-
-      on_null = function(f) {
-
-        if(!missing(f)) {
-          if(!is.function(f)) {
-            message("<f> must be a function")
-            return(NULL)
-          }
-          private$on_null_pvt <-  f
-          return(invisible(NULL))
-        }
-
-        return(private$on_null_pvt)
-
-
-      },
-
-      on_na = function(f) {
-
-        if(!missing(f)) {
-          if(!is.function(f)) {
-            message("<f> must be a function")
-            return(NULL)
-          }
-          private$on_na_pvt <-  f
-          return(invisible(NULL))
-        }
-
-        return(private$on_na_pvt)
 
 
       }
@@ -483,42 +457,43 @@ Year_Param <- R6::R6Class(
 
     initialize = function(year) {
 
-
-      on_change <- function(year) {
-
-        year <- tryCatch({
-          as.integer(year)
-        }, warning = function(w) {
-          message("bad argument for <year>, setting default: last year")
-          lubridate::year(Sys.Date()) - 1
-        }, error = function(e) {
-          message("bad argument for <year>, setting default: last year")
-          lubridate::year(Sys.Date()) - 1
-        })
-
-        private$value_pvt <- year
-      }
-
-      on_null <- function() {
-        private$value_pvt <- lubridate::year(Sys.Date()) - 1
-      }
-
-      on_na <- function() {
-        private$value_pvt <- lubridate::year(Sys.Date()) - 1
-      }
-
       if(missing(year)) year <- lubridate::year(Sys.Date()) - 1
 
       super$initialize(name = "year",
                        value = year,
-                       pattern =  "YEAR",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "YEAR"
+      )
+    }
+  ),
 
+  private = list(
+
+    on_change = function(year) {
+
+      year <- tryCatch({
+        as.integer(year)
+      }, warning = function(w) {
+        message("bad argument for <year>, setting default: last year")
+        lubridate::year(Sys.Date()) - 1
+      }, error = function(e) {
+        message("bad argument for <year>, setting default: last year")
+        lubridate::year(Sys.Date()) - 1
+      })
+
+      private$value_pvt <- year
+    },
+
+    on_null = function() {
+      private$value_pvt <- lubridate::year(Sys.Date()) - 1
+    },
+
+    on_na = function() {
+      private$value_pvt <- lubridate::year(Sys.Date()) - 1
     }
   )
+
 )
+
 
 Extent_Param <- R6::R6Class(
   classname = "Extent_Param",
@@ -529,39 +504,41 @@ Extent_Param <- R6::R6Class(
 
     initialize = function(extent) {
 
-      on_change <- function(extent) {
-
-        extent <- tolower(extent)
-
-        if(!extent %in% private$values_pvt) {
-          warning(paste0("extent must be one of <",
-                         paste0(private$values_pvt, collapse = ", "),
-                         ">"))
-        }
-
-        private$value_pvt <- extent
-      }
-
-      on_null <- function() {
-        private$value_pvt <- private$values_pvt[1]
-      }
-
-      on_na <- function() {
-        private$value_pvt <- private$values_pvt[1]
-      }
 
       if(missing(extent)) extent <- "local"
 
       super$initialize(name = "extent",
                        value = extent,
                        values = c("local","public", "monthly"),
-                       pattern =  "EXT",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "EXT")
 
 
     }
+  ),
+
+  private = list(
+
+    on_change = function(extent) {
+
+      extent <- tolower(extent)
+
+      if(!extent %in% private$values_pvt) {
+        warning(paste0("extent must be one of <",
+                       paste0(private$values_pvt, collapse = ", "),
+                       ">"))
+      }
+
+      private$value_pvt <- extent
+    },
+
+    on_null = function() {
+      private$value_pvt <- private$values_pvt[1]
+    },
+
+    on_na = function() {
+      private$value_pvt <- private$values_pvt[1]
+    }
+
   )
 )
 
@@ -574,38 +551,40 @@ Source_Param <- R6::R6Class(
 
     initialize = function(source) {
 
-      on_change <- function(source) {
 
-        source <- tolower(source)
-
-        if(!source %in% private$values_pvt) {
-          warning(paste0("source must be one of <",
-                         paste0(private$values_pvt, collapse = ", "), ">"))
-        }
-
-        private$value_pvt <- source
-
-      }
-
-      on_null <- function() {
-        private$value_pvt <- private$values_pvt[1]
-      }
-
-      on_na <- function() {
-        private$value_pvt <- private$values_pvt[1]
-      }
 
       if(missing(source)) source <- "ascii"
 
       super$initialize(name = "source",
                        value = source,
                        values = c("ascii","sas"),
-                       pattern =  "SRC",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "SRC")
 
 
+    }
+  ),
+
+  private = list(
+
+    on_change = function(source) {
+
+      source <- tolower(source)
+
+      if(!source %in% private$values_pvt) {
+        warning(paste0("source must be one of <",
+                       paste0(private$values_pvt, collapse = ", "), ">"))
+      }
+
+      private$value_pvt <- source
+
+    },
+
+    on_null = function() {
+      private$value_pvt <- private$values_pvt[1]
+    },
+
+    on_na = function() {
+      private$value_pvt <- private$values_pvt[1]
     }
   )
 )
@@ -619,35 +598,37 @@ Weight_Param <- R6::R6Class(
 
     initialize = function(weight) {
 
-      on_change <- function(weight) {
 
-        if(!inherits(weight, "character")) {
-          warning(paste0("weight must class character"))
-        }
-
-        private$value_pvt <- weight
-
-      }
-
-      on_null <- function() {
-        private$value_pvt <- "_LLCPWT"
-      }
-
-      on_na <- function() {
-        private$value_pvt <- NA
-      }
 
       if(missing(weight)) weight <-  "_LLCPWT"
 
       super$initialize(name = "weight",
                        value = weight,
                        values = NULL,
-                       pattern =  "WT",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "WT")
 
 
+    }
+  ),
+
+  private = list(
+
+    on_change = function(weight) {
+
+      if(!inherits(weight, "character")) {
+        warning(paste0("weight must class character"))
+      }
+
+      private$value_pvt <- weight
+
+    },
+
+    on_null = function() {
+      private$value_pvt <- "_LLCPWT"
+    },
+
+    on_na = function() {
+      private$value_pvt <- NA
     }
   )
 )
@@ -661,46 +642,48 @@ GeogFlag_Param <- R6::R6Class(
 
     initialize = function(geog_flag) {
 
-      on_change <- function(geog_flag) {
-
-        if(is.logical(geog_flag)) {
-
-          geog_flag <- if(geog_flag) geog_flag <- "on" else geog_flag <- "off"
-
-        } else if(is.character(geog_flag)) {
-
-          if(!geog_flag %in% c("on", "off")) {
-            message("bad argument for <geog_flag>, setting default: on")
-            geog_flag <- "on"
-          }
-        } else {
-          message("bad argument for <geog_flag>, setting default: on")
-          geog_flag <- "on"
-
-        }
-        private$value_pvt <- geog_flag
-      }
-
-      on_null <- function() {
-        private$value_pvt <- "on"
-      }
-
-      on_na <- function() {
-        private$value_pvt <- "on"
-      }
 
       if(missing(geog_flag)) geog_flag <- "on"
 
       super$initialize(name = "geog_flag",
                        value = geog_flag,
                        values = c("on", "off"),
-                       pattern =  "GFLAG",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "GFLAG")
 
 
     }
+  ),
+
+  private = list(
+
+    on_change = function(geog_flag) {
+
+      if(is.logical(geog_flag)) {
+
+        geog_flag <- if(geog_flag) geog_flag <- "on" else geog_flag <- "off"
+
+      } else if(is.character(geog_flag)) {
+
+        if(!geog_flag %in% c("on", "off")) {
+          message("bad argument for <geog_flag>, setting default: on")
+          geog_flag <- "on"
+        }
+      } else {
+        message("bad argument for <geog_flag>, setting default: on")
+        geog_flag <- "on"
+
+      }
+      private$value_pvt <- geog_flag
+    },
+
+    on_null = function() {
+      private$value_pvt <- "on"
+    },
+
+    on_na = function() {
+      private$value_pvt <- "on"
+    }
+
   )
 )
 
@@ -714,44 +697,46 @@ Weighting_Param <- R6::R6Class(
 
     initialize = function(weighting) {
 
-      on_change <- function(weighting) {
 
-        if(is.character(weighting)) {
-          weighting <- tolower(weighting)
-
-          if(!weighting %in% c("on", "off", "true", "false")) {
-            message("bad argument for <weighting>, setting default: TRUE")
-            weighting <- TRUE
-          } else {
-            weighting <- weighting %in% c("on", "true")
-          }
-        } else if(!is.logical(weighting)) {
-          message("bad argument for <weighting>, setting default: TRUE")
-          weighting <- TRUE
-
-        }
-
-        private$value_pvt <- weighting
-      }
-
-      on_null <- function() {
-        private$value_pvt <- TRUE
-      }
-
-      on_na <- function() {
-        private$value_pvt <- TRUE
-      }
 
       if(missing(weighting)) weighting <- TRUE
 
       super$initialize(name = "weighting",
                        value = weighting,
-                       pattern =  "WTG",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "WTG")
 
 
+    }
+  ),
+
+  private = list(
+
+    on_change = function(weighting) {
+
+      if(is.character(weighting)) {
+        weighting <- tolower(weighting)
+
+        if(!weighting %in% c("on", "off", "true", "false")) {
+          message("bad argument for <weighting>, setting default: TRUE")
+          weighting <- TRUE
+        } else {
+          weighting <- weighting %in% c("on", "true")
+        }
+      } else if(!is.logical(weighting)) {
+        message("bad argument for <weighting>, setting default: TRUE")
+        weighting <- TRUE
+
+      }
+
+      private$value_pvt <- weighting
+    },
+
+    on_null = function() {
+      private$value_pvt <- TRUE
+    },
+
+    on_na = function() {
+      private$value_pvt <- TRUE
     }
   )
 )
@@ -765,42 +750,45 @@ Version_Param <- R6::R6Class(
 
     initialize = function(version) {
 
-      on_change <- function(version) {
 
-
-        version <- tryCatch({
-          as.integer(version)
-        }, warning = function(w) {
-          message("bad argument for <version>, setting default: 0")
-          return(0)
-        }, error = function(e) {
-          message("bad argument for <version>, setting default: 0")
-          return(0)
-        })
-
-        private$value_pvt <- version
-      }
-
-      on_null <- function() {
-        private$value_pvt <- 0
-      }
-
-      on_na <- function() {
-        private$value_pvt <- 0
-      }
 
       if(missing(version)) version <- 0
 
       super$initialize(name = "version",
                        value = version,
                        values = 0:5,
-                       pattern =  "VERS",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "VERS")
 
 
     }
+  ),
+
+  private = list(
+
+    on_change = function(version) {
+
+
+      version <- tryCatch({
+        as.integer(version)
+      }, warning = function(w) {
+        message("bad argument for <version>, setting default: 0")
+        return(0)
+      }, error = function(e) {
+        message("bad argument for <version>, setting default: 0")
+        return(0)
+      })
+
+      private$value_pvt <- version
+    },
+
+    on_null = function() {
+      private$value_pvt <- 0
+    },
+
+    on_na = function() {
+      private$value_pvt <- 0
+    }
+
   )
 )
 
@@ -814,63 +802,66 @@ Month_Param <- R6::R6Class(
 
     initialize = function(month) {
 
-      on_change <- function(month) {
 
-        if(is.numeric(month)) {
-          if(between(month,1, 12)) {
-            private$value_pvt <- month
-            return(invisible())
-          } else {
-            message("invalid month")
-            return(invisible())
-          }
-        }
-
-        month_chr <- gsub("[^A-z]","",as.character(month))
-        month_int <- gsub("[^0-9]","",as.character(month))
-
-        if(nchar(month_chr) > 2) {
-
-          imonth <- which(toupper(month.abb)  %in% toupper(month))
-          if(length(imonth) == 0)  imonth <- which(toupper(month.name)  %in% toupper(month))
-
-          if(length(imonth) == 0) {
-            message("invalid month")
-            return(invisible())
-
-          }
-
-          private$value_pvt <- imonth
-          return(invisible())
-        } else if(nchar(month_int) <3) {
-          month <- as.integer(month)
-          private$value_pvt <-month
-          return(invisible())
-        }
-
-      }
-
-
-      on_null <- function() {
-        private$value_pvt <- lubridate::month(Sys.Date())
-      }
-
-      on_na <- function() {
-        private$value_pvt <- lubridate::month(Sys.Date())
-      }
 
       if(missing(month)) month <- lubridate::month(Sys.Date())
 
       super$initialize(name = "month",
                        value = month,
                        values = 1:12,
-                       pattern =  "MONTH",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "MONTH")
 
 
     }
+  ),
+
+  private = list(
+
+    on_change = function(month) {
+
+      if(is.numeric(month)) {
+        if(between(month,1, 12)) {
+          private$value_pvt <- month
+          return(invisible())
+        } else {
+          message("invalid month")
+          return(invisible())
+        }
+      }
+
+      month_chr <- gsub("[^A-z]","",as.character(month))
+      month_int <- gsub("[^0-9]","",as.character(month))
+
+      if(nchar(month_chr) > 2) {
+
+        imonth <- which(toupper(month.abb)  %in% toupper(month))
+        if(length(imonth) == 0)  imonth <- which(toupper(month.name)  %in% toupper(month))
+
+        if(length(imonth) == 0) {
+          message("invalid month")
+          return(invisible())
+
+        }
+
+        private$value_pvt <- imonth
+        return(invisible())
+      } else if(nchar(month_int) <3) {
+        month <- as.integer(month)
+        private$value_pvt <-month
+        return(invisible())
+      }
+
+    },
+
+
+    on_null = function() {
+      private$value_pvt <- lubridate::month(Sys.Date())
+    },
+
+    on_na = function() {
+      private$value_pvt <- lubridate::month(Sys.Date())
+    }
+
   )
 )
 
@@ -883,45 +874,44 @@ YTD_Param <- R6::R6Class(
 
     initialize = function(ytd) {
 
-      on_change <- function(ytd) {
-
-        if(is.logical(ytd)) {
-
-          ytd <- if(ytd) ytd <- "on" else ytd <- "off"
-
-        } else if(is.character(ytd)) {
-
-          if(!ytd %in% c("on", "off")) {
-            message("bad argument for <ytd>, setting default: on")
-            ytd <- "off"
-          }
-        } else {
-          message("bad argument for <ytd>, setting default: on")
-          ytd <- "off"
-
-        }
-        private$value_pvt <- ytd
-      }
-
-      on_null <- function() {
-        private$value_pvt <- "off"
-      }
-
-      on_na <- function() {
-        private$value_pvt <- "off"
-      }
-
       if(missing(ytd)) ytd <- "on"
 
       super$initialize(name = "ytd",
                        value = ytd,
                        values = c("on", "off"),
-                       pattern =  "YTD",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "YTD")
 
+    }
+  ),
 
+  private = list(
+
+    on_change = function(ytd) {
+
+      if(is.logical(ytd)) {
+
+        ytd <- if(ytd) ytd <- "on" else ytd <- "off"
+
+      } else if(is.character(ytd)) {
+
+        if(!ytd %in% c("on", "off")) {
+          message("bad argument for <ytd>, setting default: on")
+          ytd <- "off"
+        }
+      } else {
+        message("bad argument for <ytd>, setting default: on")
+        ytd <- "off"
+
+      }
+      private$value_pvt <- ytd
+    },
+
+    on_null = function() {
+      private$value_pvt <- "off"
+    },
+
+    on_na = function() {
+      private$value_pvt <- "off"
     }
   )
 )
@@ -935,29 +925,7 @@ Phone_Param <- R6::R6Class(
 
     initialize = function(phone) {
 
-      on_change <- function(phone) {
 
-        if(is.character(phone)) {
-
-          if(!phone %in% c("cell","land", "comb")) {
-            message("bad argument for <phone>, setting default: on")
-            phone <- "comb"
-          }
-        } else {
-          message("bad argument for <phone>, setting default: on")
-          phone <- "comb"
-
-        }
-        private$value_pvt <- phone
-      }
-
-      on_null <- function() {
-        private$value_pvt <- "comb"
-      }
-
-      on_na <- function() {
-        private$value_pvt <- "comb"
-      }
 
       if(missing(phone)) phone <- "comb"
 
@@ -971,6 +939,34 @@ Phone_Param <- R6::R6Class(
 
 
     }
+  ),
+
+  private = list(
+
+    on_change = function(phone) {
+
+      if(is.character(phone)) {
+
+        if(!phone %in% c("cell","land", "comb")) {
+          message("bad argument for <phone>, setting default: on")
+          phone <- "comb"
+        }
+      } else {
+        message("bad argument for <phone>, setting default: on")
+        phone <- "comb"
+
+      }
+      private$value_pvt <- phone
+    },
+
+    on_null = function() {
+      private$value_pvt <- "comb"
+    },
+
+    on_na = function() {
+      private$value_pvt <- "comb"
+    }
+
   )
 )
 
@@ -983,61 +979,52 @@ Geog_Param <- R6::R6Class(
 
     initialize = function(geog) {
 
-      on_change <- function(geog) {
-
-        geog_chr <- gsub("[^A-z]","",as.character(geog))
-        geog_int <- gsub("[^0-9]","",as.character(geog))
-
-        if(nchar(geog_int) == 2) geog <- as.integer(geog)
-
-        if(is.numeric(geog)) {
-          geog <- get_geogs_all() %>% filter(Id == geog) %>% pull(Abbrev)
-
-        } else {
-          if(nchar(geog) != 2) {
-            geog <- get_geogs_all() %>% filter(Geog == geog) %>% pull(Abbrev)
-          }
-        }
-
-        geog <- toupper(geog)
-
-        private$value_pvt <-geog
-      }
-
-      on_null <- function() {
-        private$value_pvt <- ""
-      }
-
-      on_na <- function() {
-        private$value_pvt <- ""
-      }
 
       if(missing(geog)) geog <- my_geog()
 
       super$initialize(name = "geog",
                        value = geog,
                        values = NULL,
-                       pattern =  "GEOG",
-                       on_change = on_change,
-                       on_null = on_null,
-                       on_na = on_na)
+                       pattern =  "GEOG")
 
 
     }
+  ),
+
+  private = list(
+
+    on_change = function(geog) {
+
+      geog_chr <- gsub("[^A-z]","",as.character(geog))
+      geog_int <- gsub("[^0-9]","",as.character(geog))
+
+      if(nchar(geog_int) == 2) geog <- as.integer(geog)
+
+      if(is.numeric(geog)) {
+        geog <- get_geogs_all() %>% filter(Id == geog) %>% pull(Abbrev)
+
+      } else {
+        if(nchar(geog) != 2) {
+          geog <- get_geogs_all() %>% filter(Geog == geog) %>% pull(Abbrev)
+        }
+      }
+
+      geog <- toupper(geog)
+
+      private$value_pvt <-geog
+    },
+
+    on_null = function() {
+      private$value_pvt <- ""
+    },
+
+    on_na = function() {
+      private$value_pvt <- ""
+    }
+
   )
 )
 
-
-#'
-#'   ###################################################
-#'   ##
-#'   ##    phone
-#'
-#'   my_brfss$phone$value <- "cell"
-#'   my_brfss$phone$values <- c("cell","land", "comb")
-#'   my_brfss$phone$pattern <- "PHON"
-#'
-#'
 
 #' DataSetMgr DataR6 Class
 #'

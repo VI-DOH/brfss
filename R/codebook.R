@@ -323,6 +323,191 @@ resection_codebook <- function(lines) {
 
 }
 
+parse_codebook_layout <- function(lines = NULL) {
+
+
+  if(is.null(lines)) return(NULL)
+
+  ##############################################################
+  ##
+  ##  get variable values from "VARIABLE: value" lines
+
+  ##    the "Label: xxxx..."  line is the start of the information for each eventual column of
+  ##      BRFSS data
+  ##    variables below ending in '_lines' are integer vectors with line numbers
+
+  # ## some codebooks (pdf) have Section and Label on same line
+  # ##   this splits them
+  #
+  # lntmp <- lines %>% gsub("(.*{5,}) (Section.Name.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Core.Section.Numb.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Module.Numb.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Question:.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Question Number:.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (SAS Variable Name:.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Type of Variable:.*)","\\1@@@\\2", .)
+  # lntmp <- lntmp %>% gsub("(.*{5,}) (Column:.*)","\\1@@@\\2", .)
+  #
+  # lines <- lntmp %>% stringr::str_split(., "@@@") %>% unlist()
+  #
+  # lines <- lines %>% gsub(" Question Prolo.*","", .)
+  #
+  # lines <- unlist(lines)
+
+  lines <- resection_codebook(lines)
+
+  #============================================================
+
+  label_lines <- grep("^Label:", lines)
+  mod_lines <- grep("^Module.*Number", lines)
+  core_lines <- grep("^Core.*Number", lines)
+  sect_lines <- grep("^Sect.*Number", lines)
+  value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
+  ##
+  columns <- grep("^Column:", lines, value = TRUE) %>% gsub(" Type of Variable.*", "", .)
+  col_names <- grep("^SAS.", lines, value = TRUE)
+
+
+  labels <- lines[label_lines]
+  questions <- grep("^Question:", lines, value = TRUE)
+  sections <- grep("^Section.Nam.*:", lines, value = TRUE)
+  qnums <- grep("^Question.Number", lines, value = TRUE)
+  var_types <- grep("^Type.*Variable:", lines, value = TRUE)
+
+  label <- stringr::str_trim(gsub(".*?:(.*)","\\1",labels))
+  question <- stringr::str_trim(gsub(".*?:(.*)","\\1",questions))
+
+  section <- stringr::str_trim(gsub(".*?:(.*)","\\1",sections))
+  question_num <- stringr::str_trim(gsub(".*:(.*)","\\1",qnums))
+  var_type <- stringr::str_trim(gsub(".*?:(.*)","\\1",var_types))
+
+  sect_type <- rep("",length(label_lines))
+  sect_num <- rep("",length(label_lines))
+
+  if(length(core_lines)== 0) {
+
+    # didn't find phrase Core Section n ... eg. 2021 has it, but 2016 doesn't
+    # 2016 ... Section n for both core and modules
+
+    # get section lines values (parse the n)
+
+    sects <- sapply(sect_lines, function(sect_ln) {
+      as.integer(stringr::str_trim(gsub(".*?:(.*)","\\1",lines[sect_ln])))
+    })
+
+    #remove Section 0 lines
+
+    sect_lines <- sect_lines[sects > 0]
+    sects <- sects[sects > 0]
+
+    sects_next <- c(sects[-1],999)
+
+    splits <- which(sects_next <  sects)
+    split <- splits[1] + 1
+    end_mods <- splits[2]
+
+
+    core_lines <- sect_lines[1:(split-1)]
+    mod_lines <- sect_lines[split:end_mods]
+
+  }
+  ##    get Core Section numbers
+
+  cors<-sapply(core_lines, function(core_ln) {
+
+    max(which(label_lines<core_ln))
+  })
+
+
+
+  sect_type[cors] <- "Core"
+  sect_num[cors] <- stringr::str_trim(gsub(".*?:(.*)","\\1",lines[core_lines]))
+
+
+  ##    get Module Section numbers
+
+  mods<-sapply(mod_lines, function(mod_ln) {
+
+    max(which(label_lines<mod_ln))
+  })
+
+  sect_type[mods] <- "Module"
+  sect_num[mods] <- stringr::str_trim(gsub(".*?:(.*)","\\1",lines[mod_lines]))
+
+  ##   Blank Section Name for  Weighting Variables
+  ##     for some reason, the state codebook for 2021 has
+  ##      Module 1 for all weighting variables
+
+  wgts <- grep("^Sect.*Nam.*:.*Weight", sections)
+  sect_type[wgts] <- ""
+
+  ##   set blank section types to the 'Non-Survey'
+
+  calculated  <-  grepl("Calculated", section)
+  blnks <- nchar(sect_type) == 0
+  sect_type[blnks] <- "Non-Survey"
+
+  ##
+  ##    for some reason calculated variables are assigned to Modules instead of Core so we
+  ##     have to change that
+
+  sect_type[calculated] <- "Core"
+  sect_num[blnks] <- 0
+
+  ## parse column name and column range from text
+
+  col_name <- stringr::str_trim(gsub(".*?:(.*)","\\1",col_names))
+  column <- stringr::str_trim(gsub(".*?:(.*)","\\1",columns))
+
+
+  ## build data frame for storage and later conversion to column name-column width pairs
+  ##  for ASCII file reading
+
+  df <- data.frame(column,col_name, label, question, section, sect_type,
+                   sect_num, question_num, var_type, calculated) %>%
+    mutate(start = as.integer(gsub("(.*)-(.*)","\\1",column))) %>%
+    mutate(end = as.integer(gsub("(.*)-(.*)","\\2",column))) %>%
+    mutate(field_size = end - start + 1) %>%
+    relocate(sect_num, .after = sect_type) %>%
+    select(-column)
+
+  df_core <- df %>%
+    filter(sect_type == "Core" & !calculated) %>%
+    select(sect_type, sect_num, section) %>%
+    distinct()
+
+
+  df <- df %>%
+    left_join(df_core, by = join_by(sect_type == sect_type, sect_num == sect_num)) %>%
+    mutate(section = ifelse(calculated, section.y, section.x)) %>%
+    select(-contains("."))
+
+  ##
+  ## remove duplicates (overlaps of columns)
+  ##
+  ## e.g. IDATE (8 chars) always overlaps IYEAR, IMONTH and IDAY
+  ##  and _PSU is always co-located with SEQNO
+  ##  not sure of the history on the latter one
+
+  df <- df %>% deduped_layout()
+
+  ## add DUMMY variables for missing columns (non-contiguous end of one and start of the next)
+  ##    if Var1 starts at column 50 and ends at column 52 and the next variable
+  ##    starts at 60 then
+  ##    we have to have a DUUMMY variable from 53-59
+
+  df_layout_cb <- df  %>% fill_dummies() %>%
+    mutate(var_type = ifelse(is.na(var_type),"character",var_type)) %>%
+    mutate(var_type = ifelse(var_type == "Num","integer",var_type)) %>%
+    mutate(var_type = ifelse(var_type == "Char","character",var_type)) %>%
+    relocate(field_size, start, end, col_name, sect_type, sect_num, section, label,
+             question_num, var_type, question) %>%
+    mutate(saq = FALSE)
+
+
+  return(df_layout_cb)
+}
+
 #############################################################
 ##
 ##    layout from codebook
@@ -484,7 +669,8 @@ save_codebook_layout <- function(file=NULL) {
     distinct()
 
 
-  df <- df %>% left_join(df_core, by = join_by(sect_type == sect_type, sect_num == sect_num)) %>%
+  df <- df %>%
+    left_join(df_core, by = join_by(sect_type == sect_type, sect_num == sect_num)) %>%
     mutate(section = ifelse(calculated, section.y, section.x)) %>%
     select(-contains("."))
 

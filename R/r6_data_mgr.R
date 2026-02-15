@@ -53,7 +53,7 @@ DataMgr <-
 
         }
 
-        layout_mgr_pvt <- Layout_Mgr$new()
+        #layout_mgr_pvt <- Layout_Mgr$new()
       },
 
       percents = function(..., include_n = TRUE) {
@@ -107,6 +107,35 @@ DataMgr <-
 
       },
 
+      my_local_data = function() {
+
+        p <- private
+
+        params <- p$dataset_mgr_pvt$as.list()
+
+        dir <- p$patterns_mgr_pvt$apply("data_folder")
+
+        df <- list.files(dir, pattern = "^.._20[0-9]{2}.rds$", recursive = TRUE) %>%
+          grep("^[0-9]{4}/local/", ., value = TRUE) %>%
+          grep("../(sas|ascii)",., value = TRUE) %>%
+          as.data.frame() %>%
+          rename(filename = 1) %>%
+          mutate(base = basename(filename)) %>%
+          mutate(geog = gsub("(..)_([0-9]{4}).*", "\\1", base))%>%
+          mutate(year = gsub("(..)_([0-9]{4}).*", "\\2", base))%>%
+          mutate(source = gsub(".*(ascii|sas).*", "\\1", filename))
+
+        df_ascii <- df %>% filter(source == "ascii")
+        df_sas <- df %>% filter(source == "sas")
+
+        df_sas_only <- df_sas %>% anti_join(df_ascii %>% select(year), by = join_by(year))
+        df_ascii_only <- df_ascii %>% anti_join(df_sas %>% select(year), by = join_by(year))
+
+        df_ascii %>%
+          bind_rows(df_sas_only) %>%
+          arrange(year)
+      },
+
       my_public_geogs = function(year = NULL) {
 
         p <- private
@@ -137,6 +166,21 @@ DataMgr <-
     ),
 
     active = list(
+
+      modules = function(value) {
+
+        if(!missing(value)) {
+          message("this property is read-only")
+          return(NULL)
+        }
+
+        params <- private$dataset_mgr_pvt$patterns
+
+        file <- private$patterns_mgr_pvt$apply("brfss_modules_path")
+
+        readRDS(file)
+
+      },
 
       prepped_data = function(value) {
 
@@ -203,13 +247,11 @@ DataMgr <-
 
         if(missing(value)) {
           return(self$data_mgr$dataset_mgr$get(year))
-          else {
-            if(is.numeric(value)) {
-              self$dataset_mgr$set(year = year)
-            }
+        } else {
+          if(is.numeric(value)) {
+            self$dataset_mgr$set(year = year)
           }
         }
-
       },
 
 

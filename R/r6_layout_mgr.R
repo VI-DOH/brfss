@@ -32,8 +32,8 @@ Layout_Mgr <-
 
         # --- get the year in case it isn't the current working year
 
-        df_params <- DataSetMgr$new()
-        old_year <- df_params$get(year)
+        dataset_mgr <- DataSetMgr$new()
+        old_year <- dataset_mgr$get(year)
 
         if(is.null(year)) {
           self$year <- old_year
@@ -298,7 +298,10 @@ Layout_Mgr <-
 
       load_layout_from_data = function(df = NULL) {
 
-        if(is.null(private$df_brfss)) private$df_brfss <- prepped_data() #return(NULL)
+        data_mgr <- DataMgr$new()
+        data_mgr$year <- self$year
+
+        if(is.null(private$df_brfss)) private$df_brfss <- data_mgr$prepped_data #return(NULL)
 
         df <- private$df_brfss
 
