@@ -23,6 +23,25 @@ has_data <- function(df_brfss = NULL, coi) {
   !all(is.na(x))
 }
 
+resolve_column <- function(df_brfss = NULL, coi) {
+
+  if(is.null(df_brfss)) return(NULL)
+
+  cnames <- df_brfss %>% colnames()
+  cois <- grep(coi,cnames, value = TRUE)
+
+  if(length(cois) == 0) {
+    message(paste0("No match for <", coi, ">" ))
+    return(NULL)
+  }
+
+  if(length(cois) > 1) {
+    message(paste0("More than 1 match for <", coi, "> ... ", paste0(cois, collapse = ", ")))
+    return(NULL)
+  }
+
+  cois
+}
 
 #' Has a Specified Column
 #'

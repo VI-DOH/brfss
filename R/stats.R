@@ -22,7 +22,8 @@
 #'
 #' @examples
 #'
-survey_stats <- function(df_data = NULL, coi,
+survey_stats <- function(df_data = NULL,
+                         coi,
                          exclude = c("Don.*t|Refuse"),
                          subsets = NULL,
                          subset_by = NULL,
@@ -51,7 +52,9 @@ survey_stats <- function(df_data = NULL, coi,
 
   ## make sure that this column exists
 
-  if(!has_column(df_data, coi)) return(NULL)
+  coi <- resolve_column(df_data, coi)
+
+  if(is.null(coi)) return(NULL)
 
   ##    this is a kludgy way to remove the exclude ...
   ##      NULL would be better and that will be fixed

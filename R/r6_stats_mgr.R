@@ -4,411 +4,482 @@ library(R6)
 #'
 #' @export
 StatsMgr <-
-  R6Class(classname = "StatsMgr",
-
-
-          ################################################################################
-          ##
-          ##           PRIVATE
-          ##
-          ################################################################################
-
-          private = list(
-            data_pvt = NULL,
-            data_mgr_pvt = NULL,
-            coi_pvt = NULL,
-            cols_req_pvt = c("subvar","subset","response"),
-            stats_pvt = c("num","den",
-                          "percent","se","CI_lower","CI_upper","cv",
-                          "percent_unwtd","num_wtd","den_wtd"),
-            subsets_pvt = NULL,
-            subpopulation_pvt = NULL,
-            responses_pvt = ".*",
-            exclude_pvt = c("Don?t|Refuse"),
-            sub_exclude_pvt = c("Don?t|Refuse"),
-            conf_pvt =.95,
-            weighted_pvt = TRUE,
-            weight_col_pvt = "_LLCPWT",
-            pct_pvt = TRUE,
-            digits_pvt = 99,
-            combine_ci_pvt = TRUE,
-            my_stats_pvt = NULL,
-            reduce_pvt = FALSE,
-            subsets_only_pvt = FALSE,
-
-            select_cols = function(df) {
-
+  R6Class(
+    classname = "StatsMgr",
+
+
+    ################################################################################
+    ##
+    ##           PRIVATE
+    ##
+    ################################################################################
+
+    private = list(
+      data_mgr_pvt = NULL,
+      years_pvt = NULL,
+      cois_pvt = NULL,
+      cols_req_pvt = c("subvar","subset","response"),
+      stats_pvt = c("num","den",
+                    "percent","se","CI_lower","CI_upper","cv",
+                    "percent_unwtd","num_wtd","den_wtd"),
+      subsets_pvt = NULL,
+      subpopulation_pvt = NULL,
+      responses_pvt = ".*",
+      exclude_pvt = c("Don?t|Refuse"),
+      sub_exclude_pvt = c("Don?t|Refuse"),
+      conf_pvt =.95,
+      weighted_pvt = TRUE,
+      weight_col_pvt = "_LLCPWT",
+      pct_pvt = TRUE,
+      digits_pvt = 99,
+      combine_ci_pvt = TRUE,
+      my_stats_pvt = NULL,
+      reduce_pvt = FALSE,
+      subsets_only_pvt = FALSE,
+
+      select_cols = function(df) {
+
+
+        if(private$combine_ci_pvt && "ci" %in% colnames(df)) {
+          df <- df %>%
+            mutate(ci = paste0(CI_lower, "-", CI_upper)) %>%
+            relocate(ci, .before = CI_lower) %>%
+            select(-starts_with("CI_"))
+        }
 
-              if(private$combine_ci_pvt && "ci" %in% colnames(df)) {
-                df <- df %>%
-                  mutate(ci = paste0(CI_lower, "-", CI_upper)) %>%
-                  relocate(ci, .before = CI_lower) %>%
-                  select(-starts_with("CI_"))
-              }
+        if("ci" %in% private$my_stats_pvt) {
+          stats_cmp <- c(private$my_stats_pvt, "CI_lower", "CI_upper")
+        } else {
+          stats_cmp <- private$my_stats_pvt
+        }
 
-              if("ci" %in% private$my_stats_pvt) {
-                stats_cmp <- c(private$my_stats_pvt, "CI_lower", "CI_upper")
-              } else {
-                stats_cmp <- private$my_stats_pvt
-              }
+        rm <- setdiff(private$stats_pvt, stats_cmp)
 
-              rm <- setdiff(private$stats_pvt, stats_cmp)
+        df <- df %>% filter(response != "dummy") %>%
+          select(-all_of(rm))
 
-              df <- df %>% filter(response != "dummy") %>%
-                select(-all_of(rm))
+        df
 
-              df
+      }
 
-            }
+    ),
 
-          ),
+    ################################################################################
+    ##
+    ##           PUBLIC
+    ##
+    ################################################################################
 
-          ################################################################################
-          ##
-          ##           PUBLIC
-          ##
-          ################################################################################
+    public = list(
 
-          public = list(
+      initialize = function(data_mgr = NULL,
+                            years = NULL,
+                            cois = "",
+                            stats = NULL,
+                            responses = ".*",
+                            exclude = c("Don.*t|Refuse"),
+                            subsets = NULL,
+                            sub_exclude = c("Don.*t|Refuse"),
+                            subpopulation = NULL,
+                            conf =.95,
+                            weighted = TRUE,
+                            weight_col = "_LLCPWT",
+                            pct = TRUE,
+                            combine_ci = FALSE,
+                            digits = 2,
+                            reduce = FALSE,
+                            subsets_only = FALSE) {
 
-            initialize = function(data_mgr = NULL, data = NULL,
-                                  coi = "",
-                                  stats = NULL,
-                                  responses = ".*",
-                                  exclude = c("Don.*t|Refuse"),
-                                  subsets = NULL,
-                                  sub_exclude = c("Don.*t|Refuse"),
-                                  subpopulation = NULL,
-                                  conf =.95,
-                                  weighted = TRUE,
-                                  weight_col = "_LLCPWT",
-                                  pct = TRUE,
-                                  combine_ci = FALSE,
-                                  digits = 2,
-                                  reduce = FALSE,
-                                  subsets_only = FALSE) {
 
+        if(!is.null(data_mgr)) {
 
-              private$data_pvt <- data
+          if(inherits(data_mgr, "DataMgr")) private$data_mgr_pvt <- data_mgr
 
-              if(!is.null(data_mgr)) {
+        } else {
 
-                if(inherits(data_mgr, "DataMgr")) private$data_mgr_pvt <- data_mgr
+          private$data_mgr_pvt <- DataMgr$new()
 
-              } else {
+        }
 
-                private$data_mgr_pvt <- DataMgr$new()
 
-              }
+        private$cois_pvt <- cois
+        private$years_pvt <- years
+        private$responses_pvt <- responses
+        private$exclude_pvt <- exclude
+        private$subsets_pvt <-subsets
+        private$subpopulation_pvt <- subpopulation
+        private$sub_exclude_pvt <- sub_exclude
+        private$conf_pvt <-conf
+        private$weighted_pvt <- weighted
+        private$weight_col_pvt <- weight_col
+        private$pct_pvt <- pct
+        private$combine_ci_pvt <- combine_ci
+        private$digits_pvt <- digits
+        private$reduce_pvt <- reduce
+        private$subsets_only_pvt <-subsets_only
 
+        if(is.null(stats))
+          private$my_stats_pvt <- private$stats_pvt
+        else
+          private$my_stats_pvt <- stats
 
-              private$coi_pvt <- coi
-              private$responses_pvt <- responses
-              private$exclude_pvt <- exclude
-              private$subsets_pvt <-subsets
-              private$subpopulation_pvt <- subpopulation
-              private$sub_exclude_pvt <- sub_exclude
-              private$conf_pvt <-conf
-              private$weighted_pvt <- weighted
-              private$weight_col_pvt <- weight_col
-              private$pct_pvt <- pct
-              private$combine_ci_pvt <- combine_ci
-              private$digits_pvt <- digits
-              private$reduce_pvt <- reduce
-              private$subsets_only_pvt <-subsets_only
+      },
 
-              if(is.null(stats))
-                private$my_stats_pvt <- private$stats_pvt
-              else
-                private$my_stats_pvt <- stats
+      add_subset = function(subset) {
 
-            },
+        self$subsets <- c(self$subsets, subset)
 
-            add_subset = function(subset) {
+      },
 
-              self$subsets <- c(self$subsets, subset)
+      show_all_subs = function() {
 
-            },
+        self$sub_exclude <- "^$"
 
-            show_all_subs = function() {
+      },
 
-              self$sub_exclude <- "^$"
+      show_all_responses = function() {
 
-            },
+        self$responses <- ".*"
+        self$exclude <- "^$"
 
-            show_all_responses = function() {
+      },
 
-              self$responses <- ".*"
-              self$exclude <- "^$"
+      remove_stats = function(pttrn) {
 
-            },
+        private$my_stats_pvt <-
+          private$my_stats_pvt %>%
+          grep(pttrn, ., value = T, invert = T)
+      },
 
-            remove_stats = function(pttrn) {
+      reset_stats = function() {
 
-              private$my_stats_pvt <-
-                private$my_stats_pvt %>%
-                grep(pttrn, ., value = T, invert = T)
-            },
+        private$my_stats_pvt <- private$stats_pvt
+      },
 
-            reset_stats = function() {
+      # -----------------------------------------------------------------------------
+      #
+      #     suvey_stats
 
-              private$my_stats_pvt <- private$stats_pvt
-            },
+      survey_stats = function(years = NULL, cois = NULL, value = ".*", ... ){
 
-            survey_stats = function(coi = NULL, weighted = NULL, subsets = NULL,
-                                    pct = NULL, digits = NULL, subsets_only = NULL,
-                                    reduce = NULL, combine_ci = NULL, wide = FALSE) {
+        cois <-  cois %||% private$cois_pvt
+        years <- years %||% private$years_pvt
 
-              pvt <- private
+        if(length(cois)==1) {
 
-              coi <- coi %||% pvt$coi_pvt
-              pct <- pct %||% pvt$pct_pvt
-              digits <- digits %||% pvt$digits_pvt
-              subsets <- subsets %||% pvt$subsets_pvt
-              subsets_only <- subsets_only %||% pvt$subsets_only_pvt
+          cois <- rep(cois, length(years))
 
-              if(is.null(coi) || nchar(coi) == 0 || length(coi) == 0) {
-                message("must select a valid column of interest (coi)")
-                return(NULL)
-              }
+        }
 
-              weighted <- ifelse(is.null(weighted), pvt$weighted_pvt,weighted)
-              reduce <- ifelse(is.null(reduce), pvt$reduce_pvt,reduce)
+        multi_attrs <-  list()
 
-              if(!is.null(pvt$data_mgr_pvt)) pvt$data_pvt <- pvt$data_mgr_pvt$prepped_data
+        df_stats <- purrr::map2(years, cois, function(year, coi) {
 
-              df <- survey_stats(
-                df_data = pvt$data_pvt,
-                coi = coi,
-                exclude = pvt$exclude_pvt,
-                subsets = subsets,
-                subset_by = pvt$subset_by_pvt,
-                sub_exclude = pvt$sub_exclude_pvt,
-                conf = pvt$conf_pvt,
-                weighted = weighted,
-                weight_col = pvt$weight_col_pvt,
-                pct = pct,
-                digits = digits)
+          private$data_mgr_pvt$dataset_mgr$set(year = year)
 
-              if(reduce) {
+          df <- self$survey_stats_one(coi = coi, ...)
 
-                df <- df %>%
-                  select(-any_of(c("num", "den", "percent_unwtd"))) %>%
-                  rename_with(.fn = ~gsub("_wtd","", .x))
-              }
+          df <- df %>%
+            mutate(year = {{year}})
 
-              df <- df %>% private$select_cols()
-              df <- df %>% filter(grepl(self$responses, response))
+          multi_attrs <<- df %>% attributes()
 
-              if(wide) df <- self$widen(df)
+          df
+        }) %>% bind_rows() %>%
+          relocate(year)
 
-              if(subsets_only) {
-                df <- df %>% filter(subvar != "")
-              }
+        response <- df_stats %>% pull(response) %>% unique()
 
-              return(df)
+        structure(df_stats,
+                  class = c("brfss_stats", "data.frame"),
+                  response = response,
+                  label = attr(cois %>% tail(1), "label"),
+                  years = years,
+                  cois = cois,
+                  geog = multi_attrs$geog ,
+                  stat_cols = multi_attrs$stat_cols ,
+                  population = multi_attrs$population ,
+                  section_type = multi_attrs$section_type ,
+                  section_num = multi_attrs$section_num ,
+                  section_index = multi_attrs$section_index ,
+                  section_name = multi_attrs$section_name ,
+                  section = multi_attrs$section ,
+                  question = multi_attrs$question ,
+                  label = multi_attrs$label ,
+                  weighted = multi_attrs$weighted ,
+                  weight_col = multi_attrs$weight_col ,
+                  conf = multi_attrs$conf
 
-            },
+        )
+      },
 
-            widen = function(df_stats = NULL, coi = NULL, sep_char = "^") {
+      survey_stats_one = function(coi = NULL, weighted = NULL, subsets = NULL,
+                                  pct = NULL, digits = NULL, subsets_only = NULL,
+                                  reduce = NULL, combine_ci = NULL, wide = FALSE) {
 
-              stats <- StatsMgr$stats_names() %>%
-                paste0(., collapse = "$|^") %>%
-                paste0("^", ., "$")
+        pvt <- private
 
-              if(is.null(df_stats)) {
+        cois <- coi %||% pvt$cois_pvt
+        pct <- pct %||% pvt$pct_pvt
+        digits <- digits %||% pvt$digits_pvt
+        subsets <- subsets %||% pvt$subsets_pvt
+        subsets_only <- subsets_only %||% pvt$subsets_only_pvt
 
-                df_stats <- self$survey_stats(coi)
+        if(is.null(coi) || nchar(coi) == 0 || length(coi) == 0) {
+          message("must select a valid column of interest (coi)")
+          return(NULL)
+        }
 
-              }
+        weighted <- ifelse(is.null(weighted), pvt$weighted_pvt,weighted)
+        reduce <- ifelse(is.null(reduce), pvt$reduce_pvt,reduce)
 
+        if(!is.null(pvt$data_mgr_pvt)) data <- pvt$data_mgr_pvt$prepped_data
 
-              df_wide <- df_stats %>%
-                tidyr::pivot_wider(names_from = c(matches("response|year")),
-                                   id_cols = c(subvar, subset),
-                                   values_from =  c(matches(stats)), names_vary = "slowest",
-                                   names_sep = "^") %>%
-                as.data.frame()
+        df <- survey_stats(
+          df_data = data,
+          coi = coi,
+          exclude = pvt$exclude_pvt,
+          subsets = subsets,
+          subset_by = pvt$subset_by_pvt,
+          sub_exclude = pvt$sub_exclude_pvt,
+          conf = pvt$conf_pvt,
+          weighted = weighted,
+          weight_col = pvt$weight_col_pvt,
+          pct = pct,
+          digits = digits)
 
-              df_wide
+        if(reduce) {
 
-            }
+          df <- df %>%
+            select(-any_of(c("num", "den", "percent_unwtd"))) %>%
+            rename_with(.fn = ~gsub("_wtd","", .x))
+        }
 
+        df <- df %>% private$select_cols()
+        df <- df %>% filter(grepl(self$responses, response))
 
+        if(wide) df <- self$widen(df)
 
+        if(subsets_only) {
+          df <- df %>% filter(subvar != "")
+        }
 
-          ),
+        return(df)
 
-          ################################################################################
-          ##
-          ##           ACTIVE
-          ##
-          ################################################################################
+      },
 
-          active = list(
+      widen = function(df_stats = NULL, coi = NULL, sep_char = "^") {
 
-            year = function(value) {
+        stats <- StatsMgr$stats_names() %>%
+          paste0(., collapse = "$|^") %>%
+          paste0("^", ., "$")
 
-              if(missing(value)) {
-                return(self$data_mgr$dataset_mgr$get(year))
-              } else {
-                if(is.numeric(value)) {
-                  self$data_mgr$dataset_mgr$set(year = year)
-                }
-              }
+        if(is.null(df_stats)) {
 
-            },
+          df_stats <- self$survey_stats(coi)
 
-            data_mgr = function(value) {
+        }
 
-              if(!missing(value)) {
 
-                if(inherits(value, "DataMgr")) private$data_mgr_pvt <- data_mgr
+        df_wide <- df_stats %>%
+          tidyr::pivot_wider(names_from = c(matches("response|year")),
+                             id_cols = c(subvar, subset),
+                             values_from =  c(matches(stats)), names_vary = "slowest",
+                             names_sep = "^") %>%
+          as.data.frame()
 
-              } else {
+        df_wide
 
-                return(private$data_mgr_pvt)
+      }
 
-              }
+    ),
 
-            },
+    ################################################################################
+    ##
+    ##           ACTIVE
+    ##
+    ################################################################################
 
-            survey_data = function(value) {
+    active = list(
 
-              if(missing(value)) return(private$data_pvt)
+      year = function(value) {
 
-              private$data_pvt <- value
+        if(missing(value)) {
+          return(self$data_mgr$dataset_mgr$get(year))
+        } else {
+          if(is.numeric(value)) {
+            self$data_mgr$dataset_mgr$set(year = year)
+          }
+        }
 
-            },
+      },
 
-            coi = function(value) {
+      data_mgr = function(value) {
 
-              if(missing(value)) return(private$coi_pvt)
+        if(!missing(value)) {
 
-              private$coi_pvt <- value
+          if(inherits(value, "DataMgr")) private$data_mgr_pvt <- data_mgr
 
-            },
+        } else {
 
-            responses = function(value) {
+          return(private$data_mgr_pvt)
 
-              if(missing(value)) return(private$responses_pvt)
+        }
 
-              private$responses_pvt <- value
+      },
+      #
+      # survey_data = function(value) {
+      #
+      #   if(missing(value)) return(private$data_pvt)
+      #
+      #   private$data_pvt <- value
+      #
+      # },
 
-            },
+      coi = function(value) {
 
-            exclude = function(value) {
+        if(missing(value)) return(private$cois_pvt)
 
-              if(missing(value)) return(private$exclude_pvt)
+        private$cois_pvt <- value
 
-              private$exclude_pvt <- value
+      },
 
-            },
+      cois = function(value) {
 
-            subsets = function(value) {
+        if(missing(value)) return(private$cois_pvt)
 
-              if(missing(value)) return(private$subsets_pvt)
+        private$cois_pvt <- value
 
-              private$subsets_pvt <- value
+      },
 
-            },
+      years = function(value) {
 
-            subpopulation = function(value) {
+        if(missing(value)) return(private$years_pvt)
 
-              if(missing(value)) return(private$subpopulation_pvt)
+        private$years_pvt <- value
 
-              private$subpopulation_pvt <- value
+      },
 
-            },
+      responses = function(value) {
 
-            sub_exclude =function(value) {
+        if(missing(value)) return(private$responses_pvt)
 
-              if(missing(value)) return(private$sub_exclude_pvt)
+        private$responses_pvt <- value
 
-              private$sub_exclude_pvt <- value
+      },
 
-            },
+      exclude = function(value) {
 
-            conf =function(value) {
+        if(missing(value)) return(private$exclude_pvt)
 
-              if(missing(value)) return(private$conf_pvt)
+        private$exclude_pvt <- value
 
-              private$conf_pvt <- value
+      },
 
-            },
+      subsets = function(value) {
 
-            weighted = function(value) {
+        if(missing(value)) return(private$subsets_pvt)
 
-              if(missing(value)) return(private$weighted_pvt)
+        private$subsets_pvt <- value
 
-              private$weighted_pvt <- value
+      },
 
-            },
+      subpopulation = function(value) {
 
-            weight_col = function(value) {
+        if(missing(value)) return(private$subpopulation_pvt)
 
-              if(missing(value)) return(private$weight_col_pvt)
+        private$subpopulation_pvt <- value
 
-              private$weight_col_pvt <- value
+      },
 
-            },
+      sub_exclude =function(value) {
 
-            pct = function(value) {
+        if(missing(value)) return(private$sub_exclude_pvt)
 
-              if(missing(value)) return(private$pct_pvt)
+        private$sub_exclude_pvt <- value
 
-              private$pct_pvt <- value
+      },
 
-            },
+      conf =function(value) {
 
-            subsets_only = function(value) {
+        if(missing(value)) return(private$conf_pvt)
 
-              if(missing(value)) return(private$subsets_only_pvt)
+        private$conf_pvt <- value
 
-              private$subsets_only_pvt <- value
+      },
 
-            },
+      weighted = function(value) {
 
-            digits = function(value) {
+        if(missing(value)) return(private$weighted_pvt)
 
-              if(missing(value)) return(private$digits_pvt)
+        private$weighted_pvt <- value
 
-              private$digits_pvt <- value
+      },
 
-            },
+      weight_col = function(value) {
 
-            combine_ci = function(value) {
+        if(missing(value)) return(private$weight_col_pvt)
 
-              if(missing(value)) return(private$combine_ci_pvt)
+        private$weight_col_pvt <- value
 
-              if(!is.logical(value)) {
-                message("This property requires a logical value")
-                return(NULL)
+      },
 
-              }
-              private$combine_ci_pvt <- value
+      pct = function(value) {
 
-            },
+        if(missing(value)) return(private$pct_pvt)
 
+        private$pct_pvt <- value
 
+      },
 
-            stats = function(value) {
+      subsets_only = function(value) {
 
-              if(missing(value)) return(private$my_stats_pvt)
+        if(missing(value)) return(private$subsets_only_pvt)
 
-              private$my_stats_pvt <- value
+        private$subsets_only_pvt <- value
 
-            },
+      },
 
-            reduce = function(value) {
+      digits = function(value) {
 
-              if(missing(value)) return(private$reduce_pvt)
+        if(missing(value)) return(private$digits_pvt)
 
-              private$reduce_pvt <- value
+        private$digits_pvt <- value
 
-            }
+      },
 
-          )
+      combine_ci = function(value) {
+
+        if(missing(value)) return(private$combine_ci_pvt)
+
+        if(!is.logical(value)) {
+          message("This property requires a logical value")
+          return(NULL)
+
+        }
+        private$combine_ci_pvt <- value
+
+      },
+
+
+
+      stats = function(value) {
+
+        if(missing(value)) return(private$my_stats_pvt)
+
+        private$my_stats_pvt <- value
+
+      },
+
+      reduce = function(value) {
+
+        if(missing(value)) return(private$reduce_pvt)
+
+        private$reduce_pvt <- value
+
+      }
+
+    )
   )
 
 library(R6)

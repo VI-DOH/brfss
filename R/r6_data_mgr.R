@@ -63,6 +63,16 @@ DataMgr <-
 
       },
 
+      col_names = function(pttrn = "") {
+
+        self$col_info() %>%
+          filter(grepl(pttrn, variable)) %>%
+          pull(variable)
+
+
+
+      },
+
       col_info = function(section = ".*", label = ".*") {
 
         df <- self$prepped_data
@@ -77,12 +87,12 @@ DataMgr <-
 
               if("variable" %in% names(attrs)) {
 
+                variable      <- attrs[["variable"]] %||% NA
                 section_type  <- attrs[["section_type"]] %||% NA
                 section_num   <- attrs[["section_num"]] %||% NA %>% as.character()
                 section_index <- attrs[["section_index"]] %||% NA %>% as.character()
                 section_name  <- attrs[["section_name"]] %||% NA
                 label         <- attrs[["label"]] %||% NA
-                variable      <- attrs[["variable"]] %||% NA
 
                 data.frame(variable, section_type,
                            section_num, section_index,
