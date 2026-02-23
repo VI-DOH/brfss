@@ -113,7 +113,7 @@ DataMgr <-
 
         df_atts %>%
           filter(grepl(section, section_name)) %>%
-          filter(grepl({{label}}, label))
+          filter(grepl(.env$label, label))
 
       },
 
@@ -167,7 +167,7 @@ DataMgr <-
           select(-dir)
 
         if(!is.null(year)) {
-          df <- df %>% filter(year == {{year}})
+          df <- df %>% filter(year == .env$year)
         }
 
         df

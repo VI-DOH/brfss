@@ -297,7 +297,7 @@ parse_codebook_values <- function(file=NULL) {
 
 
   df_final <- df_final %>%
-    mutate(count = {{cnt}})  %>%
+    mutate(count = .env$cnt)  %>%
     mutate(text = gsub("(^.*?) {3,}.*","\\1",text))  %>%
     select(col_name,value, maxval, text, count) %>%
     filter(value != "")
@@ -517,7 +517,7 @@ parse_codebook_values_pdf <- function(file=NULL) {
 
 
   df_final <- df_final %>%
-    mutate(count = {{cnt}})  %>%
+    mutate(count = .env$cnt)  %>%
     mutate(text = gsub("(^.*?) {3,}.*","\\1",text))  %>%
     select(col_name,value, maxval, text, count)
 
@@ -705,7 +705,7 @@ quest_types <- function(df_layout = NULL, df_vals = NULL, ...) {
 #' }
 #'
 make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
-                         cols = NULL, verbose = FALSE) {
+                         cols = NULL, overwrite = TRUE, verbose = FALSE) {
 
 
   if(is.null(df_brfss)) df_brfss <- brfss_data()
@@ -731,7 +731,7 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
       if(verbose) cat("  .. ", col)
 
       tryCatch({
-        if(!(is.factor(df_brfss[[col]]))) {
+        if(!(is.factor(df_brfss[[col]])) || overwrite) {
           a<- attributes(df_brfss[[col]])
 
           df_my_vals <- df_vals %>% filter(col_name==col)
@@ -809,7 +809,7 @@ valid_only <- function(df, coi, other_cols=character(0), invalid = c("don.{0,1}t
   #  get rid of empty levels
 
   if(is.factor(df[[coi]])) df <- df %>%
-      mutate({{coi}} := droplevels(.[[coi]]))
+      mutate(.env$coi := droplevels(.[[coi]]))
 
   df
 }
@@ -923,7 +923,7 @@ compare.codebook <- function(coi) {
   # coi <- '_PRACE2'
 
   df_values <- brfss::codebook_values() %>%
-    filter(col_name == {{coi}}) %>%
+    filter(col_name == .env$coi) %>%
     select(value, text, col_name, codebook = count)
 
   table(df_brfss[coi]) %>%
@@ -973,7 +973,7 @@ original_values <- function(coi) {
   ##  get original values
   ## if it wasn't a range it will already be a factor
 
-  df <- brfss_data() %>% rename(COI = {{coi}})  %>%
+  df <- brfss_data() %>% rename(COI = .env$coi)  %>%
     select(response = COI) %>%
     mutate(response = as.character(response))%>%
     mutate(response = ifelse(is.na(response),"Not eligible/no answer",response))
@@ -983,7 +983,7 @@ original_values <- function(coi) {
 
   df_vals_coi <- values() %>%
     select(col_name, response = text, value, maxval) %>%
-    filter(col_name == {{coi}}) %>%
+    filter(col_name == .env$coi) %>%
     bind_rows(data.frame(col_name = coi, response = "Not eligible/no answer", value = "NA"))
 
   if(nrow(df_vals_coi)==1) {
@@ -1064,7 +1064,7 @@ original_values_tbl <- function(coi) {
 maxval <- function(coi) {
 
   maxvals <- values()  %>%
-    filter(col_name == {{coi}}) %>%
+    filter(col_name == .env$coi) %>%
     pull(maxval)
 
   mv <- which(!is.na(maxvals))

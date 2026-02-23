@@ -48,7 +48,7 @@ survey_stats <- function(df_data = NULL,
     geog = NA
   }
 
-  df_data <- df_data %>% rename(FINAL_WT = {{weight_col}})
+  df_data <- df_data %>% rename(FINAL_WT = .env$weight_col)
 
   ## make sure that this column exists
 
@@ -63,16 +63,16 @@ survey_stats <- function(df_data = NULL,
 
   ###########################################################
 
-  coi_attrs <- df_data %>% pull({{coi}}) %>% attributes()
+  coi_attrs <- df_data %>% pull(.env$coi) %>% attributes()
 
   df_brfss <- coi_data(df_data = df_data, coi = coi, subsets = subsets,
                        exclude = exclude)
 
-  test <- df_brfss %>% pull({{coi}})
+  test <- df_brfss %>% pull(.env$coi)
 
   if(!(is.factor(test) && length(levels(test))>1) ) {
     #return(NULL)
-    df_brfss<- df_brfss %>% mutate({{coi}} := as.factor(.[[coi]]))
+    df_brfss<- df_brfss %>% mutate(.env$coi := as.factor(.[[coi]]))
 
   }
   # get data from
@@ -114,7 +114,7 @@ survey_stats <- function(df_data = NULL,
   ##    we must add a"dummy" response level
   ##      it will be removed before returning the data
 
-  levels <- levels(df_brfss %>% pull({{coi}}))
+  levels <- levels(df_brfss %>% pull(.env$coi))
 
   if(length(levels) == 1) {
     levels(df_brfss[,coi]) <- c(levels , 'dummy')
@@ -187,7 +187,7 @@ survey_stats <- function(df_data = NULL,
   }
 
   df_lo <- df_lo %>%
-    filter(col_name == {{coi}})
+    filter(col_name == .env$coi)
 
   population <- pop_sex(df_data, coi) %>% gsub("ale","ales",.)
 
@@ -320,13 +320,13 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   df_dens <- mysvycounts %>% select(-se) %>%
     rename( den = counts) %>%
-    rename(subset = {{subset}}) %>%
+    rename(subset = .env$subset) %>%
     mutate(subset = as.character(subset))
 
   df_nums <- data.frame(des$variables[1],des$variables[2],check.names = FALSE) %>%
     group_by_at(c(coi, subset)) %>%
     summarise(num=n()) %>%
-    rename(response = {{coi}}, subset = {{subset}}) %>%
+    rename(response = .env$coi, subset = .env$subset) %>%
     mutate(subset = as.character(subset))
 
   myci <- svyci(mysvymean, conf = conf) %>%
@@ -355,7 +355,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
       values_from = value
     ) %>%
     rename(subset = 1) %>%
-    mutate(subvar = {{subvar}}) %>%
+    mutate(subvar = .env$subvar) %>%
     relocate(subvar) %>%
     mutate(subset = as.character(subset)) %>%
     left_join(myci, by = join_by(response, subset)) %>%
@@ -682,7 +682,7 @@ log_reg<-function(df_data = NULL, depvar, exclude = c("Don.*t|Refuse"), indepvar
 
   df_brfss <- coi_data(df_data = df_data, coi = coi, subsets = subsets, exclude = exclude)
 
-  test <- df_brfss %>% pull({{coi}})
+  test <- df_brfss %>% pull(.env$coi)
 
   if(!(is.factor(test) && length(levels(test))>1) ) return(NULL)
 
@@ -747,7 +747,7 @@ log_reg<-function(df_data = NULL, depvar, exclude = c("Don.*t|Refuse"), indepvar
   df <- bind_rows(df_stats_main, df_subs )
 
   df_lo <- get.layout() %>%
-    filter(col_name == {{coi}})
+    filter(col_name == .env$coi)
 
   attr(df,"question") <- df_lo %>%
     pull(question)

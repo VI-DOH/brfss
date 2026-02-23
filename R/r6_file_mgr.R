@@ -77,7 +77,7 @@ BRFSS_FileMgr <-
       find = function(name) {
 
 
-        private$patterns_pvt %>% filter(grepl({{name}}, name))
+        private$patterns_pvt %>% filter(grepl(.env$name, name))
       },
 
       get = function(name, expand = FALSE) {

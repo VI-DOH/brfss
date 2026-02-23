@@ -97,7 +97,7 @@ DataSetMgr <-
       initialize = function(filename = NULL) {
 
         self$read(filename = filename)
-
+        self$set_legacy()  # remove when all conversions to R6 are complete
       },
 
       load = function(from) {
@@ -110,6 +110,7 @@ DataSetMgr <-
           if(length(index) > 0) private$params[[index]]$set(x)
 
         })
+        self$set_legacy()
 
       },
 
@@ -198,11 +199,6 @@ DataSetMgr <-
         p$set(val)
 
         self$save()
-      },
-
-      patterize = function(str_in) {
-
-        pttrns <- self$patterns
 
       },
 
@@ -239,7 +235,14 @@ DataSetMgr <-
 
         if(!is.null(filename)) saveRDS(state, file = filename)
 
+        self$set_legacy()
+
         return(!is.null(filename))
+      },
+
+      set_legacy = function() {
+
+        brfss::brfss.params(self$as.list())
       }
 
     ),
@@ -271,27 +274,21 @@ DataSetMgr <-
           return(NULL)
         }
 
-        vals <- purrr::map_chr(private$params, \(param) {
-          as.character(param$value)
+        x <- self$as.vector()
 
-        })
-
-        names(vals) <- purrr::map_chr(private$params, \(param) {
+        vnames <- purrr::map_chr(private$params, \(param) {
           param$pattern
         })
 
-        deps <- purrr::map_chr(private$dependencies, \(dep) {
-          as.character(dep$evaluate(vals))
-
-        })
-
-        names(deps) <- purrr::map_chr(private$dependencies, \(dep) {
+        dnames <- purrr::map_chr(private$dependencies, \(dep) {
           dep$pattern
         })
 
-        c(vals, deps)
-      }
+        names(x) <- c(vnames, dnames)
 
+        return(x)
+
+      }
 
     )
   )
@@ -330,6 +327,7 @@ Dataset_Param <-
                             value = NULL,
                             pattern = "",
                             values = NULL) {
+
 
 
         private$name_pvt = name

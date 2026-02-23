@@ -165,6 +165,8 @@ StatsMgr <-
         cois <-  cois %||% private$cois_pvt
         years <- years %||% private$years_pvt
 
+        if(is.null(years)) years <- private$data_mgr_pvt$dataset_mgr$get(year)
+
         if(length(cois)==1) {
 
           cois <- rep(cois, length(years))
@@ -180,7 +182,7 @@ StatsMgr <-
           df <- self$survey_stats_one(coi = coi, ...)
 
           df <- df %>%
-            mutate(year = {{year}})
+            mutate(year = .env$year)
 
           multi_attrs <<- df %>% attributes()
 
@@ -540,7 +542,7 @@ MultiYearStatsMgr <-
                 df <- super$survey_stats(coi = coi, ...)
 
                 df <- df %>%
-                  mutate(year = {{year}})
+                  mutate(year = .env$year)
 
                 multi_attrs <<- df %>% attributes()
 

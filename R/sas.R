@@ -200,6 +200,8 @@ convert_sas <- function(verbose = FALSE, progress = NULL) {
 
     ivers<-ivers + 1
   }
+
+  brfss.params(version = 0)
 }
 
 #' Download SAS Metadata files
@@ -218,7 +220,7 @@ sas_download_metadata<-function(folderout = NULL, year = NULL, progress = NULL, 
 
   show_progress(progress,
                 message = "Metadata ... downloading")
-  browser()
+
   pttrns<-get.pattern.group("sas_downloads")
   urlfiles<- apply.pattern("brfss_url_files", params)
 
