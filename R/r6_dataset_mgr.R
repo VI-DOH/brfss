@@ -100,6 +100,14 @@ DataSetMgr <-
         self$set_legacy()  # remove when all conversions to R6 are complete
       },
 
+      print = function() {
+
+        x <- self$as.vector()
+        class(x) <- "character"
+
+        print(x)
+      },
+
       load = function(from) {
 
         if(!inherits(from, "brfss_dataset")) return(FALSE)

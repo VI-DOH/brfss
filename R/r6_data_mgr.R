@@ -213,13 +213,13 @@ DataMgr <-
 
           source <- private$dataset_mgr_pvt$get(source)
 
-          try_source <- ifelse (source == "ascii", "sas", "ascii")
+          try_source <- ifelse (source == "ascii", "sas", "ascii") %>% unname()
 
           private$dataset_mgr_pvt$set(source = try_source)
 
           df <- self$data
 
-          private$dataset_mgr_pvt$get(source = source)
+          private$dataset_mgr_pvt$set(source = source)
         }
 
         if(is.null(df))  return(NULL)
@@ -256,10 +256,10 @@ DataMgr <-
       year = function(value) {
 
         if(missing(value)) {
-          return(self$data_mgr$dataset_mgr$get(year))
+          return(self$dataset_mgr$get(year))
         } else {
           if(is.numeric(value)) {
-            self$dataset_mgr$set(year = year)
+            self$dataset_mgr$set(year = value)
           }
         }
       },

@@ -9,3 +9,4 @@ data-raw
 man/
 */archive/*
 junk/
+*_V[0-9].R
