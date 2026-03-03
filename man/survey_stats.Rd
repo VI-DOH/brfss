@@ -8,7 +8,7 @@ survey_stats(
   df_data = NULL,
   coi,
   exclude = c("Don.*t|Refuse"),
-  subsets = NULL,
+  subvars = NULL,
   subset_by = NULL,
   sub_exclude = c("Don.*t|Refuse"),
   conf = 0.95,
@@ -29,7 +29,7 @@ survey_stats(
 
 \item{weighted}{- logical: use weighting}
 
-\item{subset}{- character: name of column to subset data by}
+\item{subvar}{- character: name of column to subset data by}
 }
 \value{
 data.frame: statistics for the coi each subset

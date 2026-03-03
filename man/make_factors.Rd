@@ -9,6 +9,7 @@ make_factors(
   df_layout = NULL,
   df_vals = NULL,
   cols = NULL,
+  overwrite = TRUE,
   verbose = FALSE
 )
 }

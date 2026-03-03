@@ -13,7 +13,7 @@
 #' @param df_data - data.frame: the survey data
 #' @param coi - character: column of interest name for analysis
 #' @param exclude - integer: values in coi to exclude for analysis purposes
-#' @param subset - character: name of column to subset data by
+#' @param subvar - character: name of column to subset data by
 #' @param conf - numeric: confidence level, default is .95
 #' @param weighted - logical: use weighting
 ##'
@@ -25,7 +25,7 @@
 survey_stats <- function(df_data = NULL,
                          coi,
                          exclude = c("Don.*t|Refuse"),
-                         subsets = NULL,
+                         subvars = NULL,
                          subset_by = NULL,
                          sub_exclude = c("Don.*t|Refuse"),
                          conf =.95,
@@ -65,7 +65,7 @@ survey_stats <- function(df_data = NULL,
 
   coi_attrs <- df_data %>% pull(.env$coi) %>% attributes()
 
-  df_brfss <- coi_data(df_data = df_data, coi = coi, subsets = subsets,
+  df_brfss <- coi_data(df_data = df_data, coi = coi, subvars = subvars,
                        exclude = exclude)
 
   test <- df_brfss %>% pull(.env$coi)
@@ -82,10 +82,10 @@ survey_stats <- function(df_data = NULL,
     return (ret)
   }
 
-  if(is.null(subsets)) {
+  if(is.null(subvars)) {
     nsubs<-0
   } else {
-    nsubs<-length(subsets)
+    nsubs<-length(subvars)
   }
 
   # only the valid values - remove the excludes
@@ -155,9 +155,9 @@ survey_stats <- function(df_data = NULL,
 
   if (nsubs > 0 ) {
 
-    df_subs <- map(subsets, function(subset){
+    df_subs <- map(subvars, function(subvar){
 
-      cols <- c(coi,subset)  %>% paste0("`",.,"`")
+      cols <- c(coi,subvar)  %>% paste0("`",.,"`")
       frmla<- reformulate(cols)
 
       des<-survey::svydesign(ids = ~1,
@@ -200,7 +200,7 @@ survey_stats <- function(df_data = NULL,
 
   df <- df %>%
     filter(response != "dummy") %>%
-    filter(!grepl(sub_exclude, subset))
+    filter(!grepl(sub_exclude, subvar))
 
   #  get the actual stat columns
 
