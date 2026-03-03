@@ -987,7 +987,7 @@ process_app <- function() {
         column <-rvals$coi
 
         #subvar  subset  response  num   mean   se  CI_lower
-        df <- survey_stats(coi = column, subsets = input$subsets_id,
+        df <- survey_stats(coi = column, subvars = input$subsets_id,
                            pct = TRUE, digits = 1) %>%
           stats_wide_htm(stats = input$stats_id)
       })

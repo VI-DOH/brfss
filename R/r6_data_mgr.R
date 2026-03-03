@@ -9,7 +9,7 @@ DataMgr <-
     private = list(
       layout_mgr_pvt = NULL,
       dataset_mgr_pvt = NULL,
-      patterns_mgr_pvt = NULL,
+      file_mgr_pvt = NULL,
 
       data_path = function(rw = c("r","w")) {
 
@@ -20,13 +20,13 @@ DataMgr <-
 
         params <- p$dataset_mgr_pvt$patterns
 
-        fldr <- p$patterns_mgr_pvt$apply("brfss_annual_data_folder")
+        fldr <- p$file_mgr_pvt$apply("brfss_annual_data_folder")
 
         if(!dir.exists(fldr) && write) {
           dir.create(fldr, recursive = TRUE)
         }
 
-        file <- p$patterns_mgr_pvt$apply("brfss_annual_data_file")
+        file <- p$file_mgr_pvt$apply("brfss_annual_data_file")
 
         path <- paste0(fldr,file)
 
@@ -40,19 +40,24 @@ DataMgr <-
 
     public = list(
 
-      initialize = function(dataset_mgr = NULL) {
+      initialize = function(dataset_mgr = NULL, file_mgr = NULL) {
 
         if(!is.null(dataset_mgr)) {
           if(inherits(dataset_mgr, "DataSetMgr")) {
             private$dataset_mgr_pvt <-  dataset_mgr
-            private$patterns_mgr_pvt <- BRFSS_FileMgr$new(dataset_mgr)
           }
         } else {
           private$dataset_mgr_pvt <-  DataSetMgr$new()
-          private$patterns_mgr_pvt <- BRFSS_FileMgr$new(private$dataset_mgr_pvt)
-
         }
 
+        if(!is.null(file_mgr)) {
+          if(inherits(file_mgr, "BRFSS_FileMgr")) {
+            private$file_mgr_pvt <- BRFSS_FileMgr$new(private$dataset_mgr_pvt)
+          }
+        } else {
+          private$file_mgr_pvt <- BRFSS_FileMgr$new(private$dataset_mgr_pvt)
+
+        }
         #layout_mgr_pvt <- Layout_Mgr$new()
       },
 
@@ -123,7 +128,7 @@ DataMgr <-
 
         params <- p$dataset_mgr_pvt$as.list()
 
-        dir <- p$patterns_mgr_pvt$apply("data_folder")
+        dir <- p$file_mgr_pvt$apply("data_folder")
 
         df <- list.files(dir, pattern = "^.._20[0-9]{2}.rds$", recursive = TRUE) %>%
           grep("^[0-9]{4}/local/", ., value = TRUE) %>%
@@ -152,7 +157,7 @@ DataMgr <-
 
         params <- p$dataset_mgr_pvt$as.list()
 
-        dir <- p$patterns_mgr_pvt$apply("data_folder")
+        dir <- p$file_mgr_pvt$apply("data_folder")
 
         df <- list.files(dir, recursive = TRUE) %>%
           grep("^[0-9]{4}/public/states", ., value = TRUE) %>%
@@ -186,7 +191,7 @@ DataMgr <-
 
         params <- private$dataset_mgr_pvt$patterns
 
-        file <- private$patterns_mgr_pvt$apply("brfss_modules_path")
+        file <- private$file_mgr_pvt$apply("brfss_modules_path")
 
         readRDS(file)
 
@@ -270,7 +275,7 @@ DataMgr <-
         if(!missing(value)) {
           if(inherits(value, "DataSetMgr")) {
             private$dataset_mgr_pvt <-  value
-            private$patterns_mgr_pvt <- BRFSS_FileMgr$new(value)
+            private$file_mgr_pvt <- BRFSS_FileMgr$new(value)
           }
         }
         private$dataset_mgr_pvt

@@ -22,7 +22,7 @@ StatsMgr <-
       stats_pvt = c("num","den",
                     "percent","se","CI_lower","CI_upper","cv",
                     "percent_unwtd","num_wtd","den_wtd"),
-      subsets_pvt = NULL,
+      subvars_pvt = NULL,
       subpopulation_pvt = NULL,
       responses_pvt = ".*",
       exclude_pvt = c("Don?t|Refuse"),
@@ -35,7 +35,7 @@ StatsMgr <-
       combine_ci_pvt = TRUE,
       my_stats_pvt = NULL,
       reduce_pvt = FALSE,
-      subsets_only_pvt = FALSE,
+      subvars_only_pvt = FALSE,
 
       select_cols = function(df) {
 
@@ -78,7 +78,7 @@ StatsMgr <-
                             stats = NULL,
                             responses = ".*",
                             exclude = c("Don.*t|Refuse"),
-                            subsets = NULL,
+                            subvars = NULL,
                             sub_exclude = c("Don.*t|Refuse"),
                             subpopulation = NULL,
                             conf =.95,
@@ -88,7 +88,7 @@ StatsMgr <-
                             combine_ci = FALSE,
                             digits = 2,
                             reduce = FALSE,
-                            subsets_only = FALSE) {
+                            subvars_only = FALSE) {
 
 
         if(!is.null(data_mgr)) {
@@ -106,7 +106,7 @@ StatsMgr <-
         private$years_pvt <- years
         private$responses_pvt <- responses
         private$exclude_pvt <- exclude
-        private$subsets_pvt <-subsets
+        private$subvars_pvt <-subvars
         private$subpopulation_pvt <- subpopulation
         private$sub_exclude_pvt <- sub_exclude
         private$conf_pvt <-conf
@@ -116,7 +116,7 @@ StatsMgr <-
         private$combine_ci_pvt <- combine_ci
         private$digits_pvt <- digits
         private$reduce_pvt <- reduce
-        private$subsets_only_pvt <-subsets_only
+        private$subvars_only_pvt <-subvars_only
 
         if(is.null(stats))
           private$my_stats_pvt <- private$stats_pvt
@@ -125,9 +125,9 @@ StatsMgr <-
 
       },
 
-      add_subset = function(subset) {
+      add_subvar = function(subvar) {
 
-        self$subsets <- c(self$subsets, subset)
+        self$subvars <- c(self$subvars, subvar)
 
       },
 
@@ -215,8 +215,8 @@ StatsMgr <-
         )
       },
 
-      survey_stats_one = function(coi = NULL, weighted = NULL, subsets = NULL,
-                                  pct = NULL, digits = NULL, subsets_only = NULL,
+      survey_stats_one = function(coi = NULL, weighted = NULL, subvars = NULL,
+                                  pct = NULL, digits = NULL, subvars_only = NULL,
                                   reduce = NULL, combine_ci = NULL, wide = FALSE) {
 
         pvt <- private
@@ -224,8 +224,15 @@ StatsMgr <-
         cois <- coi %||% pvt$cois_pvt
         pct <- pct %||% pvt$pct_pvt
         digits <- digits %||% pvt$digits_pvt
-        subsets <- subsets %||% pvt$subsets_pvt
-        subsets_only <- subsets_only %||% pvt$subsets_only_pvt
+
+        if(length(subvars) == 1 && is.na(subvars)) {
+          subvars  <-  NULL
+          subvars_only <- FALSE
+        } else {
+          subvars <- subvars %||% pvt$subvars_pvt
+          subvars_only <- subvars_only %||% pvt$subvars_only_pvt
+        }
+
 
         if(is.null(coi) || nchar(coi) == 0 || length(coi) == 0) {
           message("must select a valid column of interest (coi)")
@@ -241,7 +248,7 @@ StatsMgr <-
           df_data = data,
           coi = coi,
           exclude = pvt$exclude_pvt,
-          subsets = subsets,
+          subvars = subvars,
           subset_by = pvt$subset_by_pvt,
           sub_exclude = pvt$sub_exclude_pvt,
           conf = pvt$conf_pvt,
@@ -262,7 +269,7 @@ StatsMgr <-
 
         if(wide) df <- self$widen(df)
 
-        if(subsets_only) {
+        if(subvars_only) {
           df <- df %>% filter(subvar != "")
         }
 
@@ -378,11 +385,11 @@ StatsMgr <-
 
       },
 
-      subsets = function(value) {
+      subvars = function(value) {
 
-        if(missing(value)) return(private$subsets_pvt)
+        if(missing(value)) return(private$subvars_pvt)
 
-        private$subsets_pvt <- value
+        private$subvars_pvt <- value
 
       },
 
@@ -434,11 +441,11 @@ StatsMgr <-
 
       },
 
-      subsets_only = function(value) {
+      subvars_only = function(value) {
 
-        if(missing(value)) return(private$subsets_only_pvt)
+        if(missing(value)) return(private$subvars_only_pvt)
 
-        private$subsets_only_pvt <- value
+        private$subvars_only_pvt <- value
 
       },
 

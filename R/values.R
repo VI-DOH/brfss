@@ -741,8 +741,8 @@ make_factors <- function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
 
           x <- df_brfss[[col]]
 
-          if(all(orrr::is.integer_like(levels))) levels <- as.integer(levels)
-          if(orrr::is.integer_like(x)) x <- as.integer(x)
+          if(all(is.integer_like(levels))) levels <- as.integer(levels)
+          if(is.integer_like(x)) x <- as.integer(x)
 
 
           atts_mgr <- Attributes_Mgr$new(a)

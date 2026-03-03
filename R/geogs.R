@@ -93,7 +93,7 @@ geog_name <- function(geogs) {
 
   if(is.factor(geogs) | is.character(geogs) ) {
     geogs <- tolower(as.character(geogs))
-  } else  if(orrr::is.integer_like(geogs)) {
+  } else  if(is.integer_like(geogs)) {
     geogs <- as.integer(geogs)
   }
 
@@ -151,7 +151,7 @@ geog_abb <- function(geogs) {
 
   if(is.factor(geogs) | is.character(geogs) ) {
     geogs <- tolower(as.character(geogs))
-  } else  if(orrr::is.integer_like(geogs)) {
+  } else  if(is.integer_like(geogs)) {
     geogs <- as.integer(geogs)
   }
 
@@ -201,7 +201,7 @@ geog_id <- function(geogs) {
   if(is.factor(geogs) | is.character(geogs) ) {
     geogs <- tolower(as.character(geogs))
 
-  } else  if(orrr::is.integer_like(geogs))
+  } else  if(is.integer_like(geogs))
   {
     geogs <- as.integer(geogs)
   }

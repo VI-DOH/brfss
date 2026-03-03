@@ -112,7 +112,7 @@ brfss_geog_data <- function() {
   df_brfss
 }
 
-coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NULL) {
+coi_data_vers<- function(df_data = NULL, coi=NULL, subvars = NULL, version = NULL) {
 
   stratum <- apply.pattern("stratum_col")
 
@@ -124,12 +124,12 @@ coi_data_vers<- function(df_data = NULL, coi=NULL, subsets = NULL, version = NUL
 
   df_data %>%
     dplyr::rename(STRATUM = {{stratum}}) %>%
-    dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subsets)) %>%
+    dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subvars)) %>%
     dplyr::mutate(vers = {{version}})
 
 }
 
-coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$",
+coi_data <- function(df_data=NULL, coi = NULL, subvars = NULL, exclude = "^$",
                      weight_col = "FINAL_WT") {
 
 
@@ -141,7 +141,7 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$",
   #     browser()
   #     df_brfss <<- df_brfss %>%
   #       bind_rows(coi_data_vers(df_data = df_data,
-  #                               coi = coi, subsets = subsets,
+  #                               coi = coi, subvars = subvars,
   #                               version = ver))
   #   })
   # )
@@ -149,7 +149,7 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$",
 
   df_brfss <- purrr::map(0:highest_version(),function(ver) {
     coi_data_vers(df_data = df_data,
-                  coi = coi, subsets = subsets,
+                  coi = coi, subvars = subvars,
                   version = ver)
   })
 
@@ -174,7 +174,7 @@ coi_data <- function(df_data=NULL, coi = NULL, subsets = NULL, exclude = "^$",
   df_brfss <- df_brfss %>%
     dplyr::left_join(df_resp, by = c("vers" = "version")) %>%
     dplyr::mutate(FINAL_WT = FINAL_WT * pct) %>%
-    dplyr::select(matches(coi), FINAL_WT, STRATUM, all_of(subsets))%>%
+    dplyr::select(matches(coi), FINAL_WT, STRATUM, all_of(subvars))%>%
     dplyr::rename(coi = {{coi}})%>%
     dplyr::mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
     filter(!is.na(coi))

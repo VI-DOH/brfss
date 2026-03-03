@@ -455,7 +455,8 @@ my.brfss.init <- function() {
 
       # turn year into an integer and resave
 
-      if(!orrr::is.integer_like(year)) {
+      #      if(!is.integer_like(year)) {
+      if(!grepl("^[12][0-9]{3}$", year)) {
         year <- lubridate::year(Sys.Date()) - 1
       } else {
         year <- as.integer(year)
@@ -496,7 +497,7 @@ my.brfss.init <- function() {
 
   my_brfss$month$on_change <- function(month) {
 
-    if(orrr::is.integer_like(month)) {
+    if(is.integer_like(month)) {
 
       month <-  as.integer(month)
 

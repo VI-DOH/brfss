@@ -229,3 +229,28 @@ find_column <- function(pattern, field = "col_name") {
   get.layout() %>% filter(grepl(pattern, get(field), ignore.case = TRUE)) %>% select(col_name, label)
 
 }
+
+is.integer_like <- function(x) {
+
+  ret <- FALSE
+  if(is.numeric(x)) {
+    return(TRUE)
+  } else if(is.character(x)){
+    tryCatch(
+      {
+        x1 <- as.integer(x)
+        return(!is.na(x1))
+      },
+      warning = function(cond) {
+        return(FALSE)
+      }
+
+    )
+
+
+  } else {
+    return(FALSE)
+  }
+  ret
+
+}
