@@ -168,6 +168,7 @@ survey_stats <- function(df_data = NULL,
                              deff=F)
 
 
+
       stats_w_subs(des, pct = pct, digits = digits, conf = conf)
 
     }) %>% bind_rows()
@@ -333,15 +334,19 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     remove_coi(coi) %>%
     mutate(subset = gsub("(.*)[:](.*)","\\1", response)) %>%
     mutate(response = gsub("(.*)[:](.*)","\\2", response)) %>%
-    mutate(across(where(is.numeric), ~ . * mult)) %>%
-    mutate(across(where(is.numeric), round, digits))
+    mutate(across(where(is.numeric),
+        ~ round(.x * mult, digits)
+      )
+    )
 
   df_stats <- as.data.frame(mysvymean) %>%
     rename_with(~gsub(coi,"",.x)) %>%
     rename_with(~gsub("`","",.x))  %>%
-    mutate(across(where(is.numeric), ~ . * mult)) %>%
-    mutate(across(where(is.numeric), round, digits))%>%
-    tidyr::pivot_longer(
+    mutate(across(where(is.numeric),
+                  ~ round(.x * mult, digits)
+    )) %>%
+
+  tidyr::pivot_longer(
       cols = -all_of(subvar),
       names_to = "response",
       values_to = "value"
@@ -389,14 +394,16 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
   mycv <- cv(mysvymean)%>% t()
   mycv <- data.frame(response = dimnames(mycv)[[2]] %>% gsub(coi,"",.),
                      cv = mycv %>% as.numeric()) %>%
-    mutate(across(where(is.numeric), ~ . * mult)) %>%
-    mutate(across(where(is.numeric), round, digits))
+    mutate(across(where(is.numeric),
+                  ~ round(.x * mult, digits)
+    ))
 
 
   myci <- svyci(mysvymean = mysvymean, conf = conf) %>%
     remove_coi(coi) %>%
-    mutate(across(where(is.numeric), ~ . * mult)) %>%
-    mutate(across(where(is.numeric), round, digits))
+    mutate(across(where(is.numeric),
+                  ~ round(.x * mult, digits)
+    ))
 
   mysvymean <- mysvymean %>%
     as.data.frame() %>%
@@ -406,8 +413,9 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     rename(percent = mean) %>%
     relocate(response) %>%
     tibble::remove_rownames() %>%
-    mutate(across(where(is.numeric), ~ . * mult)) %>%
-    mutate(across(where(is.numeric), round, digits))
+    mutate(across(where(is.numeric),
+                  ~ round(.x * mult, digits)
+    ))
 
   mysvytotal <- survey::svytotal(frmla,des,na.rm = T,deff = F) %>%
     as.data.frame() %>%

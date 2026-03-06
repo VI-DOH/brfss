@@ -197,6 +197,18 @@ DataMgr <-
 
       },
 
+      has_data = function(value) {
+
+        if(!missing(value)) {
+          message("this property is read-only")
+          return(NULL)
+        }
+
+        !is.null(self$prepped_data)
+
+
+      },
+
       prepped_data = function(value) {
 
         if(!missing(value)) {

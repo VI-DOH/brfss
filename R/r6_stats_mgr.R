@@ -179,7 +179,11 @@ StatsMgr <-
 
           private$data_mgr_pvt$dataset_mgr$set(year = year)
 
+          if(!private$data_mgr_pvt$has_data) return(NULL)
+
           df <- self$survey_stats_one(coi = coi, ...)
+
+          if(is.null(df)) return(NULL)
 
           df <- df %>%
             mutate(year = .env$year)
@@ -187,7 +191,11 @@ StatsMgr <-
           multi_attrs <<- df %>% attributes()
 
           df
-        }) %>% bind_rows() %>%
+        }) %>% bind_rows()
+
+        if(is.null(df_stats) || nrow(df_stats) == 0) return(NULL)
+
+        df_stats <- df_stats%>%
           relocate(year)
 
         response <- df_stats %>% pull(response) %>% unique()
@@ -256,6 +264,8 @@ StatsMgr <-
           weight_col = pvt$weight_col_pvt,
           pct = pct,
           digits = digits)
+
+        if(is.null(df)) return(NULL)
 
         if(reduce) {
 
@@ -554,7 +564,11 @@ MultiYearStatsMgr <-
                 multi_attrs <<- df %>% attributes()
 
                 df
-              }) %>% bind_rows() %>%
+              }) %>% bind_rows()
+
+              if(is.null(df_stats)) return(NULL)
+
+              df_stats <- df_stats %>%
                 relocate(year)
 
               response <- df_stats %>% pull(response) %>% unique()
