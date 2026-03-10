@@ -124,7 +124,7 @@ coi_data_vers<- function(df_data = NULL, coi=NULL, subvars = NULL, version = NUL
 
   df_data %>%
     dplyr::rename(STRATUM = {{stratum}}) %>%
-    dplyr::select(all_of(coi), FINAL_WT, STRATUM, all_of(subvars)) %>%
+    dplyr::select(all_of(coi), FINAL_WT, STRATUM, any_of(subvars)) %>%
     dplyr::mutate(vers = {{version}})
 
 }
@@ -174,7 +174,7 @@ coi_data <- function(df_data=NULL, coi = NULL, subvars = NULL, exclude = "^$",
   df_brfss <- df_brfss %>%
     dplyr::left_join(df_resp, by = c("vers" = "version")) %>%
     dplyr::mutate(FINAL_WT = FINAL_WT * pct) %>%
-    dplyr::select(matches(coi), FINAL_WT, STRATUM, all_of(subvars))%>%
+    dplyr::select(matches(coi), FINAL_WT, STRATUM, any_of(subvars))%>%
     dplyr::rename(coi = {{coi}})%>%
     dplyr::mutate(coi = replace(coi, grep(exclude,coi),NA)) %>%
     filter(!is.na(coi))

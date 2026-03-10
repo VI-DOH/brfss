@@ -209,7 +209,7 @@ CodebookMgr <-
 
         } else {
 
-          browser()
+          #browser()
           df_values_cb <- parse_codebook_values(file = file)
         }
 

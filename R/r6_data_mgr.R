@@ -108,7 +108,7 @@ DataMgr <-
               }
 
             }, error = function(e) {
-              browser()
+              #browser()
             }
             )
 

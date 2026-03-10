@@ -175,15 +175,23 @@ StatsMgr <-
 
         multi_attrs <-  list()
 
+        # -------------------------------------------------------------------
+        #
+        #         cycle through the years
+
         df_stats <- purrr::map2(years, cois, function(year, coi) {
 
           private$data_mgr_pvt$dataset_mgr$set(year = year)
 
-          if(!private$data_mgr_pvt$has_data) return(NULL)
+          if(!private$data_mgr_pvt$has_data)  {
+            return(NULL)
+          }
 
           df <- self$survey_stats_one(coi = coi, ...)
 
-          if(is.null(df)) return(NULL)
+          if(is.null(df)) {
+            return(NULL)
+          }
 
           df <- df %>%
             mutate(year = .env$year)
@@ -227,6 +235,7 @@ StatsMgr <-
                                   pct = NULL, digits = NULL, subvars_only = NULL,
                                   reduce = NULL, combine_ci = NULL, wide = FALSE) {
 
+
         pvt <- private
 
         cois <- coi %||% pvt$cois_pvt
@@ -264,6 +273,8 @@ StatsMgr <-
           weight_col = pvt$weight_col_pvt,
           pct = pct,
           digits = digits)
+
+
 
         if(is.null(df)) return(NULL)
 

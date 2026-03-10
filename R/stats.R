@@ -50,6 +50,10 @@ survey_stats <- function(df_data = NULL,
 
   df_data <- df_data %>% rename(FINAL_WT = .env$weight_col)
 
+  subvars <- subvars[subvars %in% colnames(df_data)]
+
+  if(length(subvars) == 0) subvars <- NULL
+
   ## make sure that this column exists
 
   coi <- resolve_column(df_data, coi)
@@ -82,7 +86,9 @@ survey_stats <- function(df_data = NULL,
     return (ret)
   }
 
-  if(is.null(subvars)) {
+  subvars <- subvars[subvars %in% colnames(df_brfss)]
+
+  if(is.null(subvars) || length(subvars) == 0) {
     nsubs<-0
   } else {
     nsubs<-length(subvars)

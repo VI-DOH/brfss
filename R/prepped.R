@@ -105,6 +105,7 @@ prepped_data <- function(...) {
 
   if(func_geog %in% ls(.GlobalEnv)) {
 
+    #browser()
     df <- do.call(func_geog,args = list(df))
   }
 
