@@ -133,7 +133,7 @@ StatsMgr <-
 
       show_all_subs = function() {
 
-        self$sub_exclude <- "^$"
+        self$sub_exclude <- NULL
 
       },
 

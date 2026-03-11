@@ -203,11 +203,13 @@ survey_stats <- function(df_data = NULL,
     label <- attr(df_data[[coi]], "label")
   }
 
-  # remove "dummy" response (in case there was only one level)
+  # regex that matches nothing (negative lookahead that always fails)
+  sub_exclude <- sub_exclude %||% "(?!)"
 
+  # remove "dummy" response (in case there was only one level)
   df <- df %>%
     filter(response != "dummy") %>%
-    filter(!grepl(sub_exclude, subvar))
+    filter(!grepl(sub_exclude, subvar, perl = T))
 
   #  get the actual stat columns
 
