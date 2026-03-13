@@ -37,8 +37,35 @@ StatsMgr <-
       reduce_pvt = FALSE,
       subvars_only_pvt = FALSE,
 
-      select_cols = function(df) {
+      # suppression objects
 
+      suppress_pvt = FALSE,
+      suppress_if_pvt =  c(low_num = "num < 6", high_cv = "cv > 30"),
+
+      add_suppression = function(df, include_why = FALSE) {
+
+        rule_exprs <- purrr::map(private$suppress_if_pvt, rlang::parse_expr)
+
+        df$suppress_reason <- purrr::pmap_chr(
+          df,
+          function(...) {
+
+            row <- list(...)
+            hits <- names(rule_exprs)[
+              purrr::map_lgl(rule_exprs, ~ rlang::eval_tidy(.x, data = row))
+            ]
+            if (length(hits) == 0) NA_character_ else paste(hits, collapse = "; ")
+          }
+        )
+
+        df$suppress <- !is.na(df$suppress_reason)
+
+        if(!include_why) df <- df %>% select(-suppress_reason)
+
+        df
+      },
+
+      select_cols = function(df) {
 
         if(private$combine_ci_pvt && "ci" %in% colnames(df)) {
           df <- df %>%
@@ -160,10 +187,12 @@ StatsMgr <-
       #
       #     suvey_stats
 
-      survey_stats = function(years = NULL, cois = NULL, value = ".*", ... ){
+      survey_stats = function(years = NULL, cois = NULL, suppress = NULL,
+                              value = ".*", wide = FALSE, ... ){
 
         cois <-  cois %||% private$cois_pvt
         years <- years %||% private$years_pvt
+        suppress <- suppress %||% private$suppress_pvt
 
         if(is.null(years)) years <- private$data_mgr_pvt$dataset_mgr$get(year)
 
@@ -206,6 +235,15 @@ StatsMgr <-
         df_stats <- df_stats%>%
           relocate(year)
 
+        if(suppress) {
+          df_stats <- df_stats %>% private$add_suppression(include_why = FALSE)
+        }
+
+        df_stats <- df_stats %>% private$select_cols()
+        if(wide) df_stats <- self$widen(df_stats)
+
+
+
         response <- df_stats %>% pull(response) %>% unique()
 
         structure(df_stats,
@@ -233,7 +271,7 @@ StatsMgr <-
 
       survey_stats_one = function(coi = NULL, weighted = NULL, subvars = NULL,
                                   pct = NULL, digits = NULL, subvars_only = NULL,
-                                  reduce = NULL, combine_ci = NULL, wide = FALSE) {
+                                  reduce = NULL, combine_ci = NULL) {
 
 
         pvt <- private
@@ -285,10 +323,8 @@ StatsMgr <-
             rename_with(.fn = ~gsub("_wtd","", .x))
         }
 
-        df <- df %>% private$select_cols()
-        df <- df %>% filter(grepl(self$responses, response))
 
-        if(wide) df <- self$widen(df)
+        df <- df %>% filter(grepl(self$responses, response))
 
         if(subvars_only) {
           df <- df %>% filter(subvar != "")
