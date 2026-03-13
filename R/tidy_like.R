@@ -141,6 +141,8 @@ percents <- function(df, ..., wt = NULL, my_where = NULL,
 
 }
 
+#' Print the brfss_pcts object
+#'
 #' @rdname brfss_pcts-print-format
 #' @export
 print.brfss_pcts <- function(x, ...) {

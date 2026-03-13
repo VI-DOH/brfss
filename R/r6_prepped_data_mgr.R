@@ -24,7 +24,7 @@ PreppedDataMgr <-
         private$data_mgr_pvt = data_mgr
       },
 
-      prepped_data = function() {
+      prepped_data = function(...) {
 
         brfss.params(...)
         #if(year == 2024) browser()

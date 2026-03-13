@@ -670,6 +670,8 @@ pattern_params <- function() {
   pats
 }
 
+#' @  Not sure about this
+#'
 #' @rdname do_thing
 #' @export
 my.brfss.patterns <- pattern_params
