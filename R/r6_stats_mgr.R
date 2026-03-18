@@ -16,6 +16,7 @@ StatsMgr <-
 
     private = list(
       data_mgr_pvt = NULL,
+      suppression_mgr_pvt = NULL,
       years_pvt = NULL,
       cois_pvt = NULL,
       cols_req_pvt = c("subvar","subset","response"),
@@ -40,30 +41,7 @@ StatsMgr <-
       # suppression objects
 
       suppress_pvt = FALSE,
-      suppress_if_pvt =  c(low_num = "num < 6", high_cv = "cv > 30"),
-
-      add_suppression = function(df, include_why = FALSE) {
-
-        rule_exprs <- purrr::map(private$suppress_if_pvt, rlang::parse_expr)
-
-        df$suppress_reason <- purrr::pmap_chr(
-          df,
-          function(...) {
-
-            row <- list(...)
-            hits <- names(rule_exprs)[
-              purrr::map_lgl(rule_exprs, ~ rlang::eval_tidy(.x, data = row))
-            ]
-            if (length(hits) == 0) NA_character_ else paste(hits, collapse = "; ")
-          }
-        )
-
-        df$suppress <- !is.na(df$suppress_reason)
-
-        if(!include_why) df <- df %>% select(-suppress_reason)
-
-        df
-      },
+      suppress_if_pvt = NULL,
 
       select_cols = function(df) {
 
@@ -99,10 +77,10 @@ StatsMgr <-
 
     public = list(
 
-      initialize = function(data_mgr = NULL,
+      initialize = function(data_mgr = NULL, suppression_mgr = NULL,
                             years = NULL,
                             cois = "",
-                            stats = NULL,
+                            stats = "percent",
                             responses = ".*",
                             exclude = c("Don.*t|Refuse"),
                             subvars = NULL,
@@ -115,7 +93,8 @@ StatsMgr <-
                             combine_ci = FALSE,
                             digits = 2,
                             reduce = FALSE,
-                            subvars_only = FALSE) {
+                            subvars_only = FALSE,
+                            suppress = FALSE) {
 
 
         if(!is.null(data_mgr)) {
@@ -125,6 +104,17 @@ StatsMgr <-
         } else {
 
           private$data_mgr_pvt <- DataMgr$new()
+
+        }
+
+        if(!is.null(suppression_mgr)) {
+
+          if(inherits(suppression_mgr, "SuppressionMgr"))
+            private$suppression_mgr_pvt <- suppression_mgr
+
+        } else {
+
+          private$suppression_mgr_pvt <- DefaultSuppressionMgr$new()
 
         }
 
@@ -144,6 +134,7 @@ StatsMgr <-
         private$digits_pvt <- digits
         private$reduce_pvt <- reduce
         private$subvars_only_pvt <-subvars_only
+        private$suppress_pvt <- suppress
 
         if(is.null(stats))
           private$my_stats_pvt <- private$stats_pvt
@@ -187,7 +178,7 @@ StatsMgr <-
       #
       #     suvey_stats
 
-      survey_stats = function(years = NULL, cois = NULL, suppress = NULL,
+      survey_stats = function(years = NULL, cois = NULL, suppress = NULL, expand = FALSE,
                               value = ".*", wide = FALSE, ... ){
 
         cois <-  cois %||% private$cois_pvt
@@ -236,10 +227,11 @@ StatsMgr <-
           relocate(year)
 
         if(suppress) {
-          df_stats <- df_stats %>% private$add_suppression(include_why = FALSE)
+          df_stats <- df_stats %>% private$supression_mgr_pvt$suppress()
         }
 
-        df_stats <- df_stats %>% private$select_cols()
+        if(!expand) df_stats <- df_stats %>% private$select_cols()
+
         if(wide) df_stats <- self$widen(df_stats)
 
 
@@ -393,6 +385,19 @@ StatsMgr <-
         }
 
       },
+
+      suppression_mgr = function(value) {
+
+        if(missing(value)) return(private$suppression_mgr_pvt)
+
+        if(inherits(value, "SuppressionMgr")) {
+          private$suppression_mgr_pvt <- value
+        } else {
+          message("value ust be a SuppressionMgr object")
+
+        }
+      },
+
       #
       # survey_data = function(value) {
       #
@@ -524,6 +529,19 @@ StatsMgr <-
 
         }
         private$combine_ci_pvt <- value
+
+      },
+
+      suppress = function(value) {
+
+        if(missing(value)) return(private$suppress_pvt)
+
+        if(!is.logical(value)) {
+          message("This property requires a logical value")
+          return(NULL)
+
+        }
+        private$suppress_pvt <- value
 
       },
 
