@@ -38,6 +38,7 @@ survey_stats <- function(df_data = NULL,
   require(dplyr, quietly = T, warn.conflicts = F)
 
 
+
   if(any(grepl("brfss_prepped|brfss_data",class(df_data)))) {
 
     year <- df_data %>% attr("year")
@@ -81,7 +82,10 @@ survey_stats <- function(df_data = NULL,
   df_brfss <- coi_data(df_data = df_data, coi = coi, subvars = subvars,
                        exclude = exclude)
 
+
   test <- df_brfss %>% pull(.env$coi)
+
+  if(all(is.na(test))) return(NULL)
 
   if(!(is.factor(test) && length(levels(test))>1) ) {
     #return(NULL)

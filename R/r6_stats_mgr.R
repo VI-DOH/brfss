@@ -237,6 +237,7 @@ StatsMgr <-
 
 
         response <- df_stats %>% pull(response) %>% unique()
+        years_txt  <-  if(length(years) > 0) paste0(min(years),"-", max(years)) else as.character(years)
 
         structure(df_stats,
                   class = c("brfss_stats", "data.frame"),
@@ -244,6 +245,7 @@ StatsMgr <-
                   label = attr(cois %>% tail(1), "label"),
                   years = years,
                   cois = cois,
+                  years_txt = years_txt,
                   geog = multi_attrs$geog ,
                   stat_cols = multi_attrs$stat_cols ,
                   population = multi_attrs$population ,
