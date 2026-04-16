@@ -1,8 +1,8 @@
 
 #' @export
-BRFSS_FileMgr <-
+FileMgr <-
   R6::R6Class(
-    classname = "BRFSS_FileMgr",
+    classname = "FileMgr",
 
     private = list(
       dataset_mgr_pvt = NULL,
@@ -61,7 +61,7 @@ BRFSS_FileMgr <-
           }
         } else {
 
-          private$dataset_mgr_pvt <-  DataSetMgr$new()
+          #private$dataset_mgr_pvt <-  DataSetMgr$new()
         }
 
         private$filename_pvt <- here::here("data/naming_patterns.rds")
@@ -254,8 +254,14 @@ BRFSS_FileMgr <-
           bind_rows()
 
         df
-      }
+      },
 
+      pattern_group = function(group) {
+
+        self$patterns %>%
+          filter(grepl(.env$group, group))
+
+      }
     ),
 
     active = list(

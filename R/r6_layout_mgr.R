@@ -61,7 +61,7 @@ Layout_Mgr <-
 
         private$dataset_mgr_pvt <- DataSetMgr$new()$clone()
 
-        private$file_mgr_pvt <- BRFSS_FileMgr$new(dataset_mgr = private$dataset_mgr_pvt)
+        private$file_mgr_pvt <- FileMgr$new(dataset_mgr = private$dataset_mgr_pvt)
 
         if(is.null(type))
           type <- self$get_best_type()

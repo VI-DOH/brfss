@@ -38,7 +38,6 @@ survey_stats <- function(df_data = NULL,
   require(dplyr, quietly = T, warn.conflicts = F)
 
 
-
   if(any(grepl("brfss_prepped|brfss_data",class(df_data)))) {
 
     year <- df_data %>% attr("year")

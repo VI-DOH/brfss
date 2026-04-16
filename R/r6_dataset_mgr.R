@@ -1,9 +1,9 @@
 #' DataSetMgr R6 Class
 #'
 #' @export
-DataSetMgr <-
+DataSetParams <-
   R6::R6Class(
-    classname = "DataSetMgr",
+    classname = "DataSetParams",
 
     private = list(
       p_names = character(0),
@@ -77,6 +77,7 @@ DataSetMgr <-
       },
 
       get_state = function() {
+
         list(
           params = private$params,
           dependencies = private$dependencies
@@ -94,10 +95,25 @@ DataSetMgr <-
 
     public = list(
 
-      initialize = function(filename = NULL) {
+      initialize = function(filename = NULL, ...) {
 
-        self$read(filename = filename)
-        self$set_legacy()  # remove when all conversions to R6 are complete
+        tryCatch(
+
+          expr =  {
+            self$read(filename = filename)
+            self$set(...)
+            #self$set_legacy()  # remove when all conversions to R6 are complete
+          },
+
+          error = function(e) {
+
+          },
+
+          warning = function(w) {
+
+
+          }
+        )
       },
 
       print = function() {
@@ -124,7 +140,7 @@ DataSetMgr <-
 
       add = function(p) {
 
-        private$params <- append(private$params, p)
+        private$params[[p$name]] <- p
 
         private$get_p_names()
 
@@ -142,6 +158,7 @@ DataSetMgr <-
 
         x <- self$as.list() %>% unlist()
 
+        if(is.null(x)) return(NULL)
         structure(
           x,
           class = c(class(x),"brfss_dataset")
@@ -172,6 +189,18 @@ DataSetMgr <-
 
       },
 
+      restore = function(value) {
+
+        if(missing(value) || !inherits(value, "environment")) {
+          message("list must be an <environment> object")
+          return(FALSE)
+        }
+
+        private <- value
+        return(TRUE)
+
+      },
+
       get = function(name) {
 
         nm <- rlang::as_string(rlang::ensym(name))
@@ -190,27 +219,28 @@ DataSetMgr <-
       set = function(...) {
 
         quos <- rlang::enquos(...)
-        q <- quos[1]
+        names <- names(quos)
 
-        nm <- names(q)
+        purrr::iwalk(quos, \(q, nm) {
 
-        val <- rlang::eval_tidy(q[[1]])
-        index <- which(self$names == nm)
+          val <- rlang::eval_tidy(q)
+          index <- which(self$names == nm)
 
-        if(length(index) == 0) {
+          if(length(index) == 0) {
 
-          message(paste0("<", nm, "> is not a valid parameter"))
-          return(invisible())
-        }
-        p <- private$params[[index]]
+            message(paste0("<", nm, "> is not a valid parameter"))
+            return(invisible())
+          }
+          p <- private$params[[index]]
 
-        p$set(val)
+          p$set(val)
+        })
 
         self$save()
 
       },
 
-      read = function(filename = NULL) {
+      read = function(filename = NULL, update = TRUE) {
 
         filename <- private$resolve_filename(filename)
 
@@ -220,13 +250,20 @@ DataSetMgr <-
 
           if(file_ok) {
             state <- readRDS(filename)
+          } else {
+
+            message("file for load does not exist")
+            return()
+          }
+
+          if(update) {
             private$load_state(state)
 
             private$get_p_names()
             private$get_d_names()
-          } else {
 
-            message("file for load does not exist")
+          } else {
+            return(state)
           }
 
         }
@@ -242,8 +279,6 @@ DataSetMgr <-
         state <- private$get_state()
 
         if(!is.null(filename)) saveRDS(state, file = filename)
-
-        self$set_legacy()
 
         return(!is.null(filename))
       },
@@ -295,6 +330,17 @@ DataSetMgr <-
         names(x) <- c(vnames, dnames)
 
         return(x)
+
+      },
+
+      snapshot = function(value) {
+
+        if(!missing(value)) {
+          message("this property is read-only")
+          return()
+        }
+
+        return(private)
 
       }
 
@@ -532,9 +578,14 @@ Extent_Param <- R6::R6Class(
         warning(paste0("extent must be one of <",
                        paste0(private$values_pvt, collapse = ", "),
                        ">"))
-      }
+        message("Setting extent to ",  private$values_pvt[1])
+        private$value_pvt <- private$values_pvt[1]
 
-      private$value_pvt <- extent
+      } else {
+
+        private$value_pvt <- extent
+
+      }
     },
 
     on_null = function() {
@@ -579,9 +630,12 @@ Source_Param <- R6::R6Class(
       if(!source %in% private$values_pvt) {
         warning(paste0("source must be one of <",
                        paste0(private$values_pvt, collapse = ", "), ">"))
-      }
+        message("Setting source to ",  private$values_pvt[1])
+        private$value_pvt <- private$values_pvt[1]
+      } else {
 
-      private$value_pvt <- source
+        private$value_pvt <- source
+      }
 
     },
 
@@ -985,8 +1039,9 @@ Geog_Param <- R6::R6Class(
 
     initialize = function(geog) {
 
+      private$geog_mgr <- GeogMgr$new()
 
-      if(missing(geog)) geog <- my_geog()
+      if(missing(geog) || is.null(geog) || geog == "") geog <-  private$geog_mgr$abbrev
 
       super$initialize(name = "geog",
                        value = geog,
@@ -998,6 +1053,8 @@ Geog_Param <- R6::R6Class(
   ),
 
   private = list(
+
+    geog_mgr = NULL,
 
     on_change = function(geog) {
 
@@ -1035,15 +1092,28 @@ Geog_Param <- R6::R6Class(
 #' DataSetMgr DataR6 Class
 #'
 #' @export
-DataSetParams <-
+DataSetMgr <-
   R6::R6Class(
-    classname = "DataSetParams",
-    inherit = DataSetMgr,
+    classname = "DataSetMgr",
+    inherit = DataSetParams,
 
     public = list(
       initialize = function(year = NULL, geog = NULL, extent = NULL,
                             source = NULL, version = 0,
                             weight = NULL, weighting = NULL) {
+
+
+
+
+        x <- self$read(update = FALSE)
+
+        year = year %||% x$params[["year"]]$value
+        geog = geog %||% x$params[["geog"]]$value
+        extent = extent %||% x$params[["extent"]]$value
+        source = source %||% x$params[["source"]]$value
+        version = 0
+        weight = weight %||% x$params[["weight"]]$value
+        weighting = weighting %||% x$params[["weighting"]]$value
 
         super$add(Year_Param$new(year = year))
         super$add(Extent_Param$new(extent = extent))
@@ -1066,13 +1136,18 @@ DataSetParams <-
 LocalDataSetMgr <-
   R6::R6Class(
     classname = "LocalDataSetMgr",
-    inherit = DataSetParams,
+    inherit = DataSetMgr,
 
     public = list(
-      initialize = function(year = NULL, version = 0) {
+      initialize = function(year = NULL, version = 0, geog = NULL) {
+
+        if(is.null(geog)) {
+          gm <- GeogMgr$new()
+          geog <- gm$abbrev
+        }
 
         super$initialize(year = year, extent = "local", source = "ascii",
-                         geog = "VI", version = version)
+                         geog = geog, version = version)
 
 
       }
@@ -1086,7 +1161,7 @@ LocalDataSetMgr <-
 PublicDataSetMgr <-
   R6::R6Class(
     classname = "PublicDataSetMgr",
-    inherit = DataSetParams,
+    inherit = DataSetMgr,
 
     public = list(
 

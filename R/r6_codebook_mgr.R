@@ -21,9 +21,84 @@ CodebookMgr <-
           private$dataset_mgr_pvt <- LocalDataSetMgr$new()
         }
 
-        private$file_mgr_pvt <- BRFSS_FileMgr$new(dataset_mgr = dataset_mgr)
+        private$file_mgr_pvt <- FileMgr$new(dataset_mgr = dataset_mgr)
 
 
+      },
+
+      download_codebook = function(fldrout = NULL, year = NULL) {
+
+        file_mgr <- private$file_mgr_pvt
+        dataset_mgr <- private$dataset_mgr_pvt
+
+        dataset <- dataset_mgr$as.list()
+
+        if(!is.null(year)) dataset_mgr$set(year = year)
+
+        if(dataset$extent != "public") {
+
+          stop(paste0("extent must be 'public'. local codebooks are not ",
+                      "downloaded from the CDC BRFSS website."))
+
+        }
+
+        ##  URL patterns are stored under the group  "codebook_downloads"
+
+        pats <- file_mgr$pattern_group("codebook_downloads") %>% pull(name)
+
+        ## get storage location for the codebook
+        ##    GEOG is not needed unless the user changes the folder pattern
+        ##    but is included here in case
+
+        if(is.null(fldrout)) fldrout <- file_mgr$apply("codebook_folder")
+
+        fldrout <- gsub("([^[/])$","\\1/",fldrout)
+
+        ext <- file_mgr$apply("codebook_ext")
+
+        ## create the folder/dir if it does not exist
+
+        if(!dir.exists(fldrout)) dir.create(fldrout, recursive = TRUE)
+
+        ## for each pattern possibility (only one will succeed)
+        ##  still looking for a clean way to suppress the fails but
+        ##    report on the success
+
+
+        invisible(
+          sapply(pats,function(pat) {
+
+            url <- file_mgr$apply(pat)
+
+            ext <- gsub(".*([.].*)", "\\1", url)
+
+            fileout <- file_mgr$apply("codebook_file")
+            fileout <- paste0(fileout,ext)
+            destfile <- paste0(fldrout,fileout)
+
+            status <- httr::HEAD(url)$status
+
+            if(status==200) {
+
+              to <- getOption("timeout")
+              options(timeout = 180)
+
+              download.file(url = url,destfile = destfile,
+                            method = "libcurl",quiet = F, mode = "wb")
+
+              options(timeout = to)
+
+              if(ext == ".zip") {
+                dir <- dirname(destfile)
+                unzip(destfile, exdir = dir)
+                file.remove(destfile)
+              }
+
+              # this may be necessary
+              # set.pattern("codebook_ext", gsub("[.]","",ext))
+            }
+          })
+        )
       },
 
       process_codebook = function() {
@@ -246,7 +321,7 @@ CodebookMgr <-
         if(!missing(value)) {
           if(inherits(value, "DataSetMgr")) {
             private$dataset_mgr_pvt <-  value
-            private$patterns_mgr_pvt <- BRFSS_FileMgr$new(value)
+            private$patterns_mgr_pvt <- FileMgr$new(value)
           }
         }
         private$dataset_mgr_pvt

@@ -51,11 +51,11 @@ DataMgr <-
         }
 
         if(!is.null(file_mgr)) {
-          if(inherits(file_mgr, "BRFSS_FileMgr")) {
-            private$file_mgr_pvt <- BRFSS_FileMgr$new(private$dataset_mgr_pvt)
+          if(inherits(file_mgr, "FileMgr")) {
+            private$file_mgr_pvt <- FileMgr$new(private$dataset_mgr_pvt)
           }
         } else {
-          private$file_mgr_pvt <- BRFSS_FileMgr$new(private$dataset_mgr_pvt)
+          private$file_mgr_pvt <- FileMgr$new(private$dataset_mgr_pvt)
 
         }
         #layout_mgr_pvt <- Layout_Mgr$new()
@@ -151,6 +151,8 @@ DataMgr <-
           arrange(year)
       },
 
+
+
       my_public_geogs = function(year = NULL) {
 
         p <- private
@@ -206,6 +208,17 @@ DataMgr <-
 
         !is.null(self$prepped_data)
 
+
+      },
+
+      to_csv = function(filename) {
+
+        if(missing(filename)) {
+          message("You must specify a filename")
+          return()
+        }
+        df <- self$data()
+        df %>% write.csv(filename)
 
       },
 
@@ -287,7 +300,7 @@ DataMgr <-
         if(!missing(value)) {
           if(inherits(value, "DataSetMgr")) {
             private$dataset_mgr_pvt <-  value
-            private$file_mgr_pvt <- BRFSS_FileMgr$new(value)
+            private$file_mgr_pvt <- FileMgr$new(value)
           }
         }
         private$dataset_mgr_pvt
@@ -320,3 +333,61 @@ DataMgr <-
     )
   )
 
+
+
+#' Data_Mgr R6 Class
+#'
+#' @export
+PublicDataMgr <-
+  R6::R6Class(
+    classname = "PublicDataMgr",
+    inherit = DataMgr,
+
+    private = list(
+    ),
+
+    public = list(
+
+      initialize = function(...) {
+
+        super$initialize(...)
+
+      },
+
+      state_counts = function() {
+
+        dataset_mgr <- PublicDataSetMgr$new()
+
+        dataset_mgr$set(year = 2024)
+        dataset_mgr$set(geog_flag = "off")
+
+
+        data_mgr <- DataMgr$new(dataset_mgr = dataset_mgr)
+
+        df_records <- purrr::map(0:3, \(version) {
+
+          dataset_mgr$set(version = version)
+
+
+          data_mgr$data %>% summarise(n = n(), .by = c(`_STATE`)) %>%
+            mutate(version = .env$version)
+
+
+        }) %>%
+          bind_rows()
+
+        df_records %>%
+          left_join(df_geogs, by = join_by(`_STATE` == Id)) %>%
+          select(geog = Abbrev, version, n)
+
+        df_records
+
+
+
+      }
+    ),
+
+    active = list(
+
+    )
+  )
