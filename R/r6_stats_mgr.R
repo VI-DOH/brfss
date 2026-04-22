@@ -232,11 +232,14 @@ StatsMgr <-
 
         if(!expand) df_stats <- df_stats %>% private$select_cols()
 
-        if(wide) df_stats <- self$widen(df_stats)
-
-
-
         response <- df_stats %>% pull(response) %>% unique()
+
+        if(wide) {
+
+          df_stats <- self$widen(df_stats)
+
+        }
+
         years_txt  <-  if(length(years) > 0) paste0(min(years),"-", max(years)) else as.character(years)
 
         structure(df_stats,
@@ -331,6 +334,7 @@ StatsMgr <-
       widen = function(df_stats = NULL, coi = NULL, sep_char = "^") {
 
         stats <- StatsMgr$stats_names() %>%
+          setdiff("den") %>%
           paste0(., collapse = "$|^") %>%
           paste0("^", ., "$")
 
@@ -340,12 +344,11 @@ StatsMgr <-
 
         }
 
-
         df_wide <- df_stats %>%
           tidyr::pivot_wider(names_from = c(matches("response|year")),
-                             id_cols = c(subvar, subset),
+                             id_cols = any_of(c("subvar", "subset", "den")),
                              values_from =  c(matches(stats)), names_vary = "slowest",
-                             names_sep = "^") %>%
+                             names_sep = sep_char) %>%
           as.data.frame()
 
         df_wide

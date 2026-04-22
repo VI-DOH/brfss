@@ -52,7 +52,7 @@ GeogMgr <-
 
       my_geog_filename = "my_geog.rds",
 
-      initialize = function() {
+      initialize = function(geogs_path = NULL) {
 
         fm <- FileMgr$new()
         geogs_path <- fm$apply("geogs_path")
@@ -147,7 +147,7 @@ GeogMgr <-
 
         if(!p$is_abbrev(value)) {
 
-          message("invalid abbreviation")
+          message(paste0("'", value, "' is an invalid abbreviation"))
           return()
         }
 

@@ -1130,6 +1130,15 @@ DataSetMgr <-
     )
   )
 
+#' @export
+DataSetMgr$current <- function() {
+
+  ds <- DataSetMgr$new()
+  ds$as.vector()
+
+
+}
+
 #' DataSetMgr DataR6 Class
 #'
 #' @export
