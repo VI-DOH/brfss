@@ -1,11 +1,10 @@
 
-library(R6)
 
 #' Layout_Mgr R6 Class
 #'
 #' @export
 Layout_Mgr <-
-  R6Class(
+  R6::R6Class(
     classname = "Layout_Mgr",
 
     private = list(
@@ -475,7 +474,7 @@ Layout_Mgr <-
 
 #' @export
 DataLayout_Mgr <-
-  R6Class(
+  R6::R6Class(
     classname = "DataLayout_Mgr",
     inherit = Layout_Mgr,
 

@@ -1,6 +1,7 @@
-#' DataSetMgr R6 Class
-#'
-#' @export
+#' @title DatasetParams
+#' @description A class for a collection of parameters for interacting with BRFSS data.
+#' @family BRFSS Dataset
+#' #' @export
 DataSetParams <-
   R6::R6Class(
     classname = "DataSetParams",
@@ -347,7 +348,10 @@ DataSetParams <-
     )
   )
 
-
+#' @title Dataset_Param
+#' @description A class for a single parameter for interacting with BRFSS data.
+#'   Examples of parameters are year, source, extent, and geog
+#' @family BRFSS Dataset
 Dataset_Param <-
   R6::R6Class(
     classname = "Dataset_Param",
@@ -457,6 +461,11 @@ Dataset_Param <-
 
   )
 
+#' @title BRFSS_DependentParam
+#' @description A class for a single parameter dependent on other paranters for interacting with BRFSS data.
+#'   Examples of a dependent parameter is yr which is a two-digit represntation of parameter year
+#' @family BRFSS Dataset
+#'
 BRFSS_DependentParam <-
   R6::R6Class(
     classname = "BRFSS_DependentParam",
@@ -1008,11 +1017,11 @@ Phone_Param <- R6::R6Class(
       if(is.character(phone)) {
 
         if(!phone %in% c("cell","land", "comb")) {
-          message("bad argument for <phone>, setting default: on")
+          message("bad argument for <phone>, setting default: comb")
           phone <- "comb"
         }
       } else {
-        message("bad argument for <phone>, setting default: on")
+        message("bad argument for <phone>, setting default: comb")
         phone <- "comb"
 
       }
@@ -1039,9 +1048,12 @@ Geog_Param <- R6::R6Class(
 
     initialize = function(geog) {
 
-      private$geog_mgr <- GeogMgr$new()
+      if(missing(geog) || is.null(geog) || geog == "") {
 
-      if(missing(geog) || is.null(geog) || geog == "") geog <-  private$geog_mgr$abbrev
+        private$geog_mgr <- GeogMgr$new()
+
+       geog <-  private$geog_mgr$abbrev
+      }
 
       super$initialize(name = "geog",
                        value = geog,
@@ -1091,6 +1103,8 @@ Geog_Param <- R6::R6Class(
 
 #' DataSetMgr DataR6 Class
 #'
+#' @family BRFSS Tools
+#' @family BRFSS Dataset
 #' @export
 DataSetMgr <-
   R6::R6Class(
@@ -1101,8 +1115,6 @@ DataSetMgr <-
       initialize = function(year = NULL, geog = NULL, extent = NULL,
                             source = NULL, version = 0,
                             weight = NULL, weighting = NULL) {
-
-
 
 
         x <- self$read(update = FALSE)
@@ -1140,6 +1152,8 @@ DataSetMgr$current <- function() {
 }
 
 #' DataSetMgr DataR6 Class
+#' @family BRFSS Tools
+#' @family BRFSS Dataset
 #'
 #' @export
 LocalDataSetMgr <-
@@ -1165,6 +1179,8 @@ LocalDataSetMgr <-
   )
 
 #' DataSetMgr DataR6 Class
+#' @family BRFSS Tools
+#' @family BRFSS Dataset
 #'
 #' @export
 PublicDataSetMgr <-

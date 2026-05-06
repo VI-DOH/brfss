@@ -103,9 +103,9 @@ CodebookMgr <-
 
       process_codebook = function() {
 
-        save_codebook()
+        self$save_codebook()
 
-        save_codebook_values()
+        self$save_codebook_values()
 
       },
 
@@ -118,7 +118,7 @@ CodebookMgr <-
 
         if(is.null(file)) {
 
-          file <- codebook_file()
+          file <- self$codebook_file()
         }
 
         if(!file.exists(file)) {
@@ -176,12 +176,17 @@ CodebookMgr <-
 
       },
 
+# get the name of the file after testing for different extensions
 
       codebook_file = function() {
 
         exts <- c("pdf", "txt", "rtf", "html")
 
+        #  get the folder
+
         fldr <- private$file_mgr_pvt$apply("codebook_folder")
+
+        # get all filenames
 
         files <- list.files(fldr)
 
@@ -285,7 +290,8 @@ CodebookMgr <-
         } else {
 
           #browser()
-          df_values_cb <- parse_codebook_values(file = file)
+          lines <- self$read_codebook()
+          df_values_cb <- parse_codebook_values(lines = lines)
         }
 
         df_values_cb

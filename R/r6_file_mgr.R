@@ -53,15 +53,15 @@ FileMgr <-
 
     public = list(
 
-      initialize = function(dataset_mgr = NULL) {
+      initialize = function(dataset_mgr = NULL, simple = FALSE) {
 
         if(!is.null(dataset_mgr)) {
           if(inherits(dataset_mgr, "DataSetMgr")) {
             private$dataset_mgr_pvt <-  dataset_mgr
           }
-        } else {
+        } else if(!simple) {
 
-          #private$dataset_mgr_pvt <-  DataSetMgr$new()
+          private$dataset_mgr_pvt <-  DataSetMgr$new()
         }
 
         private$filename_pvt <- here::here("data/naming_patterns.rds")
@@ -117,23 +117,6 @@ FileMgr <-
 
       },
 
-      # apply = function(name,  ...) {
-      #
-      #   pats <- self$get(name = name)
-      #
-      #   pats <- sapply(pats, function(pat) {
-      #     #pat <- get.pattern(name)
-      #     browser()
-      #     self$expand(pat)
-      #   })
-      #
-      #   pats <- unname(pats)
-      #
-      #   pats <- self$patternize(pats)
-      #
-      #   pats
-      #
-      # },
 
       apply = function(name) {
 

@@ -110,7 +110,7 @@ stretch_values <- function(lines) {
 #' @export
 #'
 #' @examples
-parse_codebook_values <- function(file=NULL) {
+parse_codebook_values_SAVE <- function(file=NULL) {
   require(dplyr)
 
   year <- brfss.param(year)
@@ -122,9 +122,26 @@ parse_codebook_values <- function(file=NULL) {
 
 
   value_lines <- grep(".*Value.*Value.Label", lines)
+
+  browser()
+
   if(length(value_lines) == 0) {
     lines <- stretch_values(lines)
     value_lines <- grep(".*Value.*Value.Label", lines)
+  }
+
+  if(length(value_lines) == 0) {
+
+    pttrn <- paste0("^(Value Label[[:space:]]",
+                    "|Frequency[[:space:]]",
+                    "|Percentage[[:space:]]",
+                    ")")
+
+    hdr_lines <- grep(pttrn, lines)
+    lines <- lines[-hdr_lines]
+
+    value_lines <- grep("^[[:space:]]*Value[[:space:]]*", lines)
+    lines[value_lines] <- "Value   Value Label"
   }
 
   label_lines <- grep("^Label:", lines)
@@ -171,16 +188,247 @@ parse_codebook_values <- function(file=NULL) {
 
   # get the line numbers where the sas variable is and that variable value
 
+  value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
+
+  browser()
+
   col_name_lines <- grep("^SAS.", lines)
   col_names <- split_it(lines[col_name_lines], ":")$right
 
 
   label_lines <- grep("^Label:", lines)
-  value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
-
-
   col0 <- ""
   rm_lines <- integer(0)
+
+  browser()
+
+  test <- TRUE
+
+  if(test) {
+
+    lines_out <- paste0("-------- ",lines)
+
+    lines_out[label_lines] <- paste0("-Label-- ",lines[label_lines])
+    lines_out[value_lines] <- paste0("-Value-- ",lines[value_lines])
+    lines_out[col_name_lines] <- paste0("-C Name- ",lines[col_name_lines])
+
+    lines_out %>% writeLines("./output/lines.txt")
+  }
+
+  mapply(function(lbl_ln,val_ln, col_nm_ln,col) {
+    if(col == col0) {
+
+      rm_lines <<- c(rm_lines,lbl_ln:(val_ln+1))
+    }
+
+    rm_lines <<- c(rm_lines,lbl_ln:(col_nm_ln-1),(col_nm_ln+1):val_ln)
+
+    col0 <<- col
+
+  },label_lines, value_lines, col_name_lines, col_names)
+
+  lines <- lines[-unique(rm_lines)]
+
+  ##
+  ##  get rid of lines starting with HIDDEN or BLANK
+  ##    no useful information
+
+  rm_lines <- grep("^ *HIDDEN|^ *BLANK",lines)
+
+  lines <- lines[-rm_lines]
+
+
+  col_name_lines <- grep("^SAS.", lines)
+  col_names <- split_it(lines[col_name_lines], ":")$right
+
+  value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
+
+  # add notes lines to the end of the previous line
+  notes_lines <- grep("^Notes:", lines)
+  lines[notes_lines-1] <- paste0(lines[notes_lines-1]," ", lines[notes_lines])
+
+  lbl0 <- ""
+
+  lbl <-sapply(1:length(lines),function(lin) {
+
+    if(lin %in% col_name_lines) {
+      lbl0 <<- split_it(lines[lin], ":")$right
+    }
+    lbl0
+  })
+
+
+  df <- data.frame(col_name = lbl, text = lines)
+
+  df0 <- df %>%
+    #save original as a test for later
+    mutate(text_orig= text) %>%
+
+    mutate(col_name = lbl)%>%
+    filter(!grepl("(SAS.Var.*:|Value {6,}Value Lab)",.$text)) %>%
+    filter(!grepl("^Notes:",.$text)) %>%
+    mutate(text = stringr::str_trim(text)) %>%
+
+    # fix no space between YesGo and YesIf
+    mutate(text = gsub("(Yes|No)(Go to|If)(.*)","\\1 \\2\\3",text))
+
+
+  df_final <- df0 %>%
+    mutate(text = gsub("(^.*?) {8,}.*","\\1",text))  %>%
+
+    ## Get rid of 'go to somewhere' text in line
+    mutate(text = gsub("[—]*Go to.*?(    [0-9].*)","\\1",text))  %>%
+
+    ## Get rid of 'Code' text in line
+    mutate(text = gsub("[—]*Code=.*?(    [0-9].*)","\\1",text))  %>%
+
+    ## Get rid of 'If' conditional text in line
+    mutate(text = gsub("If .* is .* go to.*?(    [0-9].*)","\\1",text))  %>%
+
+    mutate(text = gsub("Notes:.*?(    [0-9].*)","\\1",text))  %>%
+
+    mutate(value = gsub("^([[:digit:]]+).*","\\1",text)) %>%
+
+    # get max val if text looks like 1 - 999 or similar
+    mutate(maxval = ifelse(grepl("^[[:digit:]]+ *- *([[:digit:]]+).*",text),
+                           gsub("^[[:digit:]]+ *- *([[:digit:]]+).*","\\1",text), NA)) %>%
+    mutate(text = gsub("^[[:digit:]]+ *- *([[:digit:]]+) +","",text))  %>%
+    mutate(text = gsub("^[[:digit:]]+ *","",text))  %>%
+
+    # special case IDAY ... no need for 31 lines ... make range 1 to 31
+    filter(col_name != "IDAY" | value == "1") %>%
+    mutate(maxval = ifelse(col_name == "IDAY","31", maxval)) %>%
+
+    # special case IYEAR ... usually just survey year and some following year in January
+    #    mutate(text = ifelse(col_name == "IYEAR",gsub("^(.*?) .*","\\1",text), text)) %>%
+    filter(col_name != "IYEAR" | grepl("Interview",text)) %>%
+    mutate(value = ifelse(col_name == "IYEAR",year, value)) %>%
+    mutate(maxval = ifelse(col_name == "IYEAR",year+1, maxval)) %>%
+
+    # special case REPDEPTH ... no need for 30 lines ... make range 1 to 30
+    filter(col_name != "REPDEPTH" | value == "1") %>%
+    mutate(maxval = ifelse(col_name == "REPDEPTH","30", maxval))
+
+  #  used to but now don't get rid of all numerics at end of each value name
+  #         (totals (Frequency) are now being grabbed for comparisons later)
+
+  #  Value	Value Label	           Frequency	Pct	Pct Wtd
+  #      1 Yes	                       222	17.38	10.54
+  #      2 No	                         919	71.97	76.71
+  #      7 Don’t know/Not Sure	       136	10.65	12.75
+  #  BLANK Not asked or Missing	       101    .     .
+
+  cnt <- df_final$text
+
+  cnt <- gsub("(^.*? {3,}.*)","",cnt)
+  cnt <- gsub("(^.*?) {3,}.*","\\1",cnt)
+  cnt[grep("^[A-z$]",cnt)] <- ""
+  cnt <- gsub("^ ","",cnt)
+
+  tryCatch(expr = cnt <- as.integer(cnt),
+           warning = function(w) {})
+
+
+  df_final <- df_final %>%
+    mutate(count = .env$cnt)  %>%
+    mutate(text = gsub("(^.*?) {3,}.*","\\1",text))  %>%
+    select(col_name,value, maxval, text, count) %>%
+    filter(value != "")
+
+  df_final
+
+}
+
+parse_codebook_values <- function(lines) {
+  require(dplyr)
+
+  if(missing(lines) || is.null(lines)) return(NULL)
+
+  #############################################################################
+
+  start <- purrr::detect_index(lines, ~ grepl("^Label:", .x))
+
+  lines <- tail(lines, -start + 1)
+
+  lines <- grep("^$",lines, value = TRUE, invert = TRUE)
+  lines <- grep("^[[:space:]]{10,}",lines, value = TRUE, invert = TRUE)
+
+  label_lines <- grep("^Label:", lines)
+  pct_lines <- grep("Weighted$", lines) + 1
+
+
+  value_lines <- grep(".*Value.*Value.Label", lines)
+
+  browser()
+
+  col_name_lines <- grep("^SAS.", lines)
+  col_names <- stringr::str_trim(gsub(".*:(.*)","\\1",lines[col_name_lines]))
+
+  ncols <- length(col_names)
+
+  #################################################################
+  ##
+  ##  warn if the variables don't line up (different vector lengths)
+  ##    perhaps from one or more badly formed variable lines
+  ##
+  ##      those lines should look something like this ...
+
+  # Label: Told Had Arthritis
+  # Section Name: Arthritis
+  # Core Section Number: 8
+  # Question Number: 1
+  # Column: 132
+  # Type of Variable: Num
+  # SAS Variable Name: HAVARTH5
+  # Question Prologue:
+  # Question:  Has a doctor, nurse or other health professional ever told you that
+  # Value    Value Label    Frequency    Percentage    Weighted Percentage
+
+
+  if(length(col_name_lines) != length(value_lines)){
+    warning("Number of col_names differs from number of value sections")
+  }
+
+  #######################################################################
+  ##
+  ##  remove the beginning junk
+
+  rm_lines <- 1:(label_lines[1]-1)
+  lines <- lines[-rm_lines]
+
+  ## get rid of empty lines and lines with nothing in the first 10 characters
+
+  lines <- grep("^$",lines, value = TRUE, invert = TRUE)
+  lines <- grep("^[[:space:]]{10,}",lines, value = TRUE, invert = TRUE)
+
+  # get the line numbers where the sas variable is and that variable value
+
+  value_lines <- grep("^[[:space:]]*Value[[:space:]]*Value Label", lines)
+
+  browser()
+
+  col_name_lines <- grep("^SAS.", lines)
+  col_names <- split_it(lines[col_name_lines], ":")$right
+
+
+  label_lines <- grep("^Label:", lines)
+  col0 <- ""
+  rm_lines <- integer(0)
+
+  browser()
+
+  test <- TRUE
+
+  if(test) {
+
+    lines_out <- paste0("-------- ",lines)
+
+    lines_out[label_lines] <- paste0("-Label-- ",lines[label_lines])
+    lines_out[value_lines] <- paste0("-Value-- ",lines[value_lines])
+    lines_out[col_name_lines] <- paste0("-C Name- ",lines[col_name_lines])
+
+    lines_out %>% writeLines("./output/lines.txt")
+  }
 
   mapply(function(lbl_ln,val_ln, col_nm_ln,col) {
     if(col == col0) {

@@ -1,10 +1,9 @@
 
-library(R6)
-#' Layout_Mgr R6 Class
+#' StatsMgr R6 Class
 #'
 #' @export
 StatsMgr <-
-  R6Class(
+  R6::R6Class(
     classname = "StatsMgr",
 
 
@@ -381,7 +380,7 @@ StatsMgr <-
 
         if(!missing(value)) {
 
-          if(inherits(value, "DataMgr")) private$data_mgr_pvt <- data_mgr
+          if(inherits(value, "DataMgr")) private$data_mgr_pvt <- value
 
         } else {
 
@@ -571,12 +570,11 @@ StatsMgr <-
     )
   )
 
-library(R6)
 #' Layout_Mgr R6 Class
 #'
 #' @export
 MultiYearStatsMgr <-
-  R6Class(classname = "MultiYearStatsMgr",
+  R6::R6Class(classname = "MultiYearStatsMgr",
           inherit = StatsMgr,
 
 

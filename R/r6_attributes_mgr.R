@@ -1,10 +1,9 @@
 
-library(R6)
 #' Attributes_Mgr R6 Class
 #'
 #' @export
 Attributes_Mgr <-
-  R6Class(classname = "Attributes_Mgr",
+  R6::R6Class(classname = "Attributes_Mgr",
 
           public = list(
 

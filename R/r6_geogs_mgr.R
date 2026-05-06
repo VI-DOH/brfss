@@ -52,17 +52,20 @@ GeogMgr <-
 
       my_geog_filename = "my_geog.rds",
 
-      initialize = function(geogs_path = NULL) {
+      initialize = function(geog = NULL, geogs_path = NULL) {
 
-        fm <- FileMgr$new()
+        fm <- FileMgr$new(simple = TRUE)
         geogs_path <- fm$apply("geogs_path")
         private$df_geogs <- readRDS(geogs_path)
 
         # set default geog
 
-        file <- paste0(fm$apply("brfss_data_folder"), self$my_geog_filename)
-        my_geog <- readRDS(file)
-
+        if(is.null(geog)) {
+          file <- paste0(fm$apply("brfss_data_folder"), self$my_geog_filename)
+          my_geog <- readRDS(file)
+        } else {
+          my_geog <- geog
+        }
         self$abbrev <-  my_geog
       },
 

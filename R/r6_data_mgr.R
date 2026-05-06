@@ -122,6 +122,17 @@ DataMgr <-
 
       },
 
+      to_csv = function(filename) {
+
+        if(missing(filename)) {
+          message("You must specify a filename")
+          return()
+        }
+        df <- self$data()
+        df %>% write.csv(filename)
+
+      },
+
       my_local_data = function() {
 
         p <- private
@@ -178,6 +189,28 @@ DataMgr <-
         }
 
         df
+      },
+
+      data = function() {
+
+        params <- private$dataset_mgr_pvt$as.list()
+
+        fname <- private$data_path(rw = 'r')
+
+        if(is.null(fname))  return(NULL)
+
+        df_brfss<- readRDS(fname)
+
+        params <- private$dataset_mgr_pvt$patterns
+
+        structure(df_brfss,
+                  class = c("brfss_data", "data.frame"),
+                  year = params["YEAR"] %>% as.integer() %>% unname(),
+                  geog = params["GEOG"] %>% unname(),
+                  source = params["SRC"] %>% unname(),
+                  extent = params["EXT"] %>% unname(),
+                  version = params["VERS"] %>% unname()
+        )
       }
 
     ),
@@ -208,17 +241,6 @@ DataMgr <-
 
         !is.null(self$prepped_data)
 
-
-      },
-
-      to_csv = function(filename) {
-
-        if(missing(filename)) {
-          message("You must specify a filename")
-          return()
-        }
-        df <- self$data()
-        df %>% write.csv(filename)
 
       },
 
@@ -305,28 +327,6 @@ DataMgr <-
         }
         private$dataset_mgr_pvt
 
-      },
-
-      data = function() {
-
-        params <- private$dataset_mgr_pvt$as.list()
-
-        fname <- private$data_path(rw = 'r')
-
-        if(is.null(fname))  return(NULL)
-
-        df_brfss<- readRDS(fname)
-
-        params <- private$dataset_mgr_pvt$patterns
-
-        structure(df_brfss,
-                  class = c("brfss_data", "data.frame"),
-                  year = params["YEAR"] %>% as.integer() %>% unname(),
-                  geog = params["GEOG"] %>% unname(),
-                  source = params["SRC"] %>% unname(),
-                  extent = params["EXT"] %>% unname(),
-                  version = params["VERS"] %>% unname()
-        )
       }
 
 
@@ -384,10 +384,68 @@ PublicDataMgr <-
 
 
 
+      },
+
+      data = function(any = TRUE) {
+
+        df <- super$data()
+
+        if(is.null(df) && any) {
+
+          geog_flag <- super$dataset_mgr$get(geog_flag)
+
+          if(geog_flag == "on") {
+
+            geog <- super$dataset_mgr$get(geog)
+            gm <- GeogMgr$new(geog = geog)
+            fips <- gm$geog %>% pull(fips)
+            super$dataset_mgr$set(geog_flag = "off")
+            df <- super$data() %>% filter(`_STATE` == fips)
+            super$dataset_mgr$set(geog_flag = "on")
+
+          }
+        }
+
+        df
+      },
+
+      save = function(geog = NULL) {
+
+        if(!is.null(geog)) {
+
+          dataset_mgr <- super$dataset_mgr
+          file_mgr <- FileMgr$new(dataset_mgr = dataset_mgr)
+
+          geog_flag <- dataset_mgr$get(geog_flag)
+
+          dataset_mgr$set(geog_flag = "off")
+          gm <- GeogMgr$new(geog = geog)
+          fips <- gm$geog %>% pull(fips)
+
+          browser()
+          if(!is.null(fips)) {
+            dataset_mgr$set(geog_flag = "off")
+            df <- super$data() %>% filter(`_STATE` == fips)
+
+            dataset_mgr$set(geog = geog)
+
+            file <- file_mgr$apply("brfss_annual_data_path")
+            df %>% saveRDS(file)
+            dataset_mgr$set(geog_flag = geog_flag)
+          }
+
+        }
       }
+
     ),
 
     active = list(
 
+      geog = function(value) {
+
+        if(missing(value)) return(super$dataset_mgr$get(geog))
+
+        super$dataset_mgr$set(geog = value)
+      }
     )
   )
