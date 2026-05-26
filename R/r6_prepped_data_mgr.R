@@ -65,7 +65,20 @@ PreppedDataMgr <-
         }
 
         do.call(structure, c(list(df, class = c("brfss_prepped", "data.frame")), attribs))
+      },
+
+      merge_race = function(df) {
+
+        mrg_race <- df %>% count(Race) %>%
+          filter(!is.na(Race) & n < 21) %>% pull(Race) %>% as.character()
+
+        race <- df %>% pull(Race) %>%
+          forcats::fct_collapse(Other = c("Other", mrg_race))
+
+        df$Race <- race
+
       }
+
     ),
 
     active = list(

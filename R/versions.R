@@ -17,9 +17,9 @@
 #' maxvers<-highest_version(2018)
 #'}
 #'
-highest_version<-function() {
+highest_version<-function(params = NULL) {
 
-  params <- my.brfss.patterns()
+  if(is.null(params)) params <- my.brfss.patterns()
 
   if(brfss.param(source) == "sas") {
     fldr<-apply.pattern("sas_data_folder", params)
@@ -152,10 +152,9 @@ calc_responses_old <- function() {
 #' @export
 #'
 #' @examples
-responses_by_geog<-function() {
+responses_by_geog<-function(params) {
 
-  params <- my.brfss.patterns()
-  geog <- brfss.param(geog)
+  geog <- params["geog"]
   file <- apply.pattern("brfss_responses_path",params)
 
   if(!file.exists(file)) return(NULL)

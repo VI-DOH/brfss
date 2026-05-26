@@ -133,21 +133,16 @@ coi_data <- function(df_data=NULL, coi = NULL, subvars = NULL, exclude = "^$",
                      weight_col = "FINAL_WT") {
 
 
+
+  attrs <- attributes(df_data)
+  my_attrs <- attrs[names(attrs) %in% c(  "year", "geog", "source", "extent", "version"  )]
+  params <- my_attrs %>% unlist()
+
   #df_brfss <- brfss_data(year,geog)
   df_brfss <- data.frame() #   coi_data(coi, year,geog,version = 0)
 
-  # invisible(
-  #   sapply(0:highest_version(),function(ver) {
-  #     browser()
-  #     df_brfss <<- df_brfss %>%
-  #       bind_rows(coi_data_vers(df_data = df_data,
-  #                               coi = coi, subvars = subvars,
-  #                               version = ver))
-  #   })
-  # )
 
-
-  df_brfss <- purrr::map(0:highest_version(),function(ver) {
+  df_brfss <- purrr::map(0:highest_version(params = params), function(ver) {
     coi_data_vers(df_data = df_data,
                   coi = coi, subvars = subvars,
                   version = ver)
@@ -161,7 +156,8 @@ coi_data <- function(df_data=NULL, coi = NULL, subvars = NULL, exclude = "^$",
 
   voi <- df_brfss %>% pull(vers) %>% unique()
 
-  df_resp <- responses_by_geog()
+
+  df_resp <- responses_by_geog(params)
 
   if(!is.null(df_resp)) {
     df_resp <- df_resp %>%

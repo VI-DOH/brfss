@@ -256,7 +256,7 @@ DataMgr <-
         func_any <- paste0("prepped_", params$year)
         func_geog <- paste0("prepped_", params$year, "_", params$geog)
 
-        df <- self$data
+        df <- self$data()
 
         if(!is.null(df)) f <- sapply(df, function(col) {is.factor(col)}) %>%
           which()
@@ -269,7 +269,7 @@ DataMgr <-
 
           private$dataset_mgr_pvt$set(source = try_source)
 
-          df <- self$data
+          df <- self$data()
 
           private$dataset_mgr_pvt$set(source = source)
         }
@@ -422,7 +422,6 @@ PublicDataMgr <-
           gm <- GeogMgr$new(geog = geog)
           fips <- gm$geog %>% pull(fips)
 
-          browser()
           if(!is.null(fips)) {
             dataset_mgr$set(geog_flag = "off")
             df <- super$data() %>% filter(`_STATE` == fips)

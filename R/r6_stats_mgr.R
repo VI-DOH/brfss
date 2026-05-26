@@ -202,6 +202,7 @@ StatsMgr <-
 
           private$data_mgr_pvt$dataset_mgr$set(year = year)
 
+
           if(!private$data_mgr_pvt$has_data)  {
             return(NULL)
           }
@@ -226,7 +227,7 @@ StatsMgr <-
           relocate(year)
 
         if(suppress) {
-          df_stats <- df_stats %>% private$supression_mgr_pvt$suppress()
+          #df_stats <- df_stats %>% private$suppression_mgr_pvt$suppress()
         }
 
         if(!expand) df_stats <- df_stats %>% private$select_cols()
@@ -575,130 +576,130 @@ StatsMgr <-
 #' @export
 MultiYearStatsMgr <-
   R6::R6Class(classname = "MultiYearStatsMgr",
-          inherit = StatsMgr,
+              inherit = StatsMgr,
 
 
-          ################################################################################
-          ##
-          ##           PRIVATE
-          ##
-          ################################################################################
+              ################################################################################
+              ##
+              ##           PRIVATE
+              ##
+              ################################################################################
 
-          private = list(
-            years_pvt = NULL,
-            cois_pvt = NULL
+              private = list(
+                years_pvt = NULL,
+                cois_pvt = NULL
 
-          ),
+              ),
 
-          ################################################################################
-          ##
-          ##           PUBLIC
-          ##
-          ################################################################################
+              ################################################################################
+              ##
+              ##           PUBLIC
+              ##
+              ################################################################################
 
-          public = list(
-            initialize = function(years = NULL, cois = NULL, ...) {
+              public = list(
+                initialize = function(years = NULL, cois = NULL, ...) {
 
-              private$years_pvt <- years
-              private$cois_pvt <- cois
+                  private$years_pvt <- years
+                  private$cois_pvt <- cois
 
-              super$initialize(...)
+                  super$initialize(...)
 
-            },
+                },
 
 
-            survey_stats = function(years = NULL, cois = NULL, value = ".*", ... ){
+                survey_stats = function(years = NULL, cois = NULL, value = ".*", ... ){
 
-              cois <- private$cois_pvt
-              years <- private$years_pvt
+                  cois <- private$cois_pvt
+                  years <- private$years_pvt
 
-              if(length(cois)==1) {
+                  if(length(cois)==1) {
 
-                cois <- rep(cois, length(years))
+                    cois <- rep(cois, length(years))
 
-              }
+                  }
 
-              multi_attrs <-  list()
+                  multi_attrs <-  list()
 
-              df_stats <- purrr::map2(years, cois, function(year, coi) {
+                  df_stats <- purrr::map2(years, cois, function(year, coi) {
 
-                private$data_mgr_pvt$dataset_mgr$set(year = year)
+                    private$data_mgr_pvt$dataset_mgr$set(year = year)
 
-                df <- super$survey_stats(coi = coi, ...)
+                    df <- super$survey_stats(coi = coi, ...)
 
-                df <- df %>%
-                  mutate(year = .env$year)
+                    df <- df %>%
+                      mutate(year = .env$year)
 
-                multi_attrs <<- df %>% attributes()
+                    multi_attrs <<- df %>% attributes()
 
-                df
-              }) %>% bind_rows()
+                    df
+                  }) %>% bind_rows()
 
-              if(is.null(df_stats)) return(NULL)
+                  if(is.null(df_stats)) return(NULL)
 
-              df_stats <- df_stats %>%
-                relocate(year)
+                  df_stats <- df_stats %>%
+                    relocate(year)
 
-              response <- df_stats %>% pull(response) %>% unique()
+                  response <- df_stats %>% pull(response) %>% unique()
 
-              structure(df_stats,
-                        class = c("brfss_stats", "data.frame"),
-                        response = response,
-                        label = attr(cois %>% tail(1), "label"),
-                        years = years,
-                        cois = cois,
-                        geog = multi_attrs$geog ,
-                        stat_cols = multi_attrs$stat_cols ,
-                        population = multi_attrs$population ,
-                        section_type = multi_attrs$section_type ,
-                        section_num = multi_attrs$section_num ,
-                        section_index = multi_attrs$section_index ,
-                        section_name = multi_attrs$section_name ,
-                        section = multi_attrs$section ,
-                        question = multi_attrs$question ,
-                        label = multi_attrs$label ,
-                        weighted = multi_attrs$weighted ,
-                        weight_col = multi_attrs$weight_col ,
-                        conf = multi_attrs$conf
+                  structure(df_stats,
+                            class = c("brfss_stats", "data.frame"),
+                            response = response,
+                            label = attr(cois %>% tail(1), "label"),
+                            years = years,
+                            cois = cois,
+                            geog = multi_attrs$geog ,
+                            stat_cols = multi_attrs$stat_cols ,
+                            population = multi_attrs$population ,
+                            section_type = multi_attrs$section_type ,
+                            section_num = multi_attrs$section_num ,
+                            section_index = multi_attrs$section_index ,
+                            section_name = multi_attrs$section_name ,
+                            section = multi_attrs$section ,
+                            question = multi_attrs$question ,
+                            label = multi_attrs$label ,
+                            weighted = multi_attrs$weighted ,
+                            weight_col = multi_attrs$weight_col ,
+                            conf = multi_attrs$conf
+
+                  )
+                }
+
+              ),
+
+              ################################################################################
+              ##
+              ##           ACTIVE
+              ##
+              ################################################################################
+
+              active = list(
+
+                coi = function(value) {
+
+                  if(missing(value)) return(private$cois_pvt)
+
+                  private$cois_pvt <- value
+
+                },
+
+                cois = function(value) {
+
+                  if(missing(value)) return(private$cois_pvt)
+
+                  private$cois_pvt <- value
+
+                },
+
+                years = function(value) {
+
+                  if(missing(value)) return(private$years_pvt)
+
+                  private$years_pvt <- value
+
+                }
 
               )
-            }
-
-          ),
-
-          ################################################################################
-          ##
-          ##           ACTIVE
-          ##
-          ################################################################################
-
-          active = list(
-
-            coi = function(value) {
-
-              if(missing(value)) return(private$cois_pvt)
-
-              private$cois_pvt <- value
-
-            },
-
-            cois = function(value) {
-
-              if(missing(value)) return(private$cois_pvt)
-
-              private$cois_pvt <- value
-
-            },
-
-            years = function(value) {
-
-              if(missing(value)) return(private$years_pvt)
-
-              private$years_pvt <- value
-
-            }
-
-          )
   )
 
 #' @export

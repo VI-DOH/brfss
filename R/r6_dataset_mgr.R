@@ -711,7 +711,6 @@ GeogFlag_Param <- R6::R6Class(
 
     initialize = function(geog_flag) {
 
-
       if(missing(geog_flag)) geog_flag <- "on"
 
       super$initialize(name = "geog_flag",
@@ -1113,19 +1112,20 @@ DataSetMgr <-
 
     public = list(
       initialize = function(year = NULL, geog = NULL, extent = NULL,
-                            source = NULL, version = 0,
+                            source = NULL, geog_flag = NULL, version = 0,
                             weight = NULL, weighting = NULL) {
 
 
         x <- self$read(update = FALSE)
 
-        year = year %||% x$params[["year"]]$value
-        geog = geog %||% x$params[["geog"]]$value
-        extent = extent %||% x$params[["extent"]]$value
-        source = source %||% x$params[["source"]]$value
-        version = 0
-        weight = weight %||% x$params[["weight"]]$value
-        weighting = weighting %||% x$params[["weighting"]]$value
+        year <- year %||% x$params[["year"]]$value
+        geog <- geog %||% x$params[["geog"]]$value
+        geog_flag <- geog_flag %||% x$params[["geog_flag"]]$value
+        extent <- extent %||% x$params[["extent"]]$value
+        source <- source %||% x$params[["source"]]$value
+        version <- 0
+        weight <- weight %||% x$params[["weight"]]$value
+        weighting <- weighting %||% x$params[["weighting"]]$value
 
         super$add(Year_Param$new(year = year))
         super$add(Extent_Param$new(extent = extent))
@@ -1134,7 +1134,7 @@ DataSetMgr <-
         super$add(Weight_Param$new(weight = weight))
         super$add(Weighting_Param$new(weighting = weighting))
         super$add(Geog_Param$new(geog = geog))
-        super$add(GeogFlag_Param$new())
+        super$add(GeogFlag_Param$new(geog_flag = geog_flag))
         super$add_dependency(Yr_Param$new())
 
         super$save()
@@ -1190,10 +1190,11 @@ PublicDataSetMgr <-
 
     public = list(
 
-      initialize = function(year = NULL, geog = NULL, source = "sas", version = 0) {
+      initialize = function(year = NULL, geog = NULL, source = "sas",
+                            geog_flag = NULL, version = 0) {
 
         super$initialize(year = year, extent = "public", source = source,
-                         version = version, geog = geog)
+                         geog_flag = geog_flag, version = version, geog = geog)
 
       }
     )

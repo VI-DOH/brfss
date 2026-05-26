@@ -48,7 +48,7 @@ survey_stats <- function(df_data = NULL,
     geog = NA
   }
 
-  df_data <- df_data %>% rename(FINAL_WT = .env$weight_col)
+  if(! "FINAL_WT" %in% colnames(df_data)) df_data <- df_data %>% rename(FINAL_WT = .env$weight_col)
 
   subvars <- subvars[subvars %in% colnames(df_data)]
 
