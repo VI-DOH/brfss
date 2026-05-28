@@ -313,6 +313,19 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   mysvymean<-survey::svyby(frmla1,frmla2,des,svymean)
 
+
+  my_rse <- cv(mysvymean)%>% t()
+
+  df_rse <- my_rse %>%
+    as.data.frame() %>%
+    mutate(response = row.names(.) %>% gsub(paste0(".*",coi),"",.)) %>%
+    mutate(subvar = subvar) %>%
+    tidyr::pivot_longer(cols = !matches("subvar|response"),
+                        values_to = "rse", names_to = "subset" ) %>%
+    mutate(rse = round(rse * 100, digits))
+
+
+
   mysvytotal <-survey::svyby(frmla1,frmla2,des,svytotal) %>%
     select(-starts_with("se."))  %>%
     rename_with(~gsub(coi,"",.x))  %>%
@@ -384,15 +397,13 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     relocate(subvar) %>%
     mutate(subset = as.character(subset)) %>%
     left_join(myci, by = join_by(response, subset)) %>%
-    mutate(cv = round(se/percent * mult, digits)) %>%
     left_join(df_dens, by = join_by(subset))%>%
     left_join(df_nums, by = join_by(subset, response))   %>%
     mutate(percent_unwtd = round(num/den * mult, digits)) %>%
     left_join(mysvytotal, by = join_by(subset, response)) %>%
     as.data.frame() %>%
-    relocate(c(num,den), .after = response)
-
-  #df_stats
+    relocate(c(num,den), .after = response) %>%
+    left_join(df_rse, by = join_by(response, subset, subvar))
 
   df_stats
 }
@@ -413,7 +424,7 @@ stats_no_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
 
   mycv <- cv(mysvymean)%>% t()
   mycv <- data.frame(response = dimnames(mycv)[[2]] %>% gsub(coi,"",.),
-                     cv = mycv %>% as.numeric()) %>%
+                     rse = mycv %>% as.numeric()) %>%
     mutate(across(where(is.numeric),
                   ~ round(.x * mult, digits)
     ))

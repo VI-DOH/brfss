@@ -20,7 +20,7 @@ StatsMgr <-
       cois_pvt = NULL,
       cols_req_pvt = c("subvar","subset","response"),
       stats_pvt = c("num","den",
-                    "percent","se","CI_lower","CI_upper","cv",
+                    "percent","se","CI_lower","CI_upper","rse",
                     "percent_unwtd","num_wtd","den_wtd"),
       subvars_pvt = NULL,
       subpopulation_pvt = NULL,
@@ -705,5 +705,5 @@ MultiYearStatsMgr <-
 #' @export
 StatsMgr$stats_names <- function() {
 
-  c("num", "den", "percent", "se", "ci","CI_lower", "CI_upper", "cv")
+  c("num", "den", "percent", "se", "ci","CI_lower", "CI_upper", "rse")
 }

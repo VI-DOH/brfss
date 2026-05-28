@@ -127,7 +127,7 @@ DefaultSuppressionMgr <-
 
       initialize = function(...) {
 
-        private$suppress_if_pvt =  c(low_num = "num < 6", high_cv = "cv > 30")
+        private$suppress_if_pvt =  c(low_num = "num < 6", high_rse = "rse > 30")
 
         super$initialize(...)
       }
