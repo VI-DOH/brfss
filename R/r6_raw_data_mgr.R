@@ -50,7 +50,7 @@ RawDataMgr <- R6::R6Class(
 
       urlfiles <- file_mgr$apply("brfss_url_files")
 
-      folderout <- file_mgr$apply("brfss_annual_raw_metadata_folder")
+      folderout <- file_mgr$apply("annual_raw_metadata_folder")
 
       folderout <- gsub("([^[/])$","\\1/",folderout)
 
@@ -424,7 +424,7 @@ RawDataMgr <- R6::R6Class(
         dataset_mgr$set(version = version)
         dataset_mgr$set(geog_flag = 'off')
 
-        rdata_file <- file_mgr$apply("brfss_annual_data_path")
+        rdata_file <- file_mgr$apply("annual_data_path")
 
         if(verbose) cat(paste0("Splitting ... trying version [", version, "]\n"))
 
@@ -571,7 +571,7 @@ RawDataMgr <- R6::R6Class(
         fldr <- file_mgr$apply("sas_data_folder")
       } else {
 
-        fldr <- file_mgr$apply("brfss_annual_data_folder")
+        fldr <- file_mgr$apply("annual_data_folder")
       }
 
       files <- list.files(fldr)
@@ -763,8 +763,8 @@ AsciiRawDataMgr <- R6::R6Class(
 
         #    df <- add_col_attributes(df)
 
-        path <- file_mgr$apply("brfss_annual_data_path")
-        #    path_unf <-  file_mgr$apply("brfss_annual_data_unfactored_path")
+        path <- file_mgr$apply("annual_data_path")
+        #    path_unf <-  file_mgr$apply("annual_data_unfactored_path")
 
 
         if(!dir.exists(dirname(path))) dir.create(dirname(path))
@@ -1200,7 +1200,7 @@ SasRawDataMgr <- R6::R6Class(
       ##  get save file (.rds) location
       ##
 
-      save_file <- file_mgr$apply("brfss_annual_data_path")
+      save_file <- file_mgr$apply("annual_data_path")
 
       ##
       ##    read the xpt files

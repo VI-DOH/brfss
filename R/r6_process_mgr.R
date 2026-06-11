@@ -26,13 +26,13 @@ Process_Mgr <- R6::R6Class(
       read <- rw == 'r'
       write <- rw == 'w'
 
-      fldr <- private$file_mgr_pvt$apply("brfss_annual_data_folder")
+      fldr <- private$file_mgr_pvt$apply("annual_data_folder")
 
       if(!dir.exists(fldr) && write) {
         dir.create(fldr, recursive = TRUE)
       }
 
-      file <- private$file_mgr_pvt$apply("brfss_annual_data_file")
+      file <- private$file_mgr_pvt$apply("annual_data_file")
 
       path <- paste0(fldr,file)
 
@@ -135,8 +135,8 @@ Process_Mgr <- R6::R6Class(
 
         df <- self$read_ascii(filename = path_raw, layout = layout, verbose = verbose)
 
-        path <- file_mgr$apply("brfss_annual_data_path")
-        #    path_unf <-  file_mgr$apply("brfss_annual_data_unfactored_path")
+        path <- file_mgr$apply("annual_data_path")
+        #    path_unf <-  file_mgr$apply("annual_data_unfactored_path")
 
 
         if(!dir.exists(dirname(path))) dir.create(dirname(path))
@@ -221,7 +221,7 @@ Process_Mgr <- R6::R6Class(
       ##  get save file (.rdata) location
       ##
 
-      save_file<- file_mgr$apply("brfss_annual_data_path")
+      save_file<- file_mgr$apply("annual_data_path")
 
       ##
       ##    read the xpt files

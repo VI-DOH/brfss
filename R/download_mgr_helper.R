@@ -129,7 +129,7 @@ download_metadata = function(file_mgr = NULL, folderout = NULL, year = NULL) {
 
   if(!is.null(year)) file_mgr$dataset_mgr$set(year = year)
 
-  if(is.null(folderout)) folderout <- file_mgr$apply("brfss_annual_raw_metadata_folder")
+  if(is.null(folderout)) folderout <- file_mgr$apply("annual_raw_metadata_folder")
 
   folderout <- gsub("([^[/])$","\\1/",folderout)
 

@@ -20,13 +20,13 @@ DataMgr <-
 
         params <- p$dataset_mgr_pvt$patterns
 
-        fldr <- p$file_mgr_pvt$apply("brfss_annual_data_folder")
+        fldr <- p$file_mgr_pvt$apply("annual_data_folder")
 
         if(!dir.exists(fldr) && write) {
           dir.create(fldr, recursive = TRUE)
         }
 
-        file <- p$file_mgr_pvt$apply("brfss_annual_data_file")
+        file <- p$file_mgr_pvt$apply("annual_data_file")
 
         path <- paste0(fldr,file)
 
@@ -255,7 +255,7 @@ DataMgr <-
 
         p <- private
 
-        file <- p$file_mgr_pvt$apply("brfss_annual_data_path")
+        file <- p$file_mgr_pvt$apply("annual_data_path")
 
         file.exists(file)
 
@@ -270,7 +270,7 @@ DataMgr <-
 
         p <- private
 
-        file <- p$file_mgr_pvt$apply("brfss_annual_data_path")
+        file <- p$file_mgr_pvt$apply("annual_data_path")
 
         file.exists(file)
 
@@ -460,7 +460,7 @@ PublicDataMgr <-
 
             dataset_mgr$set(geog = geog)
 
-            file <- file_mgr$apply("brfss_annual_data_path")
+            file <- file_mgr$apply("annual_data_path")
             df %>% saveRDS(file)
             dataset_mgr$set(geog_flag = geog_flag)
           }
