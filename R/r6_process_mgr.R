@@ -55,7 +55,7 @@ Process_Mgr <- R6::R6Class(
                           factorize = TRUE,
                           verbose = FALSE) {
 
-      private$file_mgr_pvt <- brfss::FileMgr$new(dataset_mgr)
+      private$file_mgr_pvt <- brfss::FileMgr$new(dataset_mgr = dataset_mgr)
       private$dataset_mgr_pvt <- private$file_mgr_pvt$dataset_mgr$clone()
       private$file_mgr_pvt$dataset_mgr <- private$dataset_mgr_pvt
 

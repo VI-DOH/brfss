@@ -101,7 +101,9 @@ DataSetParams <-
         tryCatch(
 
           expr =  {
-            self$read(filename = filename)
+            browser()
+            test <- self$read(filename = filename)
+
             self$set(...)
             #self$set_legacy()  # remove when all conversions to R6 are complete
           },
@@ -254,7 +256,7 @@ DataSetParams <-
           } else {
 
             message("file for load does not exist")
-            return()
+            return(NULL)
           }
 
           if(update) {
@@ -262,6 +264,8 @@ DataSetParams <-
 
             private$get_p_names()
             private$get_d_names()
+
+            return(TRUE)
 
           } else {
             return(state)
@@ -1051,7 +1055,7 @@ Geog_Param <- R6::R6Class(
 
         private$geog_mgr <- GeogMgr$new()
 
-       geog <-  private$geog_mgr$abbrev
+        geog <-  private$geog_mgr$abbrev
       }
 
       super$initialize(name = "geog",
@@ -1110,22 +1114,36 @@ DataSetMgr <-
     classname = "DataSetMgr",
     inherit = DataSetParams,
 
-    public = list(
-      initialize = function(year = NULL, geog = NULL, extent = NULL,
-                            source = NULL, geog_flag = NULL, version = 0,
-                            weight = NULL, weighting = NULL) {
+    private = list(
 
+      merge_current = function(...) {
 
-        x <- self$read(update = FALSE)
+        new_vals <- list(...)
+        old_vals <- self$read(update = FALSE)
 
-        year <- year %||% x$params[["year"]]$value
-        geog <- geog %||% x$params[["geog"]]$value
-        geog_flag <- geog_flag %||% x$params[["geog_flag"]]$value
-        extent <- extent %||% x$params[["extent"]]$value
-        source <- source %||% x$params[["source"]]$value
-        version <- 0
-        weight <- weight %||% x$params[["weight"]]$value
-        weighting <- weighting %||% x$params[["weighting"]]$value
+        if(is.null(old_vals)) {
+
+          year <- new_vals$year
+          geog <- new_vals$geog
+          geog_flag <- new_vals$geog_flag
+          extent <- new_vals$extent
+          source <- new_vals$source
+          version <- 0
+          weight <- new_vals$weight
+          weighting <- new_vals$weighting
+
+        } else {
+
+          year <- new_vals$year %||% old_vals$params[["year"]]$value
+          geog <- new_vals$geog %||% old_vals$params[["geog"]]$value
+          geog_flag <- new_vals$geog_flag %||% old_vals$params[["geog_flag"]]$value
+          extent <- new_vals$extent %||% old_vals$params[["extent"]]$value
+          source <- new_vals$source %||% old_vals$params[["source"]]$value
+          version <- 0
+          weight <- new_vals$weight %||% old_vals$params[["weight"]]$value
+          weighting <- new_vals$weighting %||% old_vals$params[["weighting"]]$value
+
+        }
 
         super$add(Year_Param$new(year = year))
         super$add(Extent_Param$new(extent = extent))
@@ -1138,6 +1156,21 @@ DataSetMgr <-
         super$add_dependency(Yr_Param$new())
 
         super$save()
+
+      }
+    ),
+
+    public = list(
+      initialize = function(year = NULL, geog = NULL, extent = NULL,
+                            source = NULL, geog_flag = NULL, version = 0,
+                            weight = NULL, weighting = NULL) {
+
+
+        private$merge_current(year = year, geog = geog, extent = extent,
+                              source  = source, geog_flag = geog_flag, version = version,
+                              weight = weight, weighting = weighting)
+
+
       }
     )
   )

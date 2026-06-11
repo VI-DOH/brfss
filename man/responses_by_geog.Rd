@@ -4,7 +4,7 @@
 \alias{responses_by_geog}
 \title{Response Totals}
 \usage{
-responses_by_geog()
+responses_by_geog(params)
 }
 \arguments{
 \item{year}{integer: the 4-digit year of interest}

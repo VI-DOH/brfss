@@ -6,9 +6,6 @@
 \usage{
 save_sas_layout(progress = NULL)
 }
-\arguments{
-\item{year}{}
-}
 \description{
 Get BRFSS layout from SASout
 }

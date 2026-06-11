@@ -24,7 +24,7 @@ my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL, source = NULL, e
   if(!is.null(source)) source<-match.arg(source,c("sas","ascii"))
   if(!is.null(extent)) extent<-match.arg(extent,c("local","public"))
 
-  folder <- apply.pattern("brfss_data_folder")
+  folder <- apply.pattern("data_folder")
   path <- paste0(folder, "my_brfss.rds")
 
   if(file.exists(path)) {
@@ -62,7 +62,7 @@ my.brfss <- function(year= NULL, geog= NULL, other_geogs= NULL, source = NULL, e
 #' }
 #'
 my.geog <- function() {
-  folder <- apply.pattern("brfss_data_folder")
+  folder <- apply.pattern("data_folder")
   path <- paste0(folder, "my_brfss.rda")
 
   if(!file.exists(path)) {
@@ -92,7 +92,7 @@ my.geog <- function() {
 #' }
 #'
 my.other.geogs <- function() {
-  folder <- apply.pattern("brfss_data_folder")
+  folder <- apply.pattern("data_folder")
   path <- paste0(folder, "my_brfss.rda")
 
   if(!file.exists(path)) {
@@ -125,7 +125,7 @@ my.other.geogs <- function() {
 #' }
 #'
 my.source <- function() {
-  folder <- apply.pattern("brfss_data_folder")
+  folder <- apply.pattern("data_folder")
   path <- paste0(folder, "my_brfss.rda")
 
   if(!file.exists(path)) {
@@ -159,7 +159,7 @@ my.source <- function() {
 #' }
 #'
 my.extent <- function() {
-  folder <- apply.pattern("brfss_data_folder")
+  folder <- apply.pattern("data_folder")
   path <- paste0(folder, "my_brfss.rda")
 
   if(!file.exists(path)) {
@@ -196,7 +196,7 @@ my.brfss.default.year <- function() {
 #'
 #' @examples
 my.year <- function() {
-  folder <- apply.pattern("brfss_data_folder")
+  folder <- apply.pattern("data_folder")
   path <- paste0(folder, "my_brfss.rda")
 
   if(!file.exists(path)) {

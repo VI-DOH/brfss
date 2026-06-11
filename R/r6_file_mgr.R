@@ -53,24 +53,40 @@ FileMgr <-
 
     public = list(
 
-      initialize = function(dataset_mgr = NULL, simple = FALSE) {
+      initialize = function(init = FALSE, dataset_mgr = NULL, simple = FALSE,
+                            root = NULL, use_excel = FALSE) {
 
-        if(!is.null(dataset_mgr)) {
-          if(inherits(dataset_mgr, "DataSetMgr")) {
-            private$dataset_mgr_pvt <-  dataset_mgr
-          }
-        } else if(!simple) {
-
-          private$dataset_mgr_pvt <-  DataSetMgr$new()
-        }
 
         private$filename_pvt <- here::here("data/naming_patterns.rds")
 
-        if(file.exists(private$filename_pvt)) {
+        if(!simple) {
+          if(!is.null(dataset_mgr) && inherits(dataset_mgr, "DataSetMgr")) {
+
+            private$dataset_mgr_pvt <-  dataset_mgr
+
+          } else {
+
+            private$dataset_mgr_pvt <-  DataSetMgr$new()
+          }
+
+        }
+        if(init) {
+
+          df_patterns <- init.patterns(root)
+          df_patterns %>% saveRDS("./data/naming_patterns.rds")
+        }
+
+        if(use_excel) {
+
+          private$patterns_pvt <- xlsx::read.xlsx("./data/patterns.xlsx", sheetIndex = 1)
+
+        } else if(file.exists(private$filename_pvt)) {
           private$patterns_pvt <- readRDS(private$filename_pvt)
         } else {
           self$refresh()
         }
+
+
 
       },
 
@@ -243,6 +259,23 @@ FileMgr <-
 
         self$patterns %>%
           filter(grepl(.env$group, group))
+
+      },
+
+      try = function(names = ".*") {
+        #
+        pat_names <- self$find(names) %>% pull(name)
+
+        df <- map(pat_names, function(nm) {
+
+          result <- self$apply(nm)
+
+          data.frame(name = nm, result)
+
+        }) %>%
+          bind_rows()
+
+        df
 
       }
     ),

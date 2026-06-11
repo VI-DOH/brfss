@@ -114,8 +114,25 @@ CodebookMgr <-
               if(ext == ".zip") {
                 dir <- dirname(destfile)
                 unzip(destfile, exdir = dir)
+
+
                 file.remove(destfile)
               }
+
+              #rename the new codebook (the newest file in the dir) to a standard name
+
+              files <- list.files(fldrout, full.names = T)
+              newest_file <- file.info(files) %>% arrange(mtime) %>% tail(1) %>% rownames()
+
+              pre <- gsub("(.*/).*", "\\1", newest_file)
+              fname <- gsub("(.*/)(.*)[.].*", "\\2", newest_file)
+              ext <- gsub("(.*/)(.*)[.](.*)", "\\3", newest_file)
+
+              year <- private$dataset_mgr_pvt$get(year)%% 100
+              fname <- paste0(pre,"CODEBOOK", year, "_LLCP.", ext)
+
+              file.rename(from = newest_file, to = fname)
+
 
               # this may be necessary
               # set.pattern("codebook_ext", gsub("[.]","",ext))
@@ -232,6 +249,16 @@ CodebookMgr <-
         }
 
         lines %>% stringi::stri_trans_general("Latin-ASCII")
+
+      },
+
+      # get the name of the file after testing for different extensions
+
+      codebook_folder = function() {
+
+        #  get the folder
+
+        private$file_mgr_pvt$apply("codebook_folder")
 
       },
 
@@ -442,7 +469,7 @@ CodebookMgr <-
           if(is.null(file)) return(NULL)
         }
 
-        html <- xml2::read_html(file) #"../brfss_data/data_raw/2019/public/codebook/CODEBOOK19_LLCP.HTML")
+        html <- xml2::read_html(file)
 
         tables <- xml2::xml_find_all(
           html,
@@ -467,8 +494,9 @@ CodebookMgr <-
             vals <-  x[1]
             text  <-  x[2] %>%
               gsub("Notes:.*", "", .) %>%
-              gsub(".Go.to.*", "", .)%>%
-              gsub(".Code=.*", "", .)
+              gsub(".Go.to.*", "", .) %>%
+              gsub(".Code=.*", "", .)  %>%
+              iconv(., to = "ASCII", sub = "")
 
             count = x[3]
 
@@ -698,7 +726,7 @@ CodebookMgr <-
         if(!missing(value)) {
           if(inherits(value, "DataSetMgr")) {
             private$dataset_mgr_pvt <-  value
-            private$patterns_mgr_pvt <- FileMgr$new(value)
+            private$patterns_mgr_pvt <- FileMgr$new(dataset_mgr = value)
           }
         }
         private$dataset_mgr_pvt

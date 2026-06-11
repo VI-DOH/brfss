@@ -6,9 +6,6 @@
 \usage{
 merge_saq_layout(df_layout = NULL, df_saq_layout = NULL)
 }
-\arguments{
-\item{df_saq_layout}{}
-}
 \description{
 Merge State Specific Questions with Standard Layout
 }

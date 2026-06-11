@@ -1,12 +1,19 @@
 
 
-init.patterns <- function() {
+init.patterns <- function(root = NULL) {
 
 
 
   fname <- "./data/naming_patterns.rds"
   if(file.exists(fname)) file.remove(fname)
 
+  if(is.null(root)) {
+
+    r_root <- rstudioapi::readRStudioPreference("default_open_project_location", NULL)
+
+    root <- paste0(r_root, "/brfss/brfss_data/")
+
+  }
 
   naming_patterns <- data.frame(name = character(0) ,
                                 pattern = character(0) ,
@@ -19,11 +26,15 @@ init.patterns <- function() {
     ################################################################################
   ##    base folder locations
 
-  append.pattern("data_folder","./data/",
+  append.pattern("root_folder", root,
                  type = "folder",
                  desc ="Standard location of user created data") %>%
 
-    append.pattern("raw_data_folder","./data_raw/",
+    append.pattern("data_folder","$root_folder$data/",
+                   type = "folder",
+                   desc ="Standard location of user created data") %>%
+
+    append.pattern("raw_data_folder","$root_folder$data_raw/",
                    type = "folder",
                    desc ="Standard location of data from another source") %>%
 
@@ -108,16 +119,23 @@ init.patterns <- function() {
                    desc = paste0("Folder to store the annual raw ",
                                  "(imported/downloaded from CDC) data")) %>%
 
+    append.pattern("brfss_annual_raw_data_path",
+                   paste0("$brfss_annual_raw_data_folder$^SRC^/",
+                   "{^SRC^ == 'sas';{^EXT^ == 'local';^GEOG^^YR^FINL{^VERS^ > 0;_V^VERS^}}",
+                   "{^EXT^ == 'public';LLCP{^VERS^ == 0;^YEAR^}{^VERS^ > 0;^YR^V^VERS^}}.XPT}",
+                   "{^SRC^ == 'ascii';{^EXT^ == 'public';LLCP{^VERS^ == 0;^YEAR^}",
+                   "{^VERS^ > 0;^YR^V^VERS^}.ASC}{^EXT^ == 'local';^GEOG^^YR^COMP{^VERS^ > 0;_V^VERS^}.DAT}}"),
+                   type = "file",
+
+                   desc = paste0("File path to store the annual raw ",
+                                 "(imported/downloaded from CDC) data")) %>%
+
     #####################################################################################
   ##
   ##    brfss processed data
 
-  append.pattern("brfss_data_folder","$data_folder$",
-                 type = "folder",
-                 desc = "Folder to store processed BRFSS data") %>%
-
     append.pattern("brfss_annual_data_folder_base",
-                   paste0("$brfss_data_folder$^YEAR^/",
+                   paste0("$data_folder$^YEAR^/",
 
                           #if it's a local file (NOT public)
                           "{^EXT^ == 'local' || ^EXT^ == 'monthly' ;local/^GEOG^/}",
@@ -129,7 +147,7 @@ init.patterns <- function() {
                    desc = "Folder to store processed BRFSS data") %>%
 
     append.pattern("brfss_annual_data_folder",
-                   paste0("$brfss_data_folder$^YEAR^/",
+                   paste0("$data_folder$^YEAR^/",
 
                           #if it's a local file (NOT public)
                           "{^EXT^ == 'local';local/^GEOG^/",
@@ -184,7 +202,7 @@ init.patterns <- function() {
                    desc = "Full path for annual processed BRFSS data
                    (main survey) from specific geographies") %>%
 
-    append.pattern("brfss_geog_folder","$brfss_data_folder$^YEAR^/local/",
+    append.pattern("brfss_geog_folder","$data_folder$^YEAR^/local/",
                    type = "folder",
                    desc = "Folder holding data for specific geographies") %>%
 
@@ -204,7 +222,7 @@ init.patterns <- function() {
                  desc = "Folder to store the metadata ... modules and responses") %>%
 
     append.pattern("brfss_annual_metadata_folder",
-                   paste0("$brfss_data_folder$^YEAR^/",
+                   paste0("$data_folder$^YEAR^/",
 
                           #if it's a local file (NOT public)
                           "{^EXT^ == 'local';local/^GEOG^/}",
@@ -223,7 +241,7 @@ init.patterns <- function() {
   ##
   ##  codebook patterns
 
-# https://www.cdc.gov/brfss/annual_data/2024/zip/codebook24_llcp-v2-508.zip
+  # https://www.cdc.gov/brfss/annual_data/2024/zip/codebook24_llcp-v2-508.zip
 
   append.pattern("brfss_url_codebook",
                  "$brfss_url_documentation$",
@@ -354,7 +372,7 @@ init.patterns <- function() {
                    type = "path") %>%
 
     append.pattern("ascii_data_folder",
-                   paste0("$brfss_data_folder$^YEAR^/",
+                   paste0("$data_folder$^YEAR^/",
                           "{^EXT^ == 'local';local/^GEOG^/ascii/}",
                           "{^EXT^ == 'public';public/ascii/}"),
                    type = "folder") %>%
@@ -378,6 +396,9 @@ init.patterns <- function() {
                         "{^EXT^ == 'local';sas/}",
                         "{^EXT^ == 'public';sas/}"),
                  type = "folder") %>%
+
+    append.pattern("sas_path_raw","$xpt_path$",
+                   type = "path") %>%
 
 
     append.pattern("sas_data_folder","$brfss_annual_data_folder$",
@@ -438,7 +459,7 @@ init.patterns <- function() {
                    type = "path")%>%
 
     append.pattern("saq_layout_folder", "$layout_folder$",
-                   # paste0("$brfss_data_folder$^YEAR^/",
+                   # paste0("$data_folder$^YEAR^/",
                    #        "{^EXT^ == 'local';local/^GEOG^/saq/}{^EXT^ == 'public';ERROR}"),
                    type = "folder",
                    desc = "Folder to store the annual processed BRFSS data") %>%
@@ -596,6 +617,6 @@ init.patterns <- function() {
   ##
   ##  end of patterns ... save data
 
-  usethis::use_data(naming_patterns, overwrite = TRUE)
+#  usethis::use_data(naming_patterns, overwrite = TRUE)
 
 }

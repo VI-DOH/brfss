@@ -56,12 +56,13 @@ GeogMgr <-
 
         fm <- FileMgr$new(simple = TRUE)
         geogs_path <- fm$apply("geogs_path")
-        private$df_geogs <- readRDS(geogs_path)
+
+        private$df_geogs <- self$geogs_data()
 
         # set default geog
 
         if(is.null(geog)) {
-          file <- paste0(fm$apply("brfss_data_folder"), self$my_geog_filename)
+          file <- paste0(fm$apply("data_folder"), self$my_geog_filename)
           my_geog <- readRDS(file)
         } else {
           my_geog <- geog
@@ -69,10 +70,19 @@ GeogMgr <-
         self$abbrev <-  my_geog
       },
 
+      geogs_data = function() {
+
+        e <- new.env()
+
+        data("geogs", package = "brfss", envir = e)
+        get(ls(e),envir = e)
+
+      },
+
       join_by = function(df, fips = NULL, abbrev = NULL, name = NULL){
 
         fips <- fips %||% "fips"
-        browser()
+
         if(!fips %in% df %>% colnames()) {
           message(paste0(fips, "not a column in df"))
           return(df)
@@ -201,3 +211,42 @@ GeogMgr <-
     )
 
   )
+
+#' @export
+GeogMgr$as_fips <- function(x) {
+
+  if(x %>% gsub("[0-9]", "", .) == "") return(x)
+
+  gm <- GeogMgr$new()
+  df <- geog_mgr$geogs %>% filter(abbr == x)
+
+  if(nrow(df) == 1) return(df %>% pull(fips))
+
+  return(NULL)
+
+}
+
+#' @export
+GeogMgr$geogs <- function() {
+
+  GeogMgr$new()$geogs
+
+}
+
+
+#' @export
+GeogMgr$as_abbrev <- function(x) {
+
+  if(x %>% gsub("[0-9]", "", .) != "") return(NULL)
+
+  x <- as.integer(x) %>% sprintf("%02d", .)
+
+  gm <- GeogMgr$new()
+  df <- geog_mgr$geogs %>% filter(fips == x)
+
+  if(nrow(df) == 1) return(df %>% pull(abbr))
+
+  return(NULL)
+
+}
+

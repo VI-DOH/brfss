@@ -15,7 +15,7 @@ A data frame with 3 variables and 54 rows
 }
 }
 \usage{
-geogs
+data(geogs)
 }
 \description{
 A list containing  information for current BRFSS processing

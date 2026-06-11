@@ -387,7 +387,7 @@ my.brfss.path <- function() {
 
   path <- NULL
 
-  folder <- apply.pattern("brfss_data_folder")
+  folder <- apply.pattern("data_folder")
 
   tryCatch(expr = {
 

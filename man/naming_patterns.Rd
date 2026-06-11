@@ -16,7 +16,7 @@ A data frame with 4 variables:
 }
 }
 \usage{
-naming_patterns
+data(naming_patterns)
 }
 \description{
 A dataset containing the information for creating file patterns used to build standardized

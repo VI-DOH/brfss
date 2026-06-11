@@ -40,7 +40,7 @@ DataMgr <-
 
     public = list(
 
-      initialize = function(dataset_mgr = NULL, file_mgr = NULL) {
+      initialize = function(dataset_mgr = NULL, file_mgr = NULL, ...) {
 
         if(!is.null(dataset_mgr)) {
           if(inherits(dataset_mgr, "DataSetMgr")) {
@@ -50,14 +50,18 @@ DataMgr <-
           private$dataset_mgr_pvt <-  DataSetMgr$new()
         }
 
+        private$dataset_mgr_pvt$set(...)
+
         if(!is.null(file_mgr)) {
           if(inherits(file_mgr, "FileMgr")) {
-            private$file_mgr_pvt <- FileMgr$new(private$dataset_mgr_pvt)
+            private$file_mgr_pvt <- FileMgr$new(dataset_mgr = private$dataset_mgr_pvt)
           }
         } else {
-          private$file_mgr_pvt <- FileMgr$new(private$dataset_mgr_pvt)
+          private$file_mgr_pvt <- FileMgr$new(dataset_mgr = private$dataset_mgr_pvt)
 
         }
+
+
         #layout_mgr_pvt <- Layout_Mgr$new()
       },
 
@@ -211,6 +215,16 @@ DataMgr <-
                   extent = params["EXT"] %>% unname(),
                   version = params["VERS"] %>% unname()
         )
+      },
+
+      set = function(...) {
+
+        private$dataset_mgr_pvt$set(...)
+      },
+
+      get = function(...) {
+
+        private$dataset_mgr_pvt$get(...)
       }
 
     ),
@@ -239,8 +253,26 @@ DataMgr <-
           return(NULL)
         }
 
-        !is.null(self$prepped_data)
+        p <- private
 
+        file <- p$file_mgr_pvt$apply("brfss_annual_data_path")
+
+        file.exists(file)
+
+      },
+
+      has_raw_data = function(value) {
+
+        if(!missing(value)) {
+          message("this property is read-only")
+          return(NULL)
+        }
+
+        p <- private
+
+        file <- p$file_mgr_pvt$apply("brfss_annual_data_path")
+
+        file.exists(file)
 
       },
 
@@ -322,7 +354,7 @@ DataMgr <-
         if(!missing(value)) {
           if(inherits(value, "DataSetMgr")) {
             private$dataset_mgr_pvt <-  value
-            private$file_mgr_pvt <- FileMgr$new(value)
+            private$file_mgr_pvt <- FileMgr$new(dataset_mgr = value)
           }
         }
         private$dataset_mgr_pvt
@@ -350,7 +382,7 @@ PublicDataMgr <-
 
       initialize = function(...) {
 
-        super$initialize(...)
+        super$initialize(extent = "public", ...)
 
       },
 
@@ -448,3 +480,30 @@ PublicDataMgr <-
       }
     )
   )
+
+#' Data_Mgr R6 Class
+#'
+#' @export
+LocalDataMgr <-
+  R6::R6Class(
+    classname = "LocalDataMgr",
+    inherit = DataMgr,
+
+    private = list(
+    ),
+
+    public = list(
+
+      initialize = function(...) {
+
+        super$initialize(extent = "local", ...)
+
+      }
+
+    ),
+
+    active = list(
+
+    )
+  )
+

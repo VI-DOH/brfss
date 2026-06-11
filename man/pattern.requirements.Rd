@@ -6,9 +6,6 @@
 \usage{
 pattern.requirements(names = ".*")
 }
-\arguments{
-\item{names}{}
-}
 \value{
 data frame - pattern name and arguments required for the named patterns
 }

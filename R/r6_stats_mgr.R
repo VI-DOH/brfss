@@ -310,7 +310,6 @@ StatsMgr <-
           digits = digits)
 
 
-
         if(is.null(df)) return(NULL)
 
         if(reduce) {
@@ -329,6 +328,25 @@ StatsMgr <-
 
         return(df)
 
+      },
+
+      suppress = function(df) {
+
+        df_supp <- df %>%
+          filter(is.na(rse) | rse > 30.0) %>%
+          select(year, subvar, subset) %>%
+          mutate(supp = TRUE) %>%
+          distinct()
+
+        if(nrow(df_supp) > 0) {
+          df <- df %>%
+            left_join(df_supp, by = join_by(year, subvar, subset)) %>%
+            mutate(supp = replace(supp, is.na(supp), FALSE)) %>%
+            mutate(across(num:last_col(), ~ if_else(supp, NA, .x))) %>%
+            select(-supp)
+        }
+
+        df
       },
 
       widen = function(df_stats = NULL, coi = NULL, sep_char = "^") {
@@ -537,18 +555,18 @@ StatsMgr <-
 
       },
 
-      suppress = function(value) {
-
-        if(missing(value)) return(private$suppress_pvt)
-
-        if(!is.logical(value)) {
-          message("This property requires a logical value")
-          return(NULL)
-
-        }
-        private$suppress_pvt <- value
-
-      },
+      # suppress = function(value) {
+      #
+      #   if(missing(value)) return(private$suppress_pvt)
+      #
+      #   if(!is.logical(value)) {
+      #     message("This property requires a logical value")
+      #     return(NULL)
+      #
+      #   }
+      #   private$suppress_pvt <- value
+      #
+      # },
 
 
 
