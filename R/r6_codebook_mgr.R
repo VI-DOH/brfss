@@ -712,6 +712,14 @@ CodebookMgr <-
         fname <- private$file_mgr_pvt$apply("codebook_values_path")
 
         readRDS( file = fname)
+      },
+
+      find = function(x) {
+
+
+        self$get_layout() %>%
+          filter(grepl(x, label)) %>%
+          select(col_name, label)
       }
 
 

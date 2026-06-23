@@ -70,10 +70,9 @@ factor_brfss <- function(x, ...) {
 #' @examples
 prepped_data <- function(...) {
 
-  brfss.params(...)
   #if(year == 2024) browser()
 
-  params <- as.list(brfss::brfss.params())
+  params <- as.list(...)
 
   func_any <- paste0("prepped_", params$year)
   func_geog <- paste0("prepped_", params$year, "_", params$geog)

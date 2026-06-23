@@ -4,12 +4,21 @@ FileMgr <-
   R6::R6Class(
     classname = "FileMgr",
 
+    # ===================================================================
+    #
+    #     PRIVATE
+    #
     private = list(
-      dataset_mgr_pvt = NULL,
-      filename_pvt = NULL,
-      patterns_pvt = NULL,
 
-      next_condition = function(expr) {
+      # -----------  properties  -------------
+
+      ..dataset_mgr = NULL,
+      ..filename = NULL,
+      ..patterns = NULL,
+
+      # -----------  methods  -------------
+
+      ..next_condition = function(expr) {
         start <- max(gregexpr("{",expr, fixed  = T)[[1]])
         ends <- gregexpr("}",expr, fixed  = T)[[1]]
         tryCatch(
@@ -21,11 +30,11 @@ FileMgr <-
         list(start = start, end = end)
       },
 
-      has_conditions = function(expr) {
+      ..has_conditions = function(expr) {
         grepl(".*[{](.*)[}].*",expr)
       },
 
-      eval_pattern_cond = function(expr_in) {
+      ..eval_pattern_cond = function(expr_in) {
 
         expr <- gsub(".*[{](.*)[}].*","\\1",expr_in)
 
@@ -51,22 +60,27 @@ FileMgr <-
 
     ),
 
+    # ===================================================================
+    #
+    #     PUBLIC
+    #
+
     public = list(
 
       initialize = function(init = FALSE, dataset_mgr = NULL, simple = FALSE,
-                            root = NULL, use_excel = FALSE) {
+                            root = NULL, use_excel = TRUE) {
 
 
-        private$filename_pvt <- here::here("data/naming_patterns.rds")
+        private$..filename <- here::here("data/naming_patterns.rds")
 
         if(!simple) {
           if(!is.null(dataset_mgr) && inherits(dataset_mgr, "DataSetMgr")) {
 
-            private$dataset_mgr_pvt <-  dataset_mgr
+            private$..dataset_mgr <-  dataset_mgr
 
           } else {
 
-            private$dataset_mgr_pvt <-  DataSetMgr$new()
+            private$..dataset_mgr <-  DataSetMgr$new()
           }
 
         }
@@ -78,10 +92,10 @@ FileMgr <-
 
         if(use_excel) {
 
-          private$patterns_pvt <- xlsx::read.xlsx("./data/patterns.xlsx", sheetIndex = 1)
+          private$..patterns <- xlsx::read.xlsx("./data/patterns.xlsx", sheetIndex = 1)
 
-        } else if(file.exists(private$filename_pvt)) {
-          private$patterns_pvt <- readRDS(private$filename_pvt)
+        } else if(file.exists(private$..filename)) {
+          private$..patterns <- readRDS(private$..filename)
         } else {
           self$refresh()
         }
@@ -93,7 +107,7 @@ FileMgr <-
       find = function(name) {
 
 
-        private$patterns_pvt %>% filter(grepl(.env$name, name))
+        private$..patterns %>% filter(grepl(.env$name, name))
       },
 
       get = function(name, expand = FALSE) {
@@ -152,7 +166,7 @@ FileMgr <-
 
       patternize = function(strIn, expand = TRUE) {
 
-        if(is.null(private$dataset_mgr_pvt)) return(strIn)
+        if(is.null(private$..dataset_mgr)) return(strIn)
 
         #expand <- as.logical(args["expand"])
         ##  remove args with NULL value
@@ -175,13 +189,13 @@ FileMgr <-
         ##    check for logical expressions
         ##    e.g. "LLCP(^VERS^==0;^YEAR^)(^VERS^>0;^YR^V^VERS^)_XPT.zip"
 
-        while(private$has_conditions(ret)) {
+        while(private$..has_conditions(ret)) {
 
           # there is at least one condition .. get the text
           # cat("\n==========================================\n\n")
           # cat("ret (in)=",ret,"\n")
 
-          next_cond <- private$next_condition(ret)
+          next_cond <- private$..next_condition(ret)
 
           # cat("next_cond$start=",next_cond$start,"\n")
           # cat("next_cond$end=",next_cond$end,"\n")
@@ -198,7 +212,7 @@ FileMgr <-
           } else {
 
             # condition is clean ... evaluate
-            expr <- private$eval_pattern_cond(expr)
+            expr <- private$..eval_pattern_cond(expr)
           }
           # cat("expr (new)=",expr,"\n")
           ret  <- paste0(substring(ret, 1,next_cond$start-1),
@@ -224,7 +238,7 @@ FileMgr <-
         e <- new.env()
         data("naming_patterns", envir = e, package = "brfss")
 
-        private$patterns_pvt <- e$naming_patterns
+        private$..patterns <- e$naming_patterns
 
       },
 
@@ -280,6 +294,11 @@ FileMgr <-
       }
     ),
 
+    # ===================================================================
+    #
+    #     ACTIVE BINDINGS
+    #
+
     active = list(
 
       patterns = function(value) {
@@ -289,27 +308,27 @@ FileMgr <-
           return(invisible())
         }
 
-        private$patterns_pvt
+        private$..patterns
       },
 
       pattern_names = function(value) {
 
         if(!missing(value)) {
-          message("<patterns> property is read-only")
+          message("<pattern_names> property is read-only")
           return(invisible())
         }
 
-        private$patterns_pvt$name
+        private$..patterns$name
       },
 
       dataset_mgr = function(value) {
         if(!missing(value)) {
           if(inherits(value, "DataSetMgr")) {
-            private$dataset_mgr_pvt <- value
+            private$..dataset_mgr <- value
           }
         }
 
-        return(private$dataset_mgr_pvt)
+        return(private$..dataset_mgr)
 
       }
     )

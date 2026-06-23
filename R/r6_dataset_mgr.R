@@ -7,22 +7,27 @@ DataSetParams <-
     classname = "DataSetParams",
 
     private = list(
-      p_names = character(0),
-      d_names = character(0),
 
-      params = list(),
-      dependencies = list(),
+      # ------  properties
 
-      filename_pvt = "recent.rds",
-      dir_pvt = "./data/datasets/",
+      ..p_names = character(0),
+      ..d_names = character(0),
 
-      resolve_filename = function(filename, create_dir = FALSE) {
+      ..params = list(),
+      ..dependencies = list(),
+
+      ..filename = "recent.rds",
+      ..dir = "./data/datasets/",
+
+      # ------  methods
+
+      ..resolve_filename = function(filename, create_dir = FALSE) {
 
         if(is.null(filename)) {
-          filename <- file.path(private$dir_pvt,private$filename_pvt)
+          filename <- file.path(private$..dir,private$..filename)
           if(is.null(filename)) return(NULL)
 
-          if(!dir.exists(private$dir_pvt)) dir.create(private$dir_pvt)
+          if(!dir.exists(private$..dir)) dir.create(private$..dir)
 
           return(filename)
         }
@@ -38,7 +43,7 @@ DataSetParams <-
 
         dir <- dirname(filename)
 
-        if(dir == ".") dir <- private$dir_pvt
+        if(dir == ".") dir <- private$..dir
         base <- basename(filename)
         filename <- file.path(dir,base)
 
@@ -61,34 +66,34 @@ DataSetParams <-
 
       },
 
-      get_p_names = function() {
+      ..get_p_names = function() {
 
-        private$p_names <-
-          purrr::map_chr(private$params, \(param) {
+        private$..p_names <-
+          purrr::map_chr(private$..params, \(param) {
             param$name
           })
       },
 
-      get_d_names = function() {
+      ..get_d_names = function() {
 
-        private$d_names <-
-          purrr::map_chr(private$dependencies, \(dep) {
+        private$..d_names <-
+          purrr::map_chr(private$..dependencies, \(dep) {
             dep$name
           })
       },
 
-      get_state = function() {
+      ..get_state = function() {
 
         list(
-          params = private$params,
-          dependencies = private$dependencies
+          params = private$..params,
+          dependencies = private$..dependencies
         )
       },
 
       # Loads a list back into the private slots
-      load_state = function(state) {
-        private$params <- state$params
-        private$dependencies <- state$dependencies
+      ..load_state = function(state) {
+        private$..params <- state$params
+        private$..dependencies <- state$dependencies
         invisible(self)
       }
 
@@ -101,7 +106,7 @@ DataSetParams <-
         tryCatch(
 
           expr =  {
-            browser()
+
             test <- self$read(filename = filename)
 
             self$set(...)
@@ -133,8 +138,8 @@ DataSetParams <-
 
         purrr::iwalk(from, \(x, nm) {
 
-          index <- which(private$p_names == nm)
-          if(length(index) > 0) private$params[[index]]$set(x)
+          index <- which(private$..p_names == nm)
+          if(length(index) > 0) private$..params[[index]]$set(x)
 
         })
         self$set_legacy()
@@ -143,18 +148,18 @@ DataSetParams <-
 
       add = function(p) {
 
-        private$params[[p$name]] <- p
+        private$..params[[p$name]] <- p
 
-        private$get_p_names()
+        private$..get_p_names()
 
       },
 
       add_dependency = function(p) {
 
-        private$dependencies <- append(private$dependencies, p)
+        private$..dependencies <- append(private$..dependencies, p)
 
 
-        private$get_d_names()
+        private$..get_d_names()
       },
 
       as.vector = function() {
@@ -170,18 +175,18 @@ DataSetParams <-
 
       as.list = function() {
 
-        vals <- purrr::map(private$params, \(param) {
+        vals <- purrr::map(private$..params, \(param) {
           param$value
         })
 
-        names(vals) <- private$p_names
+        names(vals) <- private$..p_names
 
 
-        deps <- purrr::map(private$dependencies, \(dep) {
+        deps <- purrr::map(private$..dependencies, \(dep) {
           dep$evaluate(vals)
         })
 
-        names(deps) <- private$d_names
+        names(deps) <- private$..d_names
 
         x <- c(vals, deps)
 
@@ -214,7 +219,7 @@ DataSetParams <-
           stop("Unknown parameter: ", nm, call. = FALSE)
         }
 
-        val <- private$params[[index]]$value
+        val <- private$..params[[index]]$value
         names(val) <- nm
         val
       },
@@ -234,7 +239,7 @@ DataSetParams <-
             message(paste0("<", nm, "> is not a valid parameter"))
             return(invisible())
           }
-          p <- private$params[[index]]
+          p <- private$..params[[index]]
 
           p$set(val)
         })
@@ -245,7 +250,7 @@ DataSetParams <-
 
       read = function(filename = NULL, update = TRUE) {
 
-        filename <- private$resolve_filename(filename)
+        filename <- private$..resolve_filename(filename)
 
         if(!is.null(filename)) {
 
@@ -260,10 +265,10 @@ DataSetParams <-
           }
 
           if(update) {
-            private$load_state(state)
+            private$..load_state(state)
 
-            private$get_p_names()
-            private$get_d_names()
+            private$..get_p_names()
+            private$..get_d_names()
 
             return(TRUE)
 
@@ -279,9 +284,9 @@ DataSetParams <-
       save = function(filename = NULL, create_dir = FALSE) {
 
 
-        filename <- private$resolve_filename(filename = filename, create_dir)
+        filename <- private$..resolve_filename(filename = filename, create_dir)
 
-        state <- private$get_state()
+        state <- private$..get_state()
 
         if(!is.null(filename)) saveRDS(state, file = filename)
 
@@ -304,14 +309,14 @@ DataSetParams <-
           return(NULL)
         }
 
-        c(private$p_names, private$d_names)
+        c(private$..p_names, private$..d_names)
       },
 
       filename = function(value) {
 
-        if(!missing(value)) private$filename_pvt <- value
+        if(!missing(value)) private$..filename <- value
 
-        private$filename_pvt
+        private$..filename
 
       },
 
@@ -324,11 +329,11 @@ DataSetParams <-
 
         x <- self$as.vector()
 
-        vnames <- purrr::map_chr(private$params, \(param) {
+        vnames <- purrr::map_chr(private$..params, \(param) {
           param$pattern
         })
 
-        dnames <- purrr::map_chr(private$dependencies, \(dep) {
+        dnames <- purrr::map_chr(private$..dependencies, \(dep) {
           dep$pattern
         })
 
@@ -361,21 +366,21 @@ Dataset_Param <-
     classname = "Dataset_Param",
 
     private = list(
-      name_pvt = "",
-      value_pvt = NULL,
-      values_pvt = NULL,
-      pattern_pvt = "",
+      ..name = "",
+      ..value = NULL,
+      ..values = NULL,
+      ..pattern = "",
 
       on_change = function(value) {
-        private$value_pvt <- value
+        private$..value <- value
       },
 
       on_null  = function() {
-        private$value_pvt <- NULL
+        private$..value <- NULL
       },
 
       on_na = function() {
-        private$value_pvt <- NA
+        private$..value <- NA
       }
 
 
@@ -392,9 +397,9 @@ Dataset_Param <-
 
 
 
-        private$name_pvt = name
-        private$values_pvt = values
-        private$pattern_pvt = pattern
+        private$..name = name
+        private$..values = values
+        private$..pattern = pattern
 
         #
         self$set(value)
@@ -420,10 +425,10 @@ Dataset_Param <-
       value = function(val) {
 
         if(!missing(val)) {
-          private$value_pvt <- val
+          private$..value <- val
         }
 
-        return(private$value_pvt)
+        return(private$..value)
 
 
       },
@@ -431,10 +436,10 @@ Dataset_Param <-
       values = function(val) {
 
         if(!missing(val)) {
-          private$values_pvt <- val
+          private$..values <- val
         }
 
-        return(private$values_pvt)
+        return(private$..values)
 
 
       },
@@ -442,10 +447,10 @@ Dataset_Param <-
       name = function(val) {
 
         if(!missing(val)) {
-          private$name_pvt <- val
+          private$..name <- val
         }
 
-        return(private$name_pvt)
+        return(private$..name)
 
 
       },
@@ -453,10 +458,10 @@ Dataset_Param <-
       pattern = function(val) {
 
         if(!missing(val)) {
-          private$pattern_pvt <- val
+          private$..pattern <- val
         }
 
-        return(private$pattern_pvt)
+        return(private$..pattern)
 
 
       }
@@ -476,7 +481,7 @@ BRFSS_DependentParam <-
     inherit = Dataset_Param,
 
     private = list(
-      expression_pvt = ""
+      ..expression = ""
 
     ),
 
@@ -488,12 +493,12 @@ BRFSS_DependentParam <-
           expression <- as.character(expression)
           expression <- rlang::parse_expr(expression)
         }
-        private$expression_pvt <-  expression
+        private$..expression <-  expression
       },
 
       evaluate = function(vars) {
 
-        rlang::eval_tidy(private$expression_pvt, vars)
+        rlang::eval_tidy(private$..expression, vars)
       }
     )
   )
@@ -508,8 +513,8 @@ Yr_Param <-
       initialize = function() {
 
         super$initialize(expression = "year%%100")
-        private$pattern_pvt  <-  "YR"
-        private$name_pvt <- "yr"
+        private$..pattern  <-  "YR"
+        private$..name <- "yr"
       }
     )
   )
@@ -545,15 +550,15 @@ Year_Param <- R6::R6Class(
         lubridate::year(Sys.Date()) - 1
       })
 
-      private$value_pvt <- year
+      private$..value <- year
     },
 
     on_null = function() {
-      private$value_pvt <- lubridate::year(Sys.Date()) - 1
+      private$..value <- lubridate::year(Sys.Date()) - 1
     },
 
     on_na = function() {
-      private$value_pvt <- lubridate::year(Sys.Date()) - 1
+      private$..value <- lubridate::year(Sys.Date()) - 1
     }
   )
 
@@ -587,26 +592,26 @@ Extent_Param <- R6::R6Class(
 
       extent <- tolower(extent)
 
-      if(!extent %in% private$values_pvt) {
+      if(!extent %in% private$..values) {
         warning(paste0("extent must be one of <",
-                       paste0(private$values_pvt, collapse = ", "),
+                       paste0(private$..values, collapse = ", "),
                        ">"))
-        message("Setting extent to ",  private$values_pvt[1])
-        private$value_pvt <- private$values_pvt[1]
+        message("Setting extent to ",  private$..values[1])
+        private$..value <- private$..values[1]
 
       } else {
 
-        private$value_pvt <- extent
+        private$..value <- extent
 
       }
     },
 
     on_null = function() {
-      private$value_pvt <- private$values_pvt[1]
+      private$..value <- private$..values[1]
     },
 
     on_na = function() {
-      private$value_pvt <- private$values_pvt[1]
+      private$..value <- private$..values[1]
     }
 
   )
@@ -640,24 +645,24 @@ Source_Param <- R6::R6Class(
 
       source <- tolower(source)
 
-      if(!source %in% private$values_pvt) {
+      if(!source %in% private$..values) {
         warning(paste0("source must be one of <",
-                       paste0(private$values_pvt, collapse = ", "), ">"))
-        message("Setting source to ",  private$values_pvt[1])
-        private$value_pvt <- private$values_pvt[1]
+                       paste0(private$..values, collapse = ", "), ">"))
+        message("Setting source to ",  private$..values[1])
+        private$..value <- private$..values[1]
       } else {
 
-        private$value_pvt <- source
+        private$..value <- source
       }
 
     },
 
     on_null = function() {
-      private$value_pvt <- private$values_pvt[1]
+      private$..value <- private$..values[1]
     },
 
     on_na = function() {
-      private$value_pvt <- private$values_pvt[1]
+      private$..value <- private$..values[1]
     }
   )
 )
@@ -692,16 +697,16 @@ Weight_Param <- R6::R6Class(
         warning(paste0("weight must class character"))
       }
 
-      private$value_pvt <- weight
+      private$..value <- weight
 
     },
 
     on_null = function() {
-      private$value_pvt <- "_LLCPWT"
+      private$..value <- "_LLCPWT"
     },
 
     on_na = function() {
-      private$value_pvt <- NA
+      private$..value <- NA
     }
   )
 )
@@ -745,15 +750,15 @@ GeogFlag_Param <- R6::R6Class(
         geog_flag <- "on"
 
       }
-      private$value_pvt <- geog_flag
+      private$..value <- geog_flag
     },
 
     on_null = function() {
-      private$value_pvt <- "on"
+      private$..value <- "on"
     },
 
     on_na = function() {
-      private$value_pvt <- "on"
+      private$..value <- "on"
     }
 
   )
@@ -800,15 +805,15 @@ Weighting_Param <- R6::R6Class(
 
       }
 
-      private$value_pvt <- weighting
+      private$..value <- weighting
     },
 
     on_null = function() {
-      private$value_pvt <- TRUE
+      private$..value <- TRUE
     },
 
     on_na = function() {
-      private$value_pvt <- TRUE
+      private$..value <- TRUE
     }
   )
 )
@@ -850,15 +855,15 @@ Version_Param <- R6::R6Class(
         return(0)
       })
 
-      private$value_pvt <- version
+      private$..value <- version
     },
 
     on_null = function() {
-      private$value_pvt <- 0
+      private$..value <- 0
     },
 
     on_na = function() {
-      private$value_pvt <- 0
+      private$..value <- 0
     }
 
   )
@@ -893,7 +898,7 @@ Month_Param <- R6::R6Class(
 
       if(is.numeric(month)) {
         if(between(month,1, 12)) {
-          private$value_pvt <- month
+          private$..value <- month
           return(invisible())
         } else {
           message("invalid month")
@@ -915,11 +920,11 @@ Month_Param <- R6::R6Class(
 
         }
 
-        private$value_pvt <- imonth
+        private$..value <- imonth
         return(invisible())
       } else if(nchar(month_int) <3) {
         month <- as.integer(month)
-        private$value_pvt <-month
+        private$..value <-month
         return(invisible())
       }
 
@@ -927,11 +932,11 @@ Month_Param <- R6::R6Class(
 
 
     on_null = function() {
-      private$value_pvt <- lubridate::month(Sys.Date())
+      private$..value <- lubridate::month(Sys.Date())
     },
 
     on_na = function() {
-      private$value_pvt <- lubridate::month(Sys.Date())
+      private$..value <- lubridate::month(Sys.Date())
     }
 
   )
@@ -975,15 +980,15 @@ YTD_Param <- R6::R6Class(
         ytd <- "off"
 
       }
-      private$value_pvt <- ytd
+      private$..value <- ytd
     },
 
     on_null = function() {
-      private$value_pvt <- "off"
+      private$..value <- "off"
     },
 
     on_na = function() {
-      private$value_pvt <- "off"
+      private$..value <- "off"
     }
   )
 )
@@ -1028,15 +1033,15 @@ Phone_Param <- R6::R6Class(
         phone <- "comb"
 
       }
-      private$value_pvt <- phone
+      private$..value <- phone
     },
 
     on_null = function() {
-      private$value_pvt <- "comb"
+      private$..value <- "comb"
     },
 
     on_na = function() {
-      private$value_pvt <- "comb"
+      private$..value <- "comb"
     }
 
   )
@@ -1089,15 +1094,15 @@ Geog_Param <- R6::R6Class(
 
       geog <- toupper(geog)
 
-      private$value_pvt <-geog
+      private$..value <-geog
     },
 
     on_null = function() {
-      private$value_pvt <- ""
+      private$..value <- ""
     },
 
     on_na = function() {
-      private$value_pvt <- ""
+      private$..value <- ""
     }
 
   )
@@ -1195,12 +1200,14 @@ LocalDataSetMgr <-
     inherit = DataSetMgr,
 
     public = list(
-      initialize = function(year = NULL, version = 0, geog = NULL) {
+      initialize = function(year = NULL, version = 0, geog = NULL, source = NULL) {
 
         if(is.null(geog)) {
           gm <- GeogMgr$new()
           geog <- gm$abbrev
         }
+
+        source <- source %||% "ascii"
 
         super$initialize(year = year, extent = "local", source = "ascii",
                          geog = geog, version = version)

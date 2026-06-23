@@ -1,5 +1,4 @@
 
-
 #' RawDataMgr R6 Class
 #'
 #' @export
@@ -621,6 +620,20 @@ RawDataMgr <- R6::R6Class(
 
     },
 
+    has_raw_data = function(value) {
+
+      if(!missing(value)) {
+        message("this property is read-only")
+        return(NULL)
+      }
+
+      p <- private
+
+      file <- p$file_mgr_pvt$apply("annual_raw_data_path")
+
+      file.exists(file)
+
+    },
     dataset_mgr = function(value) {
 
       if(missing(value)) return(private$dataset_mgr_pvt)
@@ -657,9 +670,17 @@ AsciiRawDataMgr <- R6::R6Class(
 
     ascii_data_url = function(year) {
 
-      year <-  private$file_mgr_pvt$dataset_mgr$get(year)
+      cur_year <-  private$file_mgr_pvt$dataset_mgr$get(year)
+      if(missing(year))
+        year <-  private$file_mgr_pvt$dataset_mgr$get(year)
+      else
+        private$file_mgr_pvt$dataset_mgr$set(year = year)
 
-      paste0("https://www.cdc.gov/brfss/annual_data/", year,"/files/LLCP",year,"ASC.zip")
+      url <- private$file_mgr_pvt$apply("ascii_downloads_url")
+      #paste0("https://www.cdc.gov/brfss/annual_data/", year,"/files/LLCP",year,"ASC.zip")
+
+      private$file_mgr_pvt$dataset_mgr$set(year = cur_year)
+      url
     },
 
     download = function(destpath = NULL, unzip=TRUE, rmzip=TRUE, progress = NULL) {
@@ -922,18 +943,18 @@ AsciiRawDataMgr <- R6::R6Class(
         return(NULL)
       }
 
-      if(missing(year)) year <- DataSetMgr$new() %>% get(year)
+      if(missing(year)) year <- DataSetMgr$new()$get(year)
 
-      ds_mgr <- brfss::DataSetMgr$new(year = year, geog = geog, geog_flag = "off",
+      ds_mgr <-DataSetMgr$new(year = year, geog = geog, geog_flag = "off",
                                       extent = "public", source = "ascii")
 
-      file_mgr <- brfss::FileMgr$new(dataset_mgr = ds_mgr)
+      file_mgr <- FileMgr$new(dataset_mgr = ds_mgr)
 
       #file_mgr$get("ascii_raw_data_folder")
       asc_file <- file_mgr$apply("ascii_path_raw")
 
 
-      cb_mgr <- brfss::CodebookMgr$new(dataset_mgr = ds_mgr)
+      cb_mgr <- CodebookMgr$new(dataset_mgr = ds_mgr)
 
       df_lo <- cb_mgr$get_layout() %>%
         dplyr::filter(col_name %in% c("_STATE", "_LLCPWT", col))
@@ -1161,8 +1182,22 @@ SasRawDataMgr <- R6::R6Class(
 
         if(verbose) cat("Converting version=",ivers,"\n")
 
-        cont <- read.xpt(version=ivers,verbose=TRUE)
+        df_xpt <- read.xpt(version=ivers,verbose=TRUE)
 
+        cont <- !is.null(df_xpt)
+        if(cont) {
+          ##
+          ##  get save file (.rds) location
+          ##
+
+          save_file <- file_mgr$apply("annual_data_path")
+
+          #df_xpt <- df_xpt %>% add_col_attributes()
+
+          if(!dir.exists(dirname(save_file))) dir.create(dirname(save_file),recursive = T)
+
+          saveRDS(df_xpt,file = save_file)
+        }
 
         ivers <- ivers + 1
       }
@@ -1178,6 +1213,7 @@ SasRawDataMgr <- R6::R6Class(
       dataset_mgr <- file_mgr$dataset_mgr
 
       dataset_mgr$set(geog_flag = "off")
+      old_vers <- dataset_mgr$get(version)
       dataset_mgr$set(version = version)
 
       ########################################################################%%%%%%%%%
@@ -1195,12 +1231,7 @@ SasRawDataMgr <- R6::R6Class(
 
       xpt_file <- file_mgr$apply("xpt_path")
 
-
-      ##
-      ##  get save file (.rds) location
-      ##
-
-      save_file <- file_mgr$apply("annual_data_path")
+      dataset_mgr$set(version = old_vers)
 
       ##
       ##    read the xpt files
@@ -1212,28 +1243,86 @@ SasRawDataMgr <- R6::R6Class(
         if(verbose) cat("Trying main file \n")
       }
 
+
+
       if(file.exists(xpt_file)) {
         if(verbose) cat("Reading ",xpt_file,"\n")
-        df_xpt <- haven::read_xpt(xpt_file)
+        df_xpt <- structure(
+          haven::read_xpt(xpt_file),
+          class = c( "brfss_sas_raw", "data.frame"),
+          year = dataset_mgr$get(year)
+        )
 
         # st <- fips::state_fips(geog)
         # df_xpt <- df_xpt %>% filter(`_STATE` == st)
 
         cat("Getting sasout\n")
 
-
-        #df_xpt <- df_xpt %>% add_col_attributes()
-
-        if(!dir.exists(dirname(save_file))) dir.create(dirname(save_file),recursive = T)
-
-        saveRDS(df_xpt,file = save_file)
-
-        return(TRUE)
       } else {
         if(verbose) cat(xpt_file," doesn't exist\n")
-        return(FALSE)
+        df_xpt <- NULL
       }
+
+      df_xpt
+    },
+
+    get_one_column = function(year, col, geog = NULL, version = 0, inc_wt = TRUE, rm_inv = TRUE) {
+
+      if(missing(col)) {
+        message("col (column to read) must be supplied")
+        return(NULL)
+      }
+
+      file_mgr <- private$file_mgr_pvt$clone(deep = TRUE)
+      dataset_mgr <- file_mgr$dataset_mgr
+
+
+      if(!missing(year)) dataset_mgr$set(year = year)
+
+      year <- dataset_mgr$get(year)
+
+      dataset_mgr$set(geog = geog, geog_flag = "off", extent = "public", source = "sas")
+
+
+      cb_mgr <- brfss::CodebookMgr$new(dataset_mgr = dataset_mgr)
+
+      suppressMessages(
+        df <- self$read(version = version) %>%
+          dplyr::select(`_STATE`, `_LLCPWT`, all_of(col))
+      )
+
+      browser()
+      geog_mgr <- GeogMgr$new()
+
+      if(!missing(geog)) {
+
+        geog_mgr$geog <- geog
+        fip <- ggeog_mgr$fips
+        df <- df %>% filter(`_STATE` == fips)
+      }
+
+      # apply column values if available
+
+      vals <- cb_mgr$get_values() %>% filter(col_name == .env$col)
+
+      if(!is.null(vals)) {
+
+        lvls <- vals$value
+        lbls <- vals$text
+        vals <- df[[col]]
+
+        df <- df %>% mutate({{col}} := factor(vals, levels = lvls, labels = lbls))
+
+        if(rm_inv) {
+          df <- df %>%
+            filter(!is.na(.data[[col]])) %>%
+            filter(!grepl("refuse|not sure",.data[[col]], ignore.case = T))
+        }
+      }
+
+      df
     }
+
 
   ),
 

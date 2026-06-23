@@ -4,6 +4,7 @@
 #'
 #' @import orrr
 #' @import survey
+#' @import ggplot2
 #'
 #'
 

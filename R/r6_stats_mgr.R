@@ -202,7 +202,6 @@ StatsMgr <-
 
           private$data_mgr_pvt$dataset_mgr$set(year = year)
 
-
           if(!private$data_mgr_pvt$has_data)  {
             return(NULL)
           }
