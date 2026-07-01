@@ -7,13 +7,21 @@
 geog_modules(year = NULL, geogs = NULL, versions = FALSE, reduce = TRUE)
 }
 \arguments{
-\item{year}{- integer - 4-digit year of interest}
+\item{year}{\itemize{
+\item integer - 4-digit year of interest
+}}
 
-\item{geogs}{- character or integer vector - geogs of interest - can be 2 character geog code or FIPS code (integer)}
+\item{geogs}{\itemize{
+\item character or integer vector - geogs of interest - can be 2 character geog code or FIPS code (integer)
+}}
 
-\item{versions}{- logical - include the version number}
+\item{versions}{\itemize{
+\item logical - include the version number
+}}
 
-\item{reduce}{- logical - reduce to a vector if appropriate}
+\item{reduce}{\itemize{
+\item logical - reduce to a vector if appropriate
+}}
 }
 \description{
 Returns  a data frame that has the year, the version (if requested), the geog (2-char), and the module used or returns a

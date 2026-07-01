@@ -16,9 +16,13 @@ make_factors(
 \arguments{
 \item{df_brfss}{data.frame BRFSS data file}
 
-\item{df_layout}{- layout data for the year}
+\item{df_layout}{\itemize{
+\item layout data for the year
+}}
 
-\item{df_vals}{- value data for the year}
+\item{df_vals}{\itemize{
+\item value data for the year
+}}
 
 \item{year}{integer - year of interest}
 }

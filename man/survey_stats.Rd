@@ -19,17 +19,29 @@ survey_stats(
 )
 }
 \arguments{
-\item{df_data}{- data.frame: the survey data}
+\item{df_data}{\itemize{
+\item data.frame: the survey data
+}}
 
-\item{coi}{- character: column of interest name for analysis}
+\item{coi}{\itemize{
+\item character: column of interest name for analysis
+}}
 
-\item{exclude}{- integer: values in coi to exclude for analysis purposes}
+\item{exclude}{\itemize{
+\item integer: values in coi to exclude for analysis purposes
+}}
 
-\item{conf}{- numeric: confidence level, default is .95}
+\item{conf}{\itemize{
+\item numeric: confidence level, default is .95
+}}
 
-\item{weighted}{- logical: use weighting}
+\item{weighted}{\itemize{
+\item logical: use weighting
+}}
 
-\item{subvar}{- character: name of column to subset data by}
+\item{subvar}{\itemize{
+\item character: name of column to subset data by
+}}
 }
 \value{
 data.frame: statistics for the coi each subset

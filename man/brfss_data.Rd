@@ -7,15 +7,25 @@
 brfss_data(...)
 }
 \arguments{
-\item{year}{- int - year of interest}
+\item{year}{\itemize{
+\item int - year of interest
+}}
 
-\item{geog}{- character - 2-char geog of interest (ex: "NY")}
+\item{geog}{\itemize{
+\item character - 2-char geog of interest (ex: "NY")
+}}
 
-\item{version}{- survey version; 0 (default) = main survey}
+\item{version}{\itemize{
+\item survey version; 0 (default) = main survey
+}}
 
-\item{extent}{- character - extent of data ("local" or public")}
+\item{extent}{\itemize{
+\item character - extent of data ("local" or public")
+}}
 
-\item{source}{- character - source of data ("ascii" or sas")}
+\item{source}{\itemize{
+\item character - source of data ("ascii" or sas")
+}}
 }
 \value{
 data frame

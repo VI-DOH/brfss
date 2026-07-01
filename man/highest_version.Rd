@@ -7,7 +7,9 @@
 highest_version(params = NULL)
 }
 \arguments{
-\item{year}{- the 4-digit year of interest}
+\item{year}{\itemize{
+\item the 4-digit year of interest
+}}
 
 \item{...}{other arguments to be passed to apply.pattern()}
 }
@@ -15,7 +17,7 @@ highest_version(params = NULL)
 integer - the highest version number found in the filenames
 }
 \description{
-Looks through the filenames in the BRFSS data folder for files with the pattern  *_Vn.* where n is the version number.
+Looks through the filenames in the BRFSS data folder for files with the pattern  \emph{_Vn.} where n is the version number.
 }
 \examples{
 \dontrun{

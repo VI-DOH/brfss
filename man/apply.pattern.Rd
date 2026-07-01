@@ -17,7 +17,7 @@ character vector with variables inserted where needed
 \description{
 User passes a pattern to use and the variable/value pairs to insert where specified in the pattern.
 For example, if you store your annual data under the data folder by year, you might have a pattern named
-'annual_data_folder' that is './data/[YEAR]/' and you would call
+'annual_data_folder' that is './data/\link{YEAR}/' and you would call
 apply.pattern("annual_data_folder", YEAR = 2020)
 }
 \details{

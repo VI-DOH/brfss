@@ -23,22 +23,38 @@ ascii_process_year(
 )
 }
 \arguments{
-\item{codebook}{- logical - download and process the annual codebook}
+\item{codebook}{\itemize{
+\item logical - download and process the annual codebook
+}}
 
-\item{saq}{- logical - are there state-added questions for processing}
+\item{saq}{\itemize{
+\item logical - are there state-added questions for processing
+}}
 
-\item{convert}{- logical - read the xpt files into data_frames and save? Useful (set = FALSE)
-if you already have the xpt files processed}
+\item{convert}{\itemize{
+\item logical - read the xpt files into data_frames and save? Useful (set = FALSE)
+if you already have the xpt files processed
+}}
 
-\item{split}{- logical - split the xpt file by state/geography}
+\item{split}{\itemize{
+\item logical - split the xpt file by state/geography
+}}
 
-\item{factorize}{- logical - add values as factors to columns}
+\item{factorize}{\itemize{
+\item logical - add values as factors to columns
+}}
 
-\item{year}{- int - year of interest}
+\item{year}{\itemize{
+\item int - year of interest
+}}
 
-\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
+\item{download}{\itemize{
+\item logical - download the data? Useful (set = FALSE) if you already have the downloaded files
+}}
 
-\item{geog}{- character - geography of interest}
+\item{geog}{\itemize{
+\item character - geography of interest
+}}
 
 \item{...}{further arguments passed to other methods}
 }

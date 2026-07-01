@@ -18,7 +18,7 @@ logical status of operation
 }
 \description{
 Move a file (using file.rename()) to a location specified in the standard (expected)
- location using pattern naming.
+location using pattern naming.
 }
 \examples{
 \dontrun{

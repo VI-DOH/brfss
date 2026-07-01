@@ -20,10 +20,11 @@ brfss_data_path(rw = c("r", "w"))
 \item{source}{character - data source ('ascii' or 'sas')}
 }
 \description{
-This is used in two ways based on the `rw` variable.
+This is used in two ways based on the \code{rw} variable.
 }
 \details{
-1. rw = 'w': we want to write it ... find the path and create the folder so the file can be saved
-
-2. rw = 'r': we want to read it ... find the path of the file to be read and return NULL if it doesn't exist
+\enumerate{
+\item rw = 'w': we want to write it ... find the path and create the folder so the file can be saved
+\item rw = 'r': we want to read it ... find the path of the file to be read and return NULL if it doesn't exist
+}
 }

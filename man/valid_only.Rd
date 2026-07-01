@@ -16,9 +16,13 @@ valid_only(
 
 \item{coi}{character - column to use for filtering}
 
-\item{other_cols}{- other columns to keep}
+\item{other_cols}{\itemize{
+\item other columns to keep
+}}
 
-\item{invalid}{- pattern for invalid rsponses}
+\item{invalid}{\itemize{
+\item pattern for invalid rsponses
+}}
 }
 \value{
 the subsetted data frame
@@ -27,7 +31,7 @@ the subsetted data frame
 Removes 'Don't Know' and 'Refused' as well as Missing responses
 }
 \details{
-Invalid responses are indicated by the `invalid` pattern. Include other columns,
+Invalid responses are indicated by the \code{invalid} pattern. Include other columns,
 such as weighting and others for subsetting, like sex or age.
 
 The default pattern for invalid responses is "don.{0,1}t know|refused" (regexp formatted)

@@ -16,5 +16,5 @@ character
 }
 \description{
 Gets the section for a BRFSS column from the layout. Useful for figuring out if a
- column of interest is from the core or from a module.
+column of interest is from the core or from a module.
 }

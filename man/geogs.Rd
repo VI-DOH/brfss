@@ -8,10 +8,10 @@
 A data frame with 3 variables and 54 rows
 \describe{
 
-  \item{Geog}{text name of geography (e.g. "Montana")}
-  \item{Id}{BRFSS integer ID for the Geography - equivalent to the FIPS code (e.g. 30)}
-  \item{Abbrev}{2-digit abbreviation for the geography (state/territory) (e.g. "MT")}
-  ...
+\item{Geog}{text name of geography (e.g. "Montana")}
+\item{Id}{BRFSS integer ID for the Geography - equivalent to the FIPS code (e.g. 30)}
+\item{Abbrev}{2-digit abbreviation for the geography (state/territory) (e.g. "MT")}
+...
 }
 }
 \usage{

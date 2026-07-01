@@ -22,28 +22,46 @@ process_year(
 )
 }
 \arguments{
-\item{convert}{- logical - read the downloaded files into data_frames and save?
-Useful (set = FALSE) if you already have the downloaded files processed}
+\item{convert}{\itemize{
+\item logical - read the downloaded files into data_frames and save?
+Useful (set = FALSE) if you already have the downloaded files processed
+}}
 
-\item{codebook}{- logical - download and process the annual codebook}
+\item{codebook}{\itemize{
+\item logical - download and process the annual codebook
+}}
 
-\item{attribs}{- logical - add attributes to each column describing the column's data}
+\item{attribs}{\itemize{
+\item logical - add attributes to each column describing the column's data
+}}
 
-\item{split}{- logical - split the processed data file by state/geography}
+\item{split}{\itemize{
+\item logical - split the processed data file by state/geography
+}}
 
-\item{factorize}{- logical - convert columns to factors where appropriate}
+\item{factorize}{\itemize{
+\item logical - convert columns to factors where appropriate
+}}
 
-\item{saq}{- logical - add state-added questions}
+\item{saq}{\itemize{
+\item logical - add state-added questions
+}}
 
-\item{progress}{- function - progress function to pass progress info to}
+\item{progress}{\itemize{
+\item function - progress function to pass progress info to
+}}
 
 \item{...}{other params}
 
-\item{year}{- int - year of interest}
+\item{year}{\itemize{
+\item int - year of interest
+}}
 
 \item{source}{character - data source ('sas' or 'ascii')}
 
-\item{download}{- logical - download the data? Useful (set = FALSE) if you already have the downloaded files}
+\item{download}{\itemize{
+\item logical - download the data? Useful (set = FALSE) if you already have the downloaded files
+}}
 }
 \value{
 invisible()
