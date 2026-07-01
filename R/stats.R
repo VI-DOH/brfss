@@ -210,7 +210,11 @@ survey_stats <- function(df_data = NULL,
 
   population <- pop_sex(df_data, coi) %>% gsub("ale","ales",.)
 
-  label <- unname(df_lo %>% pull(label))
+  if("label" %in% names(attributes(df_data))) {
+    label <- attr(df_data, "label")
+  } else {
+    label <- unname(df_lo %>% pull(label))
+  }
   if(length(label) == 0) {
     label <- attr(df_data[[coi]], "label")
   }
@@ -368,8 +372,8 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
     mutate(subset = gsub("(.*)[:](.*)","\\1", response)) %>%
     mutate(response = gsub("(.*)[:](.*)","\\2", response)) %>%
     mutate(across(where(is.numeric),
-        ~ round(.x * mult, digits)
-      )
+                  ~ round(.x * mult, digits)
+    )
     )
 
   df_stats <- as.data.frame(mysvymean) %>%
@@ -379,7 +383,7 @@ stats_w_subs <- function(des, conf = .95, pct = TRUE, digits = 2) {
                   ~ round(.x * mult, digits)
     )) %>%
 
-  tidyr::pivot_longer(
+    tidyr::pivot_longer(
       cols = -all_of(subvar),
       names_to = "response",
       values_to = "value"

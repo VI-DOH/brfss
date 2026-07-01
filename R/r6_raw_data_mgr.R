@@ -7,10 +7,143 @@ RawDataMgr <- R6::R6Class(
 
   private = list(
 
-    file_mgr_pvt = NULL,
-    dataset_mgr_pvt = NULL,
-    layout_mgr = NULL,
-    verbose_pvt = FALSE
+    ..file_mgr = NULL,
+    ..dataset_mgr = NULL,
+    ..codebook_mgr = NULL,
+    ..verbose = FALSE,
+    ..values = NULL,
+    ..layout = NULL,
+
+    ..data_path = function(rw = c("r","w")) {
+
+      p <- private
+
+      read <- rw == 'r'
+      write <- rw == 'w'
+
+      fldr <- self$file_mgr$apply("annual_data_folder")
+
+      if(!dir.exists(fldr) && write) {
+        dir.create(fldr, recursive = TRUE)
+      }
+
+      file <- self$file_mgr$apply("annual_data_file")
+
+      path <- paste0(fldr,file)
+
+      if(read && !file.exists(path)) path <- NULL
+
+      path
+    },
+
+    ..add_column_attributes = function(df_brfss = NULL, layout = NULL,
+                                       verbose = FALSE, progress = NULL) {
+
+      p <- private
+
+      if(is.null(layout)) {
+        layout <- p$..layout
+      }
+
+      if(is.null(layout)) {
+        message("Adding column attributes requires a layout.")
+        return (NULL)
+      }
+
+      df_brfss <- df_brfss %>%
+        p$..add_col_attributes()
+
+      df_brfss
+    },
+
+    ..prep_atts = function(x) {
+
+      if(is.na(x) || is.null(x)) x <- ""
+
+      x
+    },
+
+    ..add_col_attributes = function(df_in) {
+
+      p <- private
+      df_layout <- p$..layout
+
+      if(!"saq" %in% colnames(df_layout)) {
+        df_layout$saq <- NA
+      }
+
+      purrr::pwalk(df_layout, \(...) {
+
+        row <- list(...)
+
+        col_name <- row$col_name
+        if(!is.null(df_in[[col_name]])) {
+
+          row$sect_type  <- row$sect_type |> p$..prep_atts()
+          row$sect_num  <- row$sect_num |> p$..prep_atts()
+          row$section  <- row$section |> p$..prep_atts()
+          row$label  <- row$label |> p$..prep_atts()
+          row$question   <- row$question  |> p$..prep_atts()
+          row$question_num   <- row$question_num  |> p$..prep_atts()
+
+
+
+          atts <-  c(
+            "section_type" = row$sect_type,
+            "section_num" = row$sect_num,
+            "section_index" = row$question_num,
+            "section_name" = stringr::str_trim(row$section),
+            "label" = row$label,
+            "question" = row$question,
+            "variable" = col_name,
+            "is_calculated" = as.logical(row$calculated),
+            "is_custom" = FALSE,
+            "is_saq" = as.logical(row$saq)
+          )
+
+          df_in <<- df_in %>% p$..add_attributes({{col_name}}, atts = atts)
+          class(df_in[[col_name]]) <<- c("brfss", class(df_in[[col_name]]))
+
+        } else {
+
+        }
+      })
+
+      df_in
+
+    },
+
+    ..add_attributes = function(df, ... , atts) {
+
+      col <- as.character(quosures(...))[1]
+
+      mapply(function(att, nm) {
+        #browser()
+
+        tryCatch(
+          {
+            if(is.null(att)) att <- ""
+            attr(df[[col]], nm) <<- att
+          },
+          error = function(e) {
+
+            cat("\n", e$message,"\n")
+            cat("trying to set column [",col, "] attribute [", nm, "] to value [", att,"]\n", sep = "")
+            if(is.null(df[[col]]))  cat(" ... column ", col, " = NULL", "\n\n", sep = "")
+          },
+          warning = function(w) {
+
+            cat("\n", w$message,"\n")
+            cat("trying to set column [",col, "] attribute [", nm, "] to value [", att,"]\n", sep = "")
+            if(is.null(df[[col]]))  cat(" ... column ", col, " = NULL", "\n\n", sep = "")
+          }
+        )
+      }, atts, names(atts) )
+      df
+    }
+
+
+
 
   ),
 
@@ -18,32 +151,38 @@ RawDataMgr <- R6::R6Class(
 
     initialize = function(file_mgr = NULL, dataset_mgr = NULL, verbose = FALSE) {
 
-
       p <- private
 
       if(!is.null(file_mgr) && inherits(file_mgr,"FileMgr"))
-        p$file_mgr_pvt <- file_mgr
+        p$..file_mgr <- file_mgr
       else
-        p$file_mgr_pvt <- FileMgr$new()
+        p$..file_mgr <- FileMgr$new()
 
       if(!is.null(dataset_mgr) && inherits(dataset_mgr,"DataSetMgr")) {
-        p$file_mgr_pvt$dataset_mgr <- dataset_mgr
-        p$dataset_mgr_pvt <- dataset_mgr
+        p$..file_mgr$dataset_mgr <- dataset_mgr
+        p$..dataset_mgr <- dataset_mgr
       } else {
 
-        p$dataset_mgr_pvt <- p$file_mgr_pvt$dataset_mgr
+        p$..dataset_mgr <- p$..file_mgr$dataset_mgr
       }
-      p$verbose_pvt <- verbose
+
+      p$..codebook_mgr <- CodebookMgr$new(dataset_mgr = p$..dataset_mgr)
+
+      p$..values <- p$..codebook_mgr$get_values()
+
+      p$..layout <- p$..codebook_mgr$get_layout()
+
+      p$..verbose <- verbose
 
     },
 
     dl_metadata = function(fldrout = NULL, quietly = TRUE) {
 
-      file_mgr <- private$file_mgr_pvt
-      dataset_mgr <- private$dataset_mgr_pvt
+      file_mgr <- private$..file_mgr
+      dataset_mgr <- private$..dataset_mgr
       dataset <- dataset_mgr$as.list()
 
-      if(private$verbose_pvt) cat(" ... downloading ... metadata ... ")
+      if(private$..verbose) cat(" ... downloading ... metadata ... ")
 
       pttrns <- file_mgr$pattern_group("sas_downloads") %>% pull(pattern)
 
@@ -121,8 +260,8 @@ RawDataMgr <- R6::R6Class(
 
     save_sas_layout = function() {
 
-      file_mgr <- private$file_mgr_pvt
-      dataset_mgr <- private$dataset_mgr_pvt
+      file_mgr <- private$..file_mgr
+      dataset_mgr <- private$..dataset_mgr
       dataset <- dataset_mgr$as.list()
 
       year <- dataset$year
@@ -230,17 +369,16 @@ RawDataMgr <- R6::R6Class(
 
     dl_codebook = function(fldrout = NULL) {
 
-      if(private$verbose_pvt) cat(" ... downloading ... codebook ... ")
+      if(private$..verbose) cat(" ... downloading ... codebook ... ")
 
-      cb_mgr <- CodebookMgr$new(dataset_mgr = self$dataset_mgr)
-      cb_mgr$download_codebook(fldrout = fldrout)
+      p$..codebook_mgr$download_codebook(fldrout = fldrout)
 
     },
 
     read_sas_field_ranges = function() {
 
-      file_mgr <- private$file_mgr_pvt
-      dataset_mgr <- private$dataset_mgr_pvt
+      file_mgr <- private$..file_mgr
+      dataset_mgr <- private$..dataset_mgr
       dataset <- dataset_mgr$as.list()
 
       # get the filename for the data
@@ -326,11 +464,15 @@ RawDataMgr <- R6::R6Class(
       #beginning (1st question) of Section
       sect_start <- grep("^Section ",lines_save)
 
-      sect_end <- sapply(sect_start,function(x) min(c(lines_stop[which(lines_stop>x)],lines_secmod2[which(lines_secmod2>x)]))-1)
+      sect_end <- sapply(sect_start,function(x) {
+        min(c(lines_stop[which(lines_stop>x)],lines_secmod2[which(lines_secmod2>x)]))-1
+      })
 
       #beginning (1st question) of Module
       mod_start <- grep("^Module ",lines_save)
-      mod_end <- sapply(mod_start,function(x) min(c(lines_stop[which(lines_stop>x)],lines_secmod2[which(lines_secmod2>x)]))-1)
+      mod_end <- sapply(mod_start,function(x) {
+        min(c(lines_stop[which(lines_stop>x)],lines_secmod2[which(lines_secmod2>x)]))-1
+      })
 
       section_text <- character(length(lines_save))
       section_index <- integer(length(lines_save))
@@ -384,14 +526,75 @@ RawDataMgr <- R6::R6Class(
       df
     },
 
+    convert = function(f_read = NULL, layout = NULL, completes = T, main = TRUE,
+                       versions = TRUE, verbose = FALSE) {
+
+
+      p <- private
+
+      p$..file_mgr$dataset_mgr$set(geog_flag = "off")
+
+      if(is.null(layout)) {
+
+        layout <- p$..layout
+      }
+
+      if(is.null(layout)) {
+
+        return (NULL)
+      }
+
+      if(main) version <- 0 else {
+        if(versions) version = 1 else return()
+      }
+
+      p$..file_mgr$dataset_mgr$set(version = version)
+
+      path_raw <- p$..file_mgr$apply("path_raw")
+
+      while (file.exists(path_raw)) {
+
+        if(verbose) cat("... reading version [", version, "] : ", path_raw, "\n")
+
+        browser()
+        df  <-  do.call(what = f_read,
+                        args = list(filename = path_raw, layout = layout, verbose = verbose)) %>%
+          self$factorize(verbose = verbose)
+
+        #    df <- add_col_attributes(df)
+
+        path <- p$..file_mgr$apply("annual_data_path")
+        #    path_unf <-  file_mgr$apply("annual_data_unfactored_path")
+
+
+        if(!dir.exists(dirname(path))) dir.create(dirname(path))
+
+
+        if(verbose) cat("... writing ", path,"\n")
+
+        saveRDS(df, file = path)
+        #    saveRDS(df, file = path_unf)
+
+        version <- version + 1
+        p$..file_mgr$dataset_mgr$set(version = version)
+
+        path_raw <- p$..file_mgr$apply("path_raw")
+
+      }
+
+      p$..file_mgr$dataset_mgr$set(version = 0)
+
+      invisible()
+
+    },
 
     get_geog = function(geog = NULL, main=TRUE, versions=TRUE, col_atts = TRUE,
                         factorize = TRUE, verbose=TRUE) {
 
       # make sure some version will be split
 
-      file_mgr <- private$file_mgr_pvt
-      dataset_mgr <- private$dataset_mgr_pvt
+      file_mgr <- private$..file_mgr
+      dataset_mgr <- private$..dataset_mgr
       dataset <- dataset_mgr$as.list()
 
       geog_save <- dataset$geog
@@ -413,7 +616,7 @@ RawDataMgr <- R6::R6Class(
 
       if(!(main || versions)) return(NULL)
 
-      ver <- 0:highest_version()
+      ver <- 0:self$highest_version()
       if(!main) ver <- tail(ver,-1)
       if(!versions) ver = head(ver,1)
 
@@ -436,7 +639,7 @@ RawDataMgr <- R6::R6Class(
         # get data for the state of interest and make sure there is data
 
         if(!is.null(df_state) && nrow(df_state) > 0) {
-          fname <- brfss_data_path( rw = 'w')
+          fname <- private$..data_path( rw = 'w')
 
           # brfss.param(extent = ext)
 
@@ -455,115 +658,188 @@ RawDataMgr <- R6::R6Class(
       invisible()
     },
 
-    factorize = function(main=TRUE, versions=TRUE, verbose=FALSE) {
+    factorize = function(df_brfss = NULL, verbose=FALSE) {
 
-      file_mgr <- private$file_mgr_pvt
-      dataset_mgr <- private$dataset_mgr_pvt
+      file_mgr <- private$..file_mgr
+      dataset_mgr <- private$..dataset_mgr
       dataset <- dataset_mgr$as.list()
 
-      geog_mgr <- GeogMgr$new()
-      geog_mgr$abbrev <- dataset$geog
 
-      if(!(main || versions)) return(NULL)
-      ver <- integer(0)
-      if(main) ver <-0
+      # get data for the state of interest and make sure there is data
 
-      vermax <- highest_version()
-      if(vermax == 0) versions = FALSE
+      # make sure, even if temporarily, extent param is set to local
+      #     to make sure we are saving the data under the geog folder
 
-      if(versions) ver <- c(ver,1:vermax)
+      df_brfss |>
+        private$..add_column_attributes() |>
+        self$make_factors(verbose = verbose)
 
-      # df_geogs <- get_geogs_all()
+    },
 
-      # factorize each version
+    make_factors = function(df_brfss = NULL, df_layout = NULL, df_vals = NULL,
+                            cols = NULL, overwrite = TRUE, verbose = FALSE) {
 
-      sapply(ver,function(version) {
 
-        browser()
-        dataset_mgr$set(version = version)
+      p <- private
 
-        params <- file_mgr$patterns()
+      if(is.null(df_brfss)) return(NULL)
 
-        ext <- brfss.param(extent)
-        #brfss.param(extent = "local")
+      if(is.null(df_vals)) df_vals <- p$..values
 
-        if(brfss.param(geog) == '*') {
-          geogs <- unique(df_brfss$`_STATE`)
+      if(is.null(df_layout)) df_layout <- p$..layout
 
-        } else {
+      df_not_factors <- self$quest_types(df_layout, df_vals) %>%
+        filter(type!= "factor") %>%
+        {row.names(.)<-NULL;.}
 
-          geogs <- c(brfss.param(geog),brfss.param(geogs_other))
-          if(is.character(geogs)) {
-            geogs <- sapply(geogs,function(state) {
-              df_geogs[df_geogs$Abbrev==state,"Id"]
-            })
+      df_factors <- self$quest_types(df_layout, df_vals) %>%
+        filter(type == "factor")  %>%
+        {row.names(.)<-NULL;.}
 
-            geogs <- unlist(unname(geogs))
-          }
+      if(verbose) cat("factorizing ... \n")
+
+      if(!is.null(cols)) {
+
+        df_factors <- df_factors %>% filter(col_name %in% cols)
+      }
+
+      # make the 'not factors that are all NA compatible with factors)
+
+      purrr::walk(df_not_factors$col_name, function(col) {
+
+        x <- df_brfss[[col]]
+
+        x_test <- x %>% unique()
+
+        if(length(x_test) == 1 && is.na(x_test)) {
+
+          df_brfss[[col]] <- factor(NA)
         }
 
-        geog_save <- brfss.param(geog)
-
-        if(brfss.param(geog_flag) == "off") df_geogs <- data.frame(Id = 0,Abbrev = "US")
-
-
-        mapply(function(id,nm) {
-          if(id%in%geogs || id == 0) {
-
-            brfss.param(geog = nm)
-            params <- my.brfss.patterns()
-
-            # get data for the state of interest and make sure there is data
-
-            # make sure, even if temporarily, extent param is set to local
-            #     to make sure we are saving the data under the geog folder
-            fname <- brfss_data_path( rw = 'w')
-            df_state <- data.frame()
-
-            tryCatch(expr = {df_state <- readRDS(file = fname)},
-                     error =  function(e) e)
-
-            if(nrow(df_state)>0) {
-              if(verbose) cat("Factorizing ",nm,"V",version,"\n")
-
-              show_progress(progress,
-                            message = paste0("Factorizing ... ", nm, "V", version))
-
-              ##   for now, have to save and (re-)attach the attributes for the columns
-
-              df_state <- df_state %>% make_factors(verbose = verbose)
-            }
-
-            # make sure, even if temporarily, extent param is set to local
-            #     to make sure we are saving the data under the geog folder
-
-
-            fname <- brfss_data_path( rw = 'w')
-
-            if(verbose) cat("Going to save :", fname, "\n")
-
-            show_progress(progress,
-                          message = paste0("Factorizing ... saving ", fname))
-
-            saveRDS(df_state,file = fname)
-
-          }
-        },df_geogs$Id,df_geogs$Abbrev)
-
-        brfss.param(geog = geog_save)
-        #brfss.param(extent = ext)
 
 
       })
 
 
-      invisible()
+      purrr::walk(df_factors$col_name, function(col) {
+        #
+
+        if(verbose) cat("  .. ", col)
+
+        tryCatch({
+
+          if(!(is.factor(df_brfss[[col]])) || overwrite) {
+
+            a<- attributes(df_brfss[[col]])
+
+            df_my_vals <- df_vals %>% filter(col_name==col)
+
+            levels <- df_my_vals %>% pull(value)
+            labels <- df_my_vals %>% pull(text)
+
+            x <- df_brfss[[col]]
+            x_test <- x %>% unique() %>% {.[!is.na(.)]}
+            if(all(gsub("[0-9]","",levels) == "")) levels <- as.integer(levels)
+            if(all(gsub("[0-9]","",x_test) == "")) x <- as.integer(x)
+
+            atts_mgr <- Attributes_Mgr$new(a)
+            x <- atts_mgr$modify(x)
+            x <- atts_mgr$factorize(x, levels = levels, labels = labels)
+
+
+            #          f <- x %>% add_prep_attrs(a) %>% factor_brfss()
+
+            #attributes(f) <- c(attributes(f),a)
+            df_brfss[col] <<- x
+            if(verbose) cat(" OK","\n")
+          } else {
+            if(verbose) cat(" ... already factorized","\n")
+          }
+
+        }, error = function(e) {
+
+          if(verbose) cat(" Failed","\n")
+
+
+        },
+        warning = function(w) {
+
+          message(paste0(
+            w$message,"\n",
+            " attempting to make factors for column ",
+            cli::style_bold(cli::col_blue(paste0("[",col, "]"))),"\n")
+          )
+        })
+      })
+
+      if(verbose) cat(" ... DONE factorizing  \n")
+
+
+      df_brfss
+    },
+
+    quest_types = function(df_layout = NULL, df_vals = NULL, ...) {
+
+      if(is.null(df_vals)) return(NULL)
+
+      if(is.null(df_layout))return(NULL)
+
+      df_cnt <- df_vals %>% group_by(col_name) %>% summarise(n=n())
+
+      is.calc <- grepl("^Calc",df_layout$section)
+      is.wt <- grepl("[Ww]eighting.V",df_layout$section)
+
+      has.mult <- df_layout %>%
+        left_join(df_cnt, by = "col_name")%>%
+        replace(is.na(.), 0) %>%
+        pull(n) %>% .[] > 1
+
+      col_names <- df_layout %>% pull(col_name)
+      #  df <- data.frame(col_name = col_names)
+
+      types <- mapply(function(col, calc, wt) {
+        #cat(" trying ... [", col, "] is.calc: ", calc," | is.wt (range): ", wt, "\n")
+        df_lo <- df_layout %>% filter(col_name == col)
+
+        df0 <- df_vals %>%
+          filter(col_name == col)
+
+        if(nrow(df0)>0) {
+          maxv <- df0 %>% pull(maxval)
+          txt <- df0 %>% pull(text)
+
+          dk <- any(grepl("^[Dd]on.{0,1}t [Kk]now",txt))
+          ref <-any(grepl("^[Rr]efused$",txt))
+          yes1 <- tolower(txt[1]) == "yes"
+          fm1 <- grepl("male",tolower(txt[1]))
+
+
+          #      if(any(!is.na(maxv)) && !calc && !wt) {
+          if(any(!is.na(maxv)) && !wt) {
+            return("range")
+            #      } else if((fm1 || dk || ref || yes1) && !wt){ #&& !calc && !wt){
+          } else if(!wt){ #&& !calc && !wt){
+            return ("factor")
+          }else {
+            return ("unknown")
+          }
+        } else {
+          return("unknown")
+        }
+      }, col_names, is.calc, is.wt & !has.mult)
+
+      types[grepl("_STSTR",col_names)] <- "stratum"
+
+      df <- data.frame(col_name = col_names, type = types,
+                       calc = is.calc, wt = is.wt,
+                       row.names = NULL)
+      df
     },
 
     highest_version = function() {
 
-      file_mgr <- private$file_mgr_pvt
-      dataset_mgr <- private$dataset_mgr_pvt
+      file_mgr <- private$..file_mgr
+      dataset_mgr <- private$..dataset_mgr
       dataset <- dataset_mgr$as.list()
 
       if(dataset$source == "sas") {
@@ -596,8 +872,6 @@ RawDataMgr <- R6::R6Class(
       max(vers)
     }
 
-
-
   ),
 
   active = list(
@@ -605,14 +879,14 @@ RawDataMgr <- R6::R6Class(
     verbose = function(value) {
 
       if(missing(value)) {
-        return(private$verbose_pvt)
+        return(private$..verbose)
       } else {
         if(!class(value) == "logical") {
           warning("This property requires a logical value")
           return(invisible())
         }
 
-        private$verbose_pvt <- value
+        private$..verbose <- value
 
         return(invisible(NULL))
       }
@@ -629,14 +903,15 @@ RawDataMgr <- R6::R6Class(
 
       p <- private
 
-      file <- p$file_mgr_pvt$apply("annual_raw_data_path")
+      file <- p$..file_mgr$apply("annual_raw_data_path")
 
       file.exists(file)
 
     },
+
     dataset_mgr = function(value) {
 
-      if(missing(value)) return(private$dataset_mgr_pvt)
+      if(missing(value)) return(private$..dataset_mgr)
 
       if(!inherits(value, "DataSetMgr")) {
         message("value must be a DataSetMgr object")
@@ -644,10 +919,27 @@ RawDataMgr <- R6::R6Class(
       }
 
       file_mgr$dataset_mgr <- value
-      private$dataset_mgr_pvt <- file_mgr$dataset_mgr
+      private$..dataset_mgr <- file_mgr$dataset_mgr
+    },
+
+    file_mgr = function(value) {
+
+      if(missing(value)) return(private$..file_mgr)
+
+      if(!inherits(value, "FileMgr")) {
+        message("value must be a FileMgr object")
+        return(NULL)
+      }
+
+
+      private$..file_mgr <- value
     }
   )
 )
+
+#=========================================================================================
+
+#   ASCII Raw Data Manager
 
 #' @export
 AsciiRawDataMgr <- R6::R6Class(
@@ -664,22 +956,22 @@ AsciiRawDataMgr <- R6::R6Class(
 
       super$initialize(...)
 
-      private$dataset_mgr_pvt$set(source = "ascii")
+      private$..dataset_mgr$set(source = "ascii")
 
     },
 
     ascii_data_url = function(year) {
 
-      cur_year <-  private$file_mgr_pvt$dataset_mgr$get(year)
+      cur_year <-  private$..file_mgr$dataset_mgr$get(year)
       if(missing(year))
-        year <-  private$file_mgr_pvt$dataset_mgr$get(year)
+        year <-  private$..file_mgr$dataset_mgr$get(year)
       else
-        private$file_mgr_pvt$dataset_mgr$set(year = year)
+        private$..file_mgr$dataset_mgr$set(year = year)
 
-      url <- private$file_mgr_pvt$apply("ascii_downloads_url")
+      url <- private$..file_mgr$apply("ascii_downloads_url")
       #paste0("https://www.cdc.gov/brfss/annual_data/", year,"/files/LLCP",year,"ASC.zip")
 
-      private$file_mgr_pvt$dataset_mgr$set(year = cur_year)
+      private$..file_mgr$dataset_mgr$set(year = cur_year)
       url
     },
 
@@ -696,7 +988,7 @@ AsciiRawDataMgr <- R6::R6Class(
 
       }
 
-      file_mgr <- p$file_mgr_pvt
+      file_mgr <- p$..file_mgr
       file_mgr$dataset_mgr$set(geog_flag = "off")
 
       if(is.null(destpath)) destpath <- file_mgr$apply("ascii_raw_data_folder")
@@ -755,14 +1047,26 @@ AsciiRawDataMgr <- R6::R6Class(
                        versions = TRUE, verbose = FALSE) {
 
 
-      file_mgr <- private$file_mgr_pvt
-      file_mgr$dataset_mgr$set(geog_flag = "off")
+      super$convert(f_read = self$read, layout = layout, completes = completes, main = main,
+                    versions = versions, verbose = verbose)
+
+
+      return()
+
+      ##  this is the original below
+
+
+      p <- private
+
+      p$..file_mgr$dataset_mgr$set(geog_flag = "off")
 
       if(is.null(layout)) {
-        layout <- private$layout_mgr$layout
+
+        layout <- p$..layout
       }
 
       if(is.null(layout)) {
+
         return (NULL)
       }
 
@@ -770,21 +1074,22 @@ AsciiRawDataMgr <- R6::R6Class(
         if(versions) version = 1 else return()
       }
 
-      file_mgr$dataset_mgr$set(version = version)
+      p$..file_mgr$dataset_mgr$set(version = version)
 
 
-      file_raw <- file_mgr$apply("ascii_filename_raw")
-      path_raw <- file_mgr$apply("ascii_path_raw")
+      file_raw <- p$..file_mgr$apply("ascii_filename_raw")
+      path_raw <- p$..file_mgr$apply("ascii_path_raw")
 
       while (file.exists(path_raw)) {
 
         if(verbose) cat("... reading version [", version, "] : ", path_raw, "\n")
 
-        df = self$read(filename = path_raw, layout = layout, verbose = verbose)
+        df  <-  self$read(filename = path_raw, layout = layout, verbose = verbose) %>%
+          self$factorize(verbose = verbose)
 
         #    df <- add_col_attributes(df)
 
-        path <- file_mgr$apply("annual_data_path")
+        path <- p$..file_mgr$apply("annual_data_path")
         #    path_unf <-  file_mgr$apply("annual_data_unfactored_path")
 
 
@@ -797,18 +1102,17 @@ AsciiRawDataMgr <- R6::R6Class(
         #    saveRDS(df, file = path_unf)
 
         version <- version + 1
-        file_mgr$dataset_mgr$set(version = version)
+        p$..file_mgr$dataset_mgr$set(version = version)
 
-        path_raw <- file_mgr$apply("ascii_path_raw")
+        path_raw <- p$..file_mgr$apply("ascii_path_raw")
 
       }
 
-      file_mgr$dataset_mgr$set(version = 0)
+      p$..file_mgr$dataset_mgr$set(version = 0)
 
       invisible()
-    }
 
-    ,
+    },
 
     read = function(filename=NULL,layout = NULL, verbose = FALSE) {
 
@@ -822,53 +1126,55 @@ AsciiRawDataMgr <- R6::R6Class(
       }
 
 
-      ################################
-      ##
-      ##  get the layout data
-      ##
-      if (class(layout) == "character") {
-        df_fields_yy <- read.brfss.layout(layout)
-      } else {
-        df_fields_yy <- layout
-      }
-
-      ############################################################
-      ##
-      ##  remove col_names of negative width columns
-      ##
-      widths  <-  as.integer(df_fields_yy$field_size)
-
-      col.names  <-  df_fields_yy$col_name[widths>0]
+      # ################################
+      # ##
+      # ##  get the layout data
+      # ##
+      # if (class(layout) == "character") {
+      #   df_fields_yy <- read.brfss.layout(layout)
+      # } else {
+      #   df_fields_yy <- layout
+      # }
+      #
+      # ############################################################
+      # ##
+      # ##  remove col_names of negative width columns
+      # ##
+      # widths  <-  as.integer(df_fields_yy$field_size)
+      #
+      # col.names  <-  df_fields_yy$col_name[widths>0]
 
       ################################
       ##
       ##  read the file based on the layout
       ##
 
+      layout <- layout %>% filter(!grepl("DUMMY", col_name))
+
+
       col_types <- layout$var_type
       names(col_types) <- layout$col_name
-      col_types[grepl("^DUMMY",names(col_types))] <- 'NULL'
+
 
       ## this is a kludge ... the weight fields should be numeric
 
-      col_types[grepl("_.*WT.*",names(col_types))] <- 'numeric'
-      col_types[is.na(col_types)] <- 'character'
+      # col_types[grepl("_.*WT.*",names(col_types))] <- 'numeric'
+      # col_types[is.na(col_types)] <- 'character'
 
-      # end kludge
+      start <- layout$start
+      end  <-  layout$end
+      col_names <- layout$col_name
 
-      widths <- layout$field_size
+      df <- readr::read_fwf(
+        file = filename,
+        col_positions  = readr::fwf_positions(
+          start = start,
+          end   = end,
+          col_names = col_names),
+        show_col_types = FALSE
+      ) %>%
+        as.data.frame()
 
-      x <- readLines(filename)
-
-
-      df <- iotools::dstrfw(x = x,col_types = col_types, widths = widths)
-
-
-      #######################################################
-      ##
-      ##  if completes only then make sure DISPCODE in completes range (<2000)
-      ##
-      # if (completes) df <- df %>% filter(DISPCODE<2000)
 
       ##########################################################
       ##
@@ -885,9 +1191,9 @@ AsciiRawDataMgr <- R6::R6Class(
         return(NULL)
       }
 
-      if(missing(year)) year <- private$dataset_mgr_pvt$get(year)
+      if(missing(year)) year <- private$..dataset_mgr$get(year)
 
-      cb_mgr <- CodebookMgr$new(dataset_mgr = private$dataset_mgr_pvt)
+      cb_mgr <- CodebookMgr$new(dataset_mgr = private$..dataset_mgr)
 
       df_lo <- cb_mgr$get_layout() %>%
         filter(col_name == .env$col)
@@ -946,7 +1252,7 @@ AsciiRawDataMgr <- R6::R6Class(
       if(missing(year)) year <- DataSetMgr$new()$get(year)
 
       ds_mgr <-DataSetMgr$new(year = year, geog = geog, geog_flag = "off",
-                                      extent = "public", source = "ascii")
+                              extent = "public", source = "ascii")
 
       file_mgr <- FileMgr$new(dataset_mgr = ds_mgr)
 
@@ -1066,12 +1372,17 @@ AsciiRawDataMgr <- R6::R6Class(
 
     file_mgr = function(value) {
 
-      if(missing(value)) return(private$file_mgr_pvt)
+      if(missing(value)) return(private$..file_mgr)
 
-      private$file_mgr_pvt <- value
+      private$..file_mgr <- value
     }
   )
 )
+
+
+#=========================================================================================
+
+#   SAS Raw Data Manager
 
 #' @export
 SasRawDataMgr <- R6::R6Class(
@@ -1090,7 +1401,7 @@ SasRawDataMgr <- R6::R6Class(
 
       super$initialize(...)
 
-      p$dataset_mgr_pvt$set(source = "sas")
+      p$..dataset_mgr$set(source = "sas")
 
     },
 
@@ -1106,7 +1417,7 @@ SasRawDataMgr <- R6::R6Class(
 
       }
 
-      file_mgr <- p$file_mgr_pvt
+      file_mgr <- p$..file_mgr
       dataset_mgr <- file_mgr$dataset_mgr
       dataset_mgr$set(geog_flag = "off")
 
@@ -1161,20 +1472,27 @@ SasRawDataMgr <- R6::R6Class(
       invisible()
     },
 
-    convert = function(verbose = FALSE) {
+    convert = function(layout = NULL, completes = T, main = TRUE,
+                       versions = TRUE, verbose = FALSE) {
+
+
+      super$convert(f_read = self$read, layout = layout, completes = completes, main = main,
+                    versions = versions, verbose = verbose)
+
+
+      return()
+
 
       p <- private
 
-      file_mgr <- p$file_mgr_pvt
+      file_mgr <- p$..file_mgr
       dataset_mgr <- file_mgr$dataset_mgr
 
       dataset_mgr$set(geog_flag = "off")
 
-      self$read(version = 0)
-
       cont <- TRUE
 
-      ivers <-1
+      ivers <-0
 
       if(verbose) cat(" ... trying versions\n ")
 
@@ -1182,7 +1500,8 @@ SasRawDataMgr <- R6::R6Class(
 
         if(verbose) cat("Converting version=",ivers,"\n")
 
-        df_xpt <- read.xpt(version=ivers,verbose=TRUE)
+        self$read(version = ivers)
+
 
         cont <- !is.null(df_xpt)
         if(cont) {
@@ -1205,16 +1524,9 @@ SasRawDataMgr <- R6::R6Class(
       dataset_mgr$set(version = 0)
     },
 
-    read = function(version = 0, verbose = F) {
+    read = function(filename = NULL, layout = NULL, verbose = F) {
 
       p <- private
-
-      file_mgr <- p$file_mgr_pvt
-      dataset_mgr <- file_mgr$dataset_mgr
-
-      dataset_mgr$set(geog_flag = "off")
-      old_vers <- dataset_mgr$get(version)
-      dataset_mgr$set(version = version)
 
       ########################################################################%%%%%%%%%
       ##
@@ -1229,21 +1541,19 @@ SasRawDataMgr <- R6::R6Class(
       ##    get xpt raw data location
       ##
 
-      xpt_file <- file_mgr$apply("xpt_path")
+      xpt_file <- filename
 
-      dataset_mgr$set(version = old_vers)
 
       ##
       ##    read the xpt files
       ##
 
-      if(version>0) {
-        if(verbose) cat("Trying version ",version,"\n")
-      } else {
-        if(verbose) cat("Trying main file \n")
-      }
-
-
+      # if(version>0) {
+      #   if(verbose) cat("Trying version ",version,"\n")
+      # } else {
+      #   if(verbose) cat("Trying main file \n")
+      # }
+      #
 
       if(file.exists(xpt_file)) {
         if(verbose) cat("Reading ",xpt_file,"\n")
@@ -1273,7 +1583,7 @@ SasRawDataMgr <- R6::R6Class(
         return(NULL)
       }
 
-      file_mgr <- private$file_mgr_pvt$clone(deep = TRUE)
+      file_mgr <- private$..file_mgr$clone(deep = TRUE)
       dataset_mgr <- file_mgr$dataset_mgr
 
 

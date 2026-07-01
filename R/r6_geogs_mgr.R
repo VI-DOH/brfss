@@ -289,7 +289,7 @@ GeogMgr$as_abbrev <- function(x) {
 
   x <- as.integer(x) %>% sprintf("%02d", .)
 
-  gm <- GeogMgr$new()
+  geog_mgr <- GeogMgr$new()
   df <- geog_mgr$geogs %>% filter(fips == x)
 
   if(nrow(df) == 1) return(df %>% pull(abbr))

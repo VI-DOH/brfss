@@ -43,6 +43,23 @@ DataMgr <-
 
         path
 
+      },
+
+      ..reweight = function(df, ..., trim = TRUE) {
+
+        df_tots <- df %>% count(...) %>% mutate(pct = n / sum(n))
+
+        df <- df %>%
+          left_join(df_tots, by = quo_var(...)) %>%
+          mutate(FINAL_WT = `_LLCPWT` * pct)
+
+        if(trim) {
+          df <- df %>%
+            select(-n, -pct, -`_LLCPWT`)
+#          select(Sex, Race, `_STSTR`, FINAL_WT)
+        }
+
+        df
       }
 
     ),
@@ -263,6 +280,150 @@ DataMgr <-
       },
 
       #' @description
+      #' Combine multiple years of data for a single column returning a reweighted data frame based on
+      #'  original weights and the weight of each year
+      #'  (# of completes for that year/total # of completes for all years())
+      #' @return An object of class `brfss_data` and `data.frame` complete with configuration tracking
+      #' keys like FINAL_WT and _STSTR
+      combine_years = function(years, col, subvars, wide = FALSE) {
+
+        yr0 <- head(years, 1)
+        yr1 <- tail(years, 1)
+
+        if(yr0 == yr1) {
+
+          message("This function is for multiple year calculations. Only 1 year was provided")
+          return(NULL)
+
+        }
+
+        year_save <- dsm$get(year)
+
+        dsm <- private$..dataset_mgr
+
+        # dm <- DataMgr$new(dataset_mgr = dsm)
+        #
+        final_atts <- list()
+
+        df_data <- purrr::map(years, \(year) {
+
+          dsm$set(year = year)
+
+          df <- dm$prepped_data %>%
+            mutate(year = year) %>%
+            select(year, all_of(cols), `_LLCPWT`, `_STSTR`)
+
+          purrr::walk(cols, \(.col) {
+
+            nms <- names(attributes(df[[.col]]))
+
+            rm_attrs <- setdiff(nms, c("class", "levels"))
+
+            if(year == yr1 && col == .col) {
+
+              final_atts <<- attributes(df[[.col]])[c("label", "variable", "population")]
+            }
+
+            purrr::walk(rm_attrs, \(attr) attr(df[[.col]], attr) <<- NULL)
+          })
+
+          attributes(df$`_LLCPWT`) <- NULL
+          attributes(df$`_STSTR`) <- NULL
+
+          df
+
+
+        }) %>%
+          bind_rows()%>%
+          filter(!is.na(.data[[col]]))
+
+        df_comb <- df_data %>% private$..reweight(year, trim = !wide)
+        #
+        # df_tots <- df_comb %>% count(year) %>% mutate(pct = n / sum(n))
+        #
+        # df_comb <- df_comb %>%
+        #   left_join(df_tots, by = join_by(year)) %>%
+        #   mutate(FINAL_WT = `_LLCPWT` * pct)
+        #
+        purrr::iwalk(final_atts, \(att, nm) { attr(df_comb, nm) <<- att})
+
+        dsm$set(year = year_save)
+
+        df_comb
+
+      },
+
+      #' @description
+      #' Combine multiple versions of data for a single column returning a reweighted data frame based on
+      #'  original weights and the weight of each version
+      #'  (# of completes for that year/total # of completes for all years())
+      #' @return An object of class `brfss_data` and `data.frame` complete with configuration tracking
+      #' keys like FINAL_WT and _STSTR
+      #'
+      combine_versions = function(col, subvars, wide = FALSE) {
+
+
+        dsm <- private$..dataset_mgr
+
+
+        # dm <- DataMgr$new(dataset_mgr = dsm)
+        #
+        final_atts <- list()
+
+        df_data <- purrr::map(0:4, \(version) {
+
+          dsm$set(version = version)
+
+          df <- dm$prepped_data
+
+          if(!is.null(df)) {
+
+            df <- df %>%
+              mutate(version = version) %>%
+              select(version, all_of(cols), `_LLCPWT`, `_STSTR`)
+
+            purrr::walk(cols, \(.col) {
+
+              nms <- names(attributes(df[[.col]]))
+
+              rm_attrs <- setdiff(nms, c("class", "levels"))
+
+              if(col == .col) {
+
+                final_atts <<- attributes(df[[.col]])[c("label", "variable", "population")]
+              }
+
+              purrr::walk(rm_attrs, \(attr) attr(df[[.col]], attr) <<- NULL)
+            })
+
+            attributes(df$`_LLCPWT`) <- NULL
+            attributes(df$`_STSTR`) <- NULL
+          }
+          df
+
+
+        }) %>%
+          bind_rows()%>%
+          filter(!is.na(.data[[col]]))
+
+        df_comb <- df_data %>% private$..reweight(version, trim = !wide)
+        #
+        # df_tots <- df_comb %>% count(year) %>% mutate(pct = n / sum(n))
+        #
+        # df_comb <- df_comb %>%
+        #   left_join(df_tots, by = join_by(year)) %>%
+        #   mutate(FINAL_WT = `_LLCPWT` * pct)
+        #
+        purrr::iwalk(final_atts, \(att, nm) { attr(df_comb, nm) <<- att})
+
+        dsm$set(version = 0)
+
+        df_comb
+
+      },
+
+
+      #' @description
       #' Pass updates directly down to the internal dataset configurations framework.
       #' @param ... Named attribute-value pairs to set.
       set = function(...) {
@@ -379,6 +540,18 @@ DataMgr <-
         do.call(structure,
                 args = c(list(df,
                               class = c("brfss_prepped", "data.frame")), attribs))
+      },
+
+      #' @field data_file Read-only name of data file
+      data_file = function(value) {
+
+        if(!missing(value)) {
+          message("This property is read-only")
+          return(NULL)
+        }
+
+        return(private$..data_path)
+
       },
 
       #' @field params Read-only snapshot list of parameters tracked inside the inner configuration state.

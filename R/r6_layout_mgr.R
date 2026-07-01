@@ -3,16 +3,16 @@
 #' Layout_Mgr R6 Class
 #'
 #' @export
-Layout_Mgr <-
+LayoutMgr <-
   R6::R6Class(
-    classname = "Layout_Mgr",
+    classname = "LayoutMgr",
 
     private = list(
-      year_pvt = NULL,
-      df_layout_pvt = NULL,
-      type_pvt = "merged",
-      dataset_mgr_pvt = NULL,
-      file_mgr_pvt = NULL,
+      ..year = NULL,
+      ..df_layout = NULL,
+      ..type = "merged",
+      ..dataset_mgr = NULL,
+      ..file_mgr = NULL,
 
       prep_layout = function(df) {
 
@@ -45,7 +45,7 @@ Layout_Mgr <-
 
         # ---------  save the data.frame   --------------------
 
-        private$df_layout_pvt <- df
+        private$..df_layout <- df
       }
 
     ),
@@ -54,13 +54,19 @@ Layout_Mgr <-
 
       # =======================================================================
 
-      initialize = function(year = NULL,
+      initialize = function(dataset_mgr = NULL, year = NULL,
                             type = NULL) {
 
 
-        private$dataset_mgr_pvt <- DataSetMgr$new()$clone()
 
-        private$file_mgr_pvt <- FileMgr$new(dataset_mgr = private$dataset_mgr_pvt)
+        if(!is.null(dataset_mgr) && inherits(dataset_mgr, "DataSetMgr")) {
+
+          private$..dataset_mgr <- dataset_mgr
+        } else {
+          private$..dataset_mgr <- DataSetMgr$new()
+        }
+
+        private$..file_mgr <- FileMgr$new(dataset_mgr = private$..dataset_mgr)
 
         if(is.null(type))
           type <- self$get_best_type()
@@ -73,18 +79,18 @@ Layout_Mgr <-
 
         # --- get the year in case it isn't the current working year
 
-        old_year <- private$dataset_mgr_pvt$get(year)
+        old_year <- private$..dataset_mgr$get(year)
 
         if(is.null(year)) {
-          private$year_pvt <- old_year
+          private$..year <- private$..dataset_mgr$get(year)
         } else {
-          private$year_pvt <- year
-          private$dataset_mgr_pvt$set(year = year)
+          private$..year <- year
+          private$..dataset_mgr$set(year = year)
         }
 
-        private$type_pvt <- type
+        private$..type <- type
 
-        private$df_layout_pvt <- self$get_layout(type)
+        private$..df_layout <- self$get_layout(type)
       },
 
       # =======================================================================
@@ -100,7 +106,7 @@ Layout_Mgr <-
                               list = FALSE) {
 
 
-        ret <- private$df_layout_pvt %>%
+        ret <- private$..df_layout %>%
           filter(sect_type %in% c("Core", "Module", "SAQ"))
 
         sect <- ifelse(is.null(section),"", section)
@@ -137,7 +143,7 @@ Layout_Mgr <-
                                    list = FALSE,
                                    mult_ok = FALSE) {
 
-        ret <- private$df_layout_pvt
+        ret <- private$..df_layout
 
         sect <- section
         sec_typ <- sect_type
@@ -195,7 +201,7 @@ Layout_Mgr <-
                                list = FALSE,
                                mult_ok = FALSE) {
 
-        ret <- private$df_layout_pvt
+        ret <- private$..df_layout
         sec_typ <- sect_type
         questn <- quest
 
@@ -228,7 +234,7 @@ Layout_Mgr <-
           sect_type = match.arg(sect_type, c("Core", "Module", ""))
 
         tryCatch({
-          private$df_layout_pvt  %>%
+          private$..df_layout  %>%
             filter(grepl(.env$sect_type,sect_type))%>%
             select(any_of("year"),section, sect_type, sect_num) %>%
             filter(sect_type %in% c("Core", "Module")) %>%
@@ -243,28 +249,6 @@ Layout_Mgr <-
 
       },
 
-      # =======================================================================
-
-      # get_layout_X = function() {
-      #
-      #   ext <- dataset_mgr$get(extent)
-      #
-      #   df_layout <- self$get_layout_ext(ext)
-      #
-      #   if(is.null(df_layout)) {
-      #     ext <- ifelse(ext == "local", "public", "local")
-      #     df_layout <- self$get_layout_ext(ext)
-      #   }
-      #
-      #   if(is.null(df_layout)) {
-      #
-      #   }
-      #
-      #
-      #   df_layout %>%
-      #     mutate(across(where(is.character),
-      #                   ~stringi::stri_replace_all_regex(.x, "\\s+", " ")))
-      # },
 
       get_layout_ext = function(extent) {
 
@@ -286,14 +270,14 @@ Layout_Mgr <-
 
       get_codebook_layout = function() {
 
-        file <- private$file_mgr_pvt$apply("codebook_layout_path")
+        file <- private$..file_mgr$apply("codebook_layout_path")
 
         if(!file.exists(file)) {
 
-          vars <- private$dataset_mgr_pvt$as.list()
-          private$dataset_mgr_pvt$set(geog_flag = "off")
+          vars <- private$..dataset_mgr$as.list()
+          private$..dataset_mgr$set(geog_flag = "off")
 
-          file <- private$file_mgr_pvt$apply("codebook_layout_path")
+          file <- private$..file_mgr$apply("codebook_layout_path")
 
           if(!file.exists(file)) return(NULL)
         }
@@ -304,21 +288,20 @@ Layout_Mgr <-
 
       get_saq_layout = function(){
 
-        saq_layout <- private$file_mgr_pvt$apply("saq_layout_path")
+        saq_layout <- private$..file_mgr$apply("saq_layout_path")
 
         readRDS(saq_layout)
       },
 
       get_merged_layout = function() {
 
-        fldr <- private$file_mgr_pvt$apply("codebook_layout_folder")
+        fldr <- private$..file_mgr$apply("codebook_layout_folder")
 
-        fil <- private$file_mgr_pvt$apply("merged_layout_file")
+        fil <- private$..file_mgr$apply("merged_layout_file")
 
         file <- paste0(fldr,fil)
 
         if(!file.exists(file)) return(NULL)
-
 
         readRDS(file = file)
 
@@ -334,13 +317,13 @@ Layout_Mgr <-
 
       get_layout_filename = function(type = NULL) {
 
-        if(is.null(type)) type <- private$type_pvt
+        if(is.null(type)) type <- private$..type
 
         file <- tryCatch({
 
-          fldr <- private$file_mgr_pvt$apply("layout_folder")
+          fldr <- private$..file_mgr$apply("layout_folder")
 
-          fil <- private$file_mgr_pvt$apply(paste0(type,"_layout_file"))
+          fil <- private$..file_mgr$apply(paste0(type,"_layout_file"))
 
           paste0(fldr,fil)
 
@@ -366,13 +349,13 @@ Layout_Mgr <-
 
       get_best_layout = function() {
 
-        private$df_layout_pvt <- self$get_layout(self$get_best_type())
+        private$..df_layout <- self$get_layout(self$get_best_type())
 
       },
 
       get_layout = function(type = NULL) {
 
-        if(is.null(type)) type <- private$type_pvt
+        if(is.null(type)) type <- private$..type
 
         if(self$layout_exists(type)) {
           file  <- self$get_layout_filename(type)
@@ -398,7 +381,7 @@ Layout_Mgr <-
 
       get_codebook_values = function() {
 
-        fname <- private$file_mgr_pvt$apply("codebook_values_path")
+        fname <- private$..file_mgr$apply("codebook_values_path")
 
         if(!file.exists(fname)) return(NULL)
 
@@ -408,7 +391,7 @@ Layout_Mgr <-
 
       get_merged_values = function() {
 
-        file <-  private$file_mgr_pvt$apply("merged_values_path")
+        file <-  private$..file_mgr$apply("merged_values_path")
 
         if(!file.exists(file)) return(NULL)
 
@@ -418,7 +401,7 @@ Layout_Mgr <-
 
       get_saq_values = function(){
 
-        file <-  private$file_mgr_pvt$apply("saq_values_path")
+        file <-  private$..file_mgr$apply("saq_values_path")
 
         if(!file.exists(file)) return(NULL)
 
@@ -436,10 +419,10 @@ Layout_Mgr <-
 
       year = function(value) {
 
-        if(missing(value)) return(private$year_pvt)
+        if(missing(value)) return(private$..year)
 
         if(is.numeric(value)) {
-          private$dataset_mgr_pvt$set(year = value)
+          private$..dataset_mgr$set(year = value)
         }
 
       },
@@ -451,7 +434,7 @@ Layout_Mgr <-
           return(NULL)
         }
 
-        return(private$df_layout_pvt)
+        return(private$..df_layout)
       },
 
       layout_basic = function(value) {
@@ -462,7 +445,7 @@ Layout_Mgr <-
         }
 
         return(
-          private$df_layout_pvt %>%
+          private$..df_layout %>%
             select(col_name, sect_type, sect_num, section)
         )
       }
@@ -476,16 +459,19 @@ Layout_Mgr <-
 DataLayout_Mgr <-
   R6::R6Class(
     classname = "DataLayout_Mgr",
-    inherit = Layout_Mgr,
+    inherit = LayoutMgr,
 
     private = list(
-      df_layout_data_pvt = NULL,
+      ..dataset_mgr = NULL,
+      ..df_layout_data = NULL,
       df_brfss = NULL
     ),
 
     public = list(
 
-      initialize = function(df = NULL, ...) {
+      initialize = function( df = NULL, ...) {
+
+
 
         super$initialize(...)
 
@@ -496,14 +482,14 @@ DataLayout_Mgr <-
 
       load_layout_from_data = function(df = NULL) {
 
-        if(is.null(private$df_layout_pvt)) {
-          private$df_layout_pvt <- super$get_best_layout()
+        if(is.null(private$..df_layout)) {
+          private$..df_layout <- super$get_best_layout()
         }
 
         if(is.null(df)) {
 
-          data_mgr <- DataMgr$new(dataset_mgr = private$dataset_mgr_pvt )
-          data_mgr$dataset_mgr$set(year = private$year_pvt)
+          data_mgr <- DataMgr$new(dataset_mgr = private$..dataset_mgr )
+          data_mgr$dataset_mgr$set(year = private$..year)
 
           #if(is.null(private$df_brfss))
           private$df_brfss <- data_mgr$prepped_data #return(NULL)
@@ -533,7 +519,7 @@ DataLayout_Mgr <-
 
 
         df_lo <- df_lo %>% private$prep_layout()
-        private$df_layout_pvt <- df_lo
+        private$..df_layout <- df_lo
       }
 
     ), #  end of public
@@ -544,14 +530,14 @@ DataLayout_Mgr <-
 
         if(missing(value)) {
 
-          return(private$year_pvt)
+          return(private$..year)
 
         } else {
 
           if(is.numeric(value)) {
 
-            private$year_pvt <- value
-            private$dataset_mgr_pvt$set(year = value)
+            private$..year <- value
+            private$..dataset_mgr$set(year = value)
 
             self$load_layout_from_data()
           }

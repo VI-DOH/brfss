@@ -14,50 +14,50 @@ StatsMgr <-
     ################################################################################
 
     private = list(
-      data_mgr_pvt = NULL,
-      suppression_mgr_pvt = NULL,
-      years_pvt = NULL,
-      cois_pvt = NULL,
-      cols_req_pvt = c("subvar","subset","response"),
-      stats_pvt = c("num","den",
-                    "percent","se","CI_lower","CI_upper","rse",
-                    "percent_unwtd","num_wtd","den_wtd"),
-      subvars_pvt = NULL,
-      subpopulation_pvt = NULL,
-      responses_pvt = ".*",
-      exclude_pvt = c("Don?t|Refuse"),
-      sub_exclude_pvt = c("Don?t|Refuse"),
-      conf_pvt =.95,
-      weighted_pvt = TRUE,
-      weight_col_pvt = "_LLCPWT",
-      pct_pvt = TRUE,
-      digits_pvt = 99,
-      combine_ci_pvt = TRUE,
-      my_stats_pvt = NULL,
-      reduce_pvt = FALSE,
-      subvars_only_pvt = FALSE,
+      ..data_mgr = NULL,
+      ..suppression_mgr = NULL,
+      ..years = NULL,
+      ..cois = NULL,
+      ..cols_req = c("subvar","subset","response"),
+      ..stats = c("num","den",
+                  "percent","se","CI_lower","CI_upper","rse",
+                  "percent_unwtd","num_wtd","den_wtd"),
+      ..subvars = NULL,
+      ..subpopulation = NULL,
+      ..responses = ".*",
+      ..exclude = c("Don?t|Refuse"),
+      ..sub_exclude = c("Don?t|Refuse"),
+      ..conf =.95,
+      ..weighted = TRUE,
+      ..weight_col = "_LLCPWT",
+      ..pct = TRUE,
+      ..digits = 99,
+      ..combine_ci = TRUE,
+      ..my_stats = NULL,
+      ..reduce = FALSE,
+      ..subvars_only = FALSE,
 
       # suppression objects
 
-      suppress_pvt = FALSE,
-      suppress_if_pvt = NULL,
+      ..suppress = FALSE,
+      ..suppress_if = NULL,
 
-      select_cols = function(df) {
+      ..select_cols = function(df) {
 
-        if(private$combine_ci_pvt && "ci" %in% colnames(df)) {
+        if(private$..combine_ci && "ci" %in% colnames(df)) {
           df <- df %>%
             mutate(ci = paste0(CI_lower, "-", CI_upper)) %>%
             relocate(ci, .before = CI_lower) %>%
             select(-starts_with("CI_"))
         }
 
-        if("ci" %in% private$my_stats_pvt) {
-          stats_cmp <- c(private$my_stats_pvt, "CI_lower", "CI_upper")
+        if("ci" %in% private$..my_stats) {
+          stats_cmp <- c(private$..my_stats, "CI_lower", "CI_upper")
         } else {
-          stats_cmp <- private$my_stats_pvt
+          stats_cmp <- private$..my_stats
         }
 
-        rm <- setdiff(private$stats_pvt, stats_cmp)
+        rm <- setdiff(private$..stats, stats_cmp)
 
         df <- df %>% filter(response != "dummy") %>%
           select(-all_of(rm))
@@ -98,47 +98,47 @@ StatsMgr <-
 
         if(!is.null(data_mgr)) {
 
-          if(inherits(data_mgr, "DataMgr")) private$data_mgr_pvt <- data_mgr
+          if(inherits(data_mgr, "DataMgr")) private$..data_mgr <- data_mgr
 
         } else {
 
-          private$data_mgr_pvt <- DataMgr$new()
+          private$..data_mgr <- DataMgr$new()
 
         }
 
         if(!is.null(suppression_mgr)) {
 
           if(inherits(suppression_mgr, "SuppressionMgr"))
-            private$suppression_mgr_pvt <- suppression_mgr
+            private$..suppression_mgr <- suppression_mgr
 
         } else {
 
-          private$suppression_mgr_pvt <- DefaultSuppressionMgr$new()
+          private$..suppression_mgr <- DefaultSuppressionMgr$new()
 
         }
 
 
-        private$cois_pvt <- cois
-        private$years_pvt <- years
-        private$responses_pvt <- responses
-        private$exclude_pvt <- exclude
-        private$subvars_pvt <-subvars
-        private$subpopulation_pvt <- subpopulation
-        private$sub_exclude_pvt <- sub_exclude
-        private$conf_pvt <-conf
-        private$weighted_pvt <- weighted
-        private$weight_col_pvt <- weight_col
-        private$pct_pvt <- pct
-        private$combine_ci_pvt <- combine_ci
-        private$digits_pvt <- digits
-        private$reduce_pvt <- reduce
-        private$subvars_only_pvt <-subvars_only
-        private$suppress_pvt <- suppress
+        private$..cois <- cois
+        private$..years <- years
+        private$..responses <- responses
+        private$..exclude <- exclude
+        private$..subvars <-subvars
+        private$..subpopulation <- subpopulation
+        private$..sub_exclude <- sub_exclude
+        private$..conf <-conf
+        private$..weighted <- weighted
+        private$..weight_col <- weight_col
+        private$..pct <- pct
+        private$..combine_ci <- combine_ci
+        private$..digits <- digits
+        private$..reduce <- reduce
+        private$..subvars_only <-subvars_only
+        private$..suppress <- suppress
 
         if(is.null(stats))
-          private$my_stats_pvt <- private$stats_pvt
+          private$..my_stats <- private$..stats
         else
-          private$my_stats_pvt <- stats
+          private$..my_stats <- stats
 
       },
 
@@ -163,14 +163,14 @@ StatsMgr <-
 
       remove_stats = function(pttrn) {
 
-        private$my_stats_pvt <-
-          private$my_stats_pvt %>%
+        private$..my_stats <-
+          private$..my_stats %>%
           grep(pttrn, ., value = T, invert = T)
       },
 
       reset_stats = function() {
 
-        private$my_stats_pvt <- private$stats_pvt
+        private$..my_stats <- private$..stats
       },
 
       # -----------------------------------------------------------------------------
@@ -180,11 +180,11 @@ StatsMgr <-
       survey_stats = function(years = NULL, cois = NULL, suppress = NULL, expand = FALSE,
                               value = ".*", wide = FALSE, ... ){
 
-        cois <-  cois %||% private$cois_pvt
-        years <- years %||% private$years_pvt
-        suppress <- suppress %||% private$suppress_pvt
+        cois <-  cois %||% private$..cois
+        years <- years %||% private$..years
+        suppress <- suppress %||% private$..suppress
 
-        if(is.null(years)) years <- private$data_mgr_pvt$dataset_mgr$get(year)
+        if(is.null(years)) years <- private$..data_mgr$dataset_mgr$get(year)
 
         if(length(cois)==1) {
 
@@ -200,13 +200,13 @@ StatsMgr <-
 
         df_stats <- purrr::map2(years, cois, function(year, coi) {
 
-          private$data_mgr_pvt$dataset_mgr$set(year = year)
+          private$..data_mgr$dataset_mgr$set(year = year)
 
-          if(!private$data_mgr_pvt$has_data)  {
+          if(!private$..data_mgr$has_data)  {
             return(NULL)
           }
 
-          df <- self$survey_stats_one(coi = coi, ...)
+          df <- self$survey_stats_one_year(coi = coi, ...)
 
           if(is.null(df)) {
             return(NULL)
@@ -226,10 +226,10 @@ StatsMgr <-
           relocate(year)
 
         if(suppress) {
-          #df_stats <- df_stats %>% private$suppression_mgr_pvt$suppress()
+          #df_stats <- df_stats %>% private$..suppression_mgr$suppress()
         }
 
-        if(!expand) df_stats <- df_stats %>% private$select_cols()
+        if(!expand) df_stats <- df_stats %>% private$..select_cols()
 
         response <- df_stats %>% pull(response) %>% unique()
 
@@ -265,23 +265,23 @@ StatsMgr <-
         )
       },
 
-      survey_stats_one = function(coi = NULL, weighted = NULL, subvars = NULL,
-                                  pct = NULL, digits = NULL, subvars_only = NULL,
-                                  reduce = NULL, combine_ci = NULL) {
+      survey_stats_one_year = function(df_data = NULL, coi = NULL, weighted = NULL, subvars = NULL,
+                                       pct = NULL, digits = NULL, subvars_only = NULL,
+                                       reduce = NULL, combine_ci = NULL) {
 
 
         pvt <- private
 
-        cois <- coi %||% pvt$cois_pvt
-        pct <- pct %||% pvt$pct_pvt
-        digits <- digits %||% pvt$digits_pvt
+        cois <- coi %||% pvt$..cois
+        pct <- pct %||% pvt$..pct
+        digits <- digits %||% pvt$..digits
 
         if(length(subvars) == 1 && is.na(subvars)) {
           subvars  <-  NULL
           subvars_only <- FALSE
         } else {
-          subvars <- subvars %||% pvt$subvars_pvt
-          subvars_only <- subvars_only %||% pvt$subvars_only_pvt
+          subvars <- subvars %||% pvt$..subvars
+          subvars_only <- subvars_only %||% pvt$..subvars_only
         }
 
 
@@ -290,21 +290,25 @@ StatsMgr <-
           return(NULL)
         }
 
-        weighted <- ifelse(is.null(weighted), pvt$weighted_pvt,weighted)
-        reduce <- ifelse(is.null(reduce), pvt$reduce_pvt,reduce)
+        weighted <- ifelse(is.null(weighted), pvt$..weighted,weighted)
+        reduce <- ifelse(is.null(reduce), pvt$..reduce,reduce)
 
-        if(!is.null(pvt$data_mgr_pvt)) data <- pvt$data_mgr_pvt$prepped_data
+        if(is.null(df_data)) {
+          if(!is.null(pvt$..data_mgr)) data <- pvt$..data_mgr$prepped_data
+        } else {
+          data <- df_data
+        }
 
         df <- survey_stats(
           df_data = data,
           coi = coi,
-          exclude = pvt$exclude_pvt,
+          exclude = pvt$..exclude,
           subvars = subvars,
-          subset_by = pvt$subset_by_pvt,
-          sub_exclude = pvt$sub_exclude_pvt,
-          conf = pvt$conf_pvt,
+          subset_by = pvt$..subset_by,
+          sub_exclude = pvt$..sub_exclude,
+          conf = pvt$..conf,
           weighted = weighted,
-          weight_col = pvt$weight_col_pvt,
+          weight_col = pvt$..weight_col,
           pct = pct,
           digits = digits)
 
@@ -327,6 +331,37 @@ StatsMgr <-
 
         return(df)
 
+      },
+
+      rolling_rates = function(years, col, subvars = NULL, verbose = FALSE) {
+
+        yr0 <- head(years, 1)
+        yr1 <- tail(years, 1)
+
+        if(yr0 == yr1) {
+
+          message("This method is for multiple year calculations. Only 1 year was provided")
+          return(NULL)
+
+        }
+
+        dm <- private$..data_mgr
+
+        df <- dm$combine_years(years = years, col = col, subvars = subvars)
+
+        wc_ret <- private$..weight_col
+        private$..weight_col <- "FINAL_WT"
+
+        df_stats <- self$survey_stats_one_year(df_data = df, coi = col,
+                                               subvars = subvars, pct = TRUE, digits = 1) %>%
+          select(subvar,subset, response, num, den, percent, se, starts_with("CI"), rse)
+
+
+        attr(df_stats, "year") = paste0(yr0, "-", yr1)
+
+        private$..weight_col <-wc_ret
+
+        df_stats
       },
 
       suppress = function(df) {
@@ -398,11 +433,11 @@ StatsMgr <-
 
         if(!missing(value)) {
 
-          if(inherits(value, "DataMgr")) private$data_mgr_pvt <- value
+          if(inherits(value, "DataMgr")) private$..data_mgr <- value
 
         } else {
 
-          return(private$data_mgr_pvt)
+          return(private$..data_mgr)
 
         }
 
@@ -410,10 +445,10 @@ StatsMgr <-
 
       suppression_mgr = function(value) {
 
-        if(missing(value)) return(private$suppression_mgr_pvt)
+        if(missing(value)) return(private$..suppression_mgr)
 
         if(inherits(value, "SuppressionMgr")) {
-          private$suppression_mgr_pvt <- value
+          private$..suppression_mgr <- value
         } else {
           message("value ust be a SuppressionMgr object")
 
@@ -423,147 +458,147 @@ StatsMgr <-
       #
       # survey_data = function(value) {
       #
-      #   if(missing(value)) return(private$data_pvt)
+      #   if(missing(value)) return(private$..data)
       #
-      #   private$data_pvt <- value
+      #   private$..data <- value
       #
       # },
 
       coi = function(value) {
 
-        if(missing(value)) return(private$cois_pvt)
+        if(missing(value)) return(private$..cois)
 
-        private$cois_pvt <- value
+        private$..cois <- value
 
       },
 
       cois = function(value) {
 
-        if(missing(value)) return(private$cois_pvt)
+        if(missing(value)) return(private$..cois)
 
-        private$cois_pvt <- value
+        private$..cois <- value
 
       },
 
       years = function(value) {
 
-        if(missing(value)) return(private$years_pvt)
+        if(missing(value)) return(private$..years)
 
-        private$years_pvt <- value
+        private$..years <- value
 
       },
 
       responses = function(value) {
 
-        if(missing(value)) return(private$responses_pvt)
+        if(missing(value)) return(private$..responses)
 
-        private$responses_pvt <- value
+        private$..responses <- value
 
       },
 
       exclude = function(value) {
 
-        if(missing(value)) return(private$exclude_pvt)
+        if(missing(value)) return(private$..exclude)
 
-        private$exclude_pvt <- value
+        private$..exclude <- value
 
       },
 
       subvars = function(value) {
 
-        if(missing(value)) return(private$subvars_pvt)
+        if(missing(value)) return(private$..subvars)
 
-        private$subvars_pvt <- value
+        private$..subvars <- value
 
       },
 
       subpopulation = function(value) {
 
-        if(missing(value)) return(private$subpopulation_pvt)
+        if(missing(value)) return(private$..subpopulation)
 
-        private$subpopulation_pvt <- value
+        private$..subpopulation <- value
 
       },
 
       sub_exclude =function(value) {
 
-        if(missing(value)) return(private$sub_exclude_pvt)
+        if(missing(value)) return(private$..sub_exclude)
 
-        private$sub_exclude_pvt <- value
+        private$..sub_exclude <- value
 
       },
 
       conf =function(value) {
 
-        if(missing(value)) return(private$conf_pvt)
+        if(missing(value)) return(private$..conf)
 
-        private$conf_pvt <- value
+        private$..conf <- value
 
       },
 
       weighted = function(value) {
 
-        if(missing(value)) return(private$weighted_pvt)
+        if(missing(value)) return(private$..weighted)
 
-        private$weighted_pvt <- value
+        private$..weighted <- value
 
       },
 
       weight_col = function(value) {
 
-        if(missing(value)) return(private$weight_col_pvt)
+        if(missing(value)) return(private$..weight_col)
 
-        private$weight_col_pvt <- value
+        private$..weight_col <- value
 
       },
 
       pct = function(value) {
 
-        if(missing(value)) return(private$pct_pvt)
+        if(missing(value)) return(private$..pct)
 
-        private$pct_pvt <- value
+        private$..pct <- value
 
       },
 
       subvars_only = function(value) {
 
-        if(missing(value)) return(private$subvars_only_pvt)
+        if(missing(value)) return(private$..subvars_only)
 
-        private$subvars_only_pvt <- value
+        private$..subvars_only <- value
 
       },
 
       digits = function(value) {
 
-        if(missing(value)) return(private$digits_pvt)
+        if(missing(value)) return(private$..digits)
 
-        private$digits_pvt <- value
+        private$..digits <- value
 
       },
 
       combine_ci = function(value) {
 
-        if(missing(value)) return(private$combine_ci_pvt)
+        if(missing(value)) return(private$..combine_ci)
 
         if(!is.logical(value)) {
           message("This property requires a logical value")
           return(NULL)
 
         }
-        private$combine_ci_pvt <- value
+        private$..combine_ci <- value
 
       },
 
       # suppress = function(value) {
       #
-      #   if(missing(value)) return(private$suppress_pvt)
+      #   if(missing(value)) return(private$..suppress)
       #
       #   if(!is.logical(value)) {
       #     message("This property requires a logical value")
       #     return(NULL)
       #
       #   }
-      #   private$suppress_pvt <- value
+      #   private$..suppress <- value
       #
       # },
 
@@ -571,17 +606,17 @@ StatsMgr <-
 
       stats = function(value) {
 
-        if(missing(value)) return(private$my_stats_pvt)
+        if(missing(value)) return(private$..my_stats)
 
-        private$my_stats_pvt <- value
+        private$..my_stats <- value
 
       },
 
       reduce = function(value) {
 
-        if(missing(value)) return(private$reduce_pvt)
+        if(missing(value)) return(private$..reduce)
 
-        private$reduce_pvt <- value
+        private$..reduce <- value
 
       }
 
@@ -603,8 +638,8 @@ MultiYearStatsMgr <-
               ################################################################################
 
               private = list(
-                years_pvt = NULL,
-                cois_pvt = NULL
+                ..years = NULL,
+                ..cois = NULL
 
               ),
 
@@ -617,8 +652,8 @@ MultiYearStatsMgr <-
               public = list(
                 initialize = function(years = NULL, cois = NULL, ...) {
 
-                  private$years_pvt <- years
-                  private$cois_pvt <- cois
+                  private$..years <- years
+                  private$..cois <- cois
 
                   super$initialize(...)
 
@@ -627,8 +662,8 @@ MultiYearStatsMgr <-
 
                 survey_stats = function(years = NULL, cois = NULL, value = ".*", ... ){
 
-                  cois <- private$cois_pvt
-                  years <- private$years_pvt
+                  cois <- private$..cois
+                  years <- private$..years
 
                   if(length(cois)==1) {
 
@@ -640,7 +675,7 @@ MultiYearStatsMgr <-
 
                   df_stats <- purrr::map2(years, cois, function(year, coi) {
 
-                    private$data_mgr_pvt$dataset_mgr$set(year = year)
+                    private$..data_mgr$dataset_mgr$set(year = year)
 
                     df <- super$survey_stats(coi = coi, ...)
 
@@ -694,25 +729,25 @@ MultiYearStatsMgr <-
 
                 coi = function(value) {
 
-                  if(missing(value)) return(private$cois_pvt)
+                  if(missing(value)) return(private$..cois)
 
-                  private$cois_pvt <- value
+                  private$..cois <- value
 
                 },
 
                 cois = function(value) {
 
-                  if(missing(value)) return(private$cois_pvt)
+                  if(missing(value)) return(private$..cois)
 
-                  private$cois_pvt <- value
+                  private$..cois <- value
 
                 },
 
                 years = function(value) {
 
-                  if(missing(value)) return(private$years_pvt)
+                  if(missing(value)) return(private$..years)
 
-                  private$years_pvt <- value
+                  private$..years <- value
 
                 }
 

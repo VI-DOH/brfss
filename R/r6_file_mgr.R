@@ -130,7 +130,7 @@ FileMgr <-
       expand = function(pattern) {
 
         ctr <- 0
-        while(grepl("\\$", pattern) && ctr < 10) {
+        while(grepl("\\$", pattern) && ctr < 100) {
 
           pat0 <- gsub(".*?\\$(.*?)\\$.*","\\1",pattern)
           pat1<- self$get(pat0)
@@ -168,21 +168,18 @@ FileMgr <-
 
         if(is.null(private$..dataset_mgr)) return(strIn)
 
-        #expand <- as.logical(args["expand"])
-        ##  remove args with NULL value
-
         args <- self$dataset_mgr$patterns
-
-        nms <- names(args)
-        vals <- unlist(unname(args))
 
         ret <- strIn
 
-        purrr::walk2( nms, vals,function(nm,val) {
+        # ===  substitute the dataset parameters like ^SRC^ and ^EXT^ with their values
+
+        purrr::iwalk(args,\(val, nm) {
           nm <- paste0("^",nm,"^")
           ret<<-gsub(nm,val,ret,fixed = T)
 
         })
+
 
         #######################################################################
         ##

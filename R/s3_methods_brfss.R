@@ -43,13 +43,27 @@ print.brfss <- function(x, ...) {
       sep = "")
 
 
-  if(attrs[["is_custom"]]) {
-    cat(" ***  Custom Variable  ***\n", sep = "")
-  } else if("is_saq" %in% names(attrs) && as.logical(attrs[["is_saq"]])){
-    cat(" ***  State-added  ***\n", sep = "")
-  } else {
+  tryCatch(
+    expr = {
+      if(as.logical(attrs[["is_custom"]])) {
+        cat(" ***  Custom Variable  ***\n", sep = "")
+      } else if("is_saq" %in% names(attrs) &&
+                !is.na(attrs[["is_saq"]]) &&
+                as.logical(attrs[["is_saq"]])
+      ){
+        cat(" ***  State-added  ***\n", sep = "")
+      }
+    },
 
-  }
+    error = function(e) {
+      browser()
+    },
+
+    warning = function(w) {
+      browser()
+
+    }
+  )
 
   cat("\n", sep = "")
 

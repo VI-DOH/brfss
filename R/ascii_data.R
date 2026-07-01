@@ -209,7 +209,7 @@ ascii.download.data<-function(destpath = NULL, unzip=TRUE, rmzip=TRUE, progress 
 #'}
 #'
 #' @export
-convert_ascii<-function(layout = NULL, completes=T, main = TRUE,
+convert_ascii<-function(layout = NULL, completes = T, main = TRUE,
                         versions = TRUE, verbose = FALSE, progress = NULL) {
 
   show_progress(progress, message = "Converting ... ")
