@@ -70,9 +70,6 @@ FileMgr <-
       initialize = function(init = FALSE, dataset_mgr = NULL, simple = FALSE,
                             root = NULL, use_excel = TRUE) {
 
-
-        browser()
-
         private$..filename <- here::here("data/naming_patterns.rds")
 
         if(!simple) {
