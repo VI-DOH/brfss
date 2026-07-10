@@ -71,6 +71,8 @@ FileMgr <-
                             root = NULL, use_excel = TRUE) {
 
 
+        browser()
+
         private$..filename <- here::here("data/naming_patterns.rds")
 
         if(!simple) {

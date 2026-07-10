@@ -178,7 +178,7 @@ DataMgr <-
       to_csv = function(filename) {
 
         if(missing(filename)) {
-          message("You must specify a filename")
+          stop("You must specify a filename")
           return()
         }
         df <- self$data()
@@ -292,7 +292,7 @@ DataMgr <-
 
         if(yr0 == yr1) {
 
-          message("This function is for multiple year calculations. Only 1 year was provided")
+          stop("This function is for multiple year calculations. Only 1 year was provided")
           return(NULL)
 
         }
@@ -448,7 +448,7 @@ DataMgr <-
       modules = function(value) {
 
         if(!missing(value)) {
-          message("this property is read-only")
+          stop("this property is read-only")
           return(NULL)
         }
 
@@ -464,7 +464,7 @@ DataMgr <-
       has_data = function(value) {
 
         if(!missing(value)) {
-          message("this property is read-only")
+          stop("this property is read-only")
           return(NULL)
         }
 
@@ -480,7 +480,7 @@ DataMgr <-
       has_raw_data = function(value) {
 
         if(!missing(value)) {
-          message("this property is read-only")
+          stop("this property is read-only")
           return(NULL)
         }
 
@@ -496,7 +496,7 @@ DataMgr <-
       prepped_data = function(value) {
 
         if(!missing(value)) {
-          message("this property is read-only")
+          stop("this property is read-only")
           return(NULL)
         }
 
@@ -543,14 +543,15 @@ DataMgr <-
       },
 
       #' @field data_file Read-only name of data file
+      #'
       data_file = function(value) {
 
         if(!missing(value)) {
-          message("This property is read-only")
+          stop("This property is read-only")
           return(NULL)
         }
 
-        return(private$..data_path)
+        return(private$..data_path())
 
       },
 
@@ -558,7 +559,7 @@ DataMgr <-
       params = function(value) {
 
         if(!missing(value)) {
-          message("this property is read-only")
+          stop("this property is read-only")
           return(NULL)
         }
 
@@ -817,7 +818,7 @@ NationalDataMgr <-
           {nrow(.) != 1}
 
         if(bad_col) {
-          message(paste0("col (", col, ") does not exist"))
+          stop(paste0("col (", col, ") does not exist"))
           return(NULL)
         }
 
@@ -826,7 +827,7 @@ NationalDataMgr <-
 
         if(is.null(df)) {
 
-          message("processed ",dataset_mgr$get(extent), " " ,
+          stop("processed ",dataset_mgr$get(extent), " " ,
                   dataset_mgr$get(source), " data not available for ",
                   dataset_mgr$get(year), "\n",
                   "... trying raw data")
@@ -1113,7 +1114,7 @@ NationalDataMgr <-
 
         if(missing(col)) {
 
-          message("Must provide <col>")
+          stop("Must provide <col>")
           return(NULL)
         }
 
@@ -1122,7 +1123,7 @@ NationalDataMgr <-
         } else {
           if(missing(prep)) {
 
-            message("Must provide a prep function if <raw_col> is supplied")
+            stop("Must provide a prep function if <raw_col> is supplied")
             return(NULL)
 
           }
@@ -1343,7 +1344,7 @@ NationalDataMgr <-
       table = function(value) {
 
         if(!missing(value)) {
-          message("This property is read-only")
+          stop("This property is read-only")
           return(NULL)
         }
 
