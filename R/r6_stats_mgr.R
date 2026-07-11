@@ -364,24 +364,24 @@ StatsMgr <-
         df_stats
       },
 
-      suppress = function(df) {
-
-        df_supp <- df %>%
-          filter(is.na(rse) | rse > 30.0) %>%
-          select(year, subvar, subset) %>%
-          mutate(supp = TRUE) %>%
-          distinct()
-
-        if(nrow(df_supp) > 0) {
-          df <- df %>%
-            left_join(df_supp, by = join_by(year, subvar, subset)) %>%
-            mutate(supp = replace(supp, is.na(supp), FALSE)) %>%
-            mutate(across(num:last_col(), ~ if_else(supp, NA, .x))) %>%
-            select(-supp)
-        }
-
-        df
-      },
+      # suppress = function(df) {
+      #
+      #   df_supp <- df %>%
+      #     filter(is.na(rse) | rse > 30.0) %>%
+      #     select(year, subvar, subset) %>%
+      #     mutate(supp = TRUE) %>%
+      #     distinct()
+      #
+      #   if(nrow(df_supp) > 0) {
+      #     df <- df %>%
+      #       left_join(df_supp, by = join_by(year, subvar, subset)) %>%
+      #       mutate(supp = replace(supp, is.na(supp), FALSE)) %>%
+      #       mutate(across(num:last_col(), ~ if_else(supp, NA, .x))) %>%
+      #       select(-supp)
+      #   }
+      #
+      #   df
+      # },
 
       widen = function(df_stats = NULL, coi = NULL, sep_char = "^") {
 
