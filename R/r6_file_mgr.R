@@ -91,7 +91,8 @@ FileMgr <-
 
         if(use_excel) {
 
-          private$..patterns <- xlsx::read.xlsx("./data/patterns.xlsx", sheetIndex = 1)
+          private$..patterns <- openxlsx::read.xlsx(
+            xlsxFile = "./data/patterns.xlsx", sheet = 1)
 
         } else if(file.exists(private$..filename)) {
           private$..patterns <- readRDS(private$..filename)

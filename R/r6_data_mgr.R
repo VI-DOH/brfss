@@ -1244,7 +1244,8 @@ NationalDataMgr <-
 
         df <- super$data()
 
-        if(is.null(df) || (length(df) == 1 && is.na(df)) || nrow(df) == 0) return(NULL)
+        if(is.null(df) || (length(df) == 1 &&
+                           is.na(df)) || nrow(df) == 0) return(NULL)
 
         if(!col %in% colnames(df)) {
 

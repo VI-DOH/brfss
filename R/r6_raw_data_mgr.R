@@ -277,7 +277,6 @@ RawDataMgr <- R6::R6Class(
 
       file <- file_mgr$apply("sas_sasout_path")
 
-      browser()
       while (file.exists(file)) {
         #  read the sasout file
 
@@ -305,8 +304,6 @@ RawDataMgr <- R6::R6Class(
 
         varlines <- grep(" = '", lines)
         vline2 <- c(varlines[2:length(varlines)] - 1, length(lines))
-
-        browser()
 
         ulines <- purrr::map2_chr(varlines, vline2, \(l0, l1) {
           paste(lines[l0:l1], collapse = "")
@@ -556,9 +553,10 @@ RawDataMgr <- R6::R6Class(
 
         if(verbose) cat("... reading version [", version, "] : ", path_raw, "\n")
 
-        browser()
-        df  <-  do.call(what = f_read,
-                        args = list(filename = path_raw, layout = layout, verbose = verbose)) %>%
+        df  <-
+          do.call(what = f_read,
+                  args = list(filename = path_raw,
+                              layout = layout, verbose = verbose)) %>%
           self$factorize(verbose = verbose)
 
         #    df <- add_col_attributes(df)
