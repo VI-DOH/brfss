@@ -202,16 +202,20 @@ StatsMgr <-
 
           private$..data_mgr$dataset_mgr$set(year = year)
 
+          message("getting data")
           if(!private$..data_mgr$has_data)  {
+            message("has no data")
             return(NULL)
           }
 
           df <- self$survey_stats_one_year(coi = coi, ...)
 
           if(is.null(df)) {
+            message("is.null df")
             return(NULL)
           }
 
+          message("got past somewhere")
           df <- df %>%
             mutate(year = .env$year)
 
