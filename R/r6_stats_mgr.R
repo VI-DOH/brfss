@@ -181,13 +181,13 @@ StatsMgr <-
       #
       #     suvey_stats
 
-      survey_stats = function(years = NULL, cois = NULL, suppress = NULL, expand = FALSE,
+      survey_stats = function(cois = NULL, years = NULL, suppress = NULL, expand = FALSE,
                               value = ".*", wide = FALSE, ... ){
 
 
 
         cois <-  cois %||% private$..cois
-        years <- (years %||% private$..years)
+        years <- years %||% private$..years
 
         suppress <- suppress %||% private$..suppress
 
@@ -209,7 +209,7 @@ StatsMgr <-
 
           private$..data_mgr$dataset_mgr$set(year = year)
 
-          message("getting data")
+          #message("getting data")
           if(!private$..data_mgr$has_data)  {
             message("has no data")
             return(NULL)
@@ -222,7 +222,7 @@ StatsMgr <-
             return(NULL)
           }
 
-          message("got past somewhere")
+          #message("got past somewhere")
           df <- df %>%
             mutate(year = .env$year)
 
@@ -279,7 +279,8 @@ StatsMgr <-
         )
       },
 
-      survey_stats_one_year = function(df_data = NULL, coi = NULL, weighted = NULL, subvars = NULL,
+      survey_stats_one_year = function(df_data = NULL, coi = NULL, weighted = NULL,
+                                       subvars = NULL,
                                        pct = NULL, digits = NULL, subvars_only = NULL,
                                        reduce = NULL, combine_ci = NULL) {
 
@@ -771,5 +772,8 @@ MultiYearStatsMgr <-
 #' @export
 StatsMgr$stats_names <- function() {
 
-  c("num", "den", "percent", "se", "ci","CI_lower", "CI_upper", "rse")
+  c(numerator = "num", denominator = "den", percent = "percent",
+    `standard error` =  "se", 'confidence interval' = "ci",
+    `lower CI` = "CI_lower", `upper CI` = "CI_upper",
+    `relative standard error` = "rse")
 }

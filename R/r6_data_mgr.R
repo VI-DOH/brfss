@@ -478,7 +478,7 @@ DataMgr <-
 
         file <- p$..file_mgr$apply("annual_data_path")
 
-        message(paste0("looking for data in ", file))
+        #message(paste0("looking for data in ", file))
         file.exists(file)
 
       },
