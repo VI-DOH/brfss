@@ -1233,6 +1233,8 @@ PublicDataSetMgr <-
       initialize = function(year = NULL, geog = NULL, source = "sas",
                             geog_flag = NULL, version = 0) {
 
+        geog_flag <- geog_flag %||% ifelse(is.null(geog), "off", "on")
+
         super$initialize(year = year, extent = "public", source = source,
                          geog_flag = geog_flag, version = version, geog = geog)
 

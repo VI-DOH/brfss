@@ -10,6 +10,7 @@ LayoutMgr <-
     private = list(
       ..year = NULL,
       ..df_layout = NULL,
+      ..types = c("merged", "codebook", "sas", "saq"),
       ..type = "merged",
       ..dataset_mgr = NULL,
       ..file_mgr = NULL,
@@ -46,6 +47,8 @@ LayoutMgr <-
         # ---------  save the data.frame   --------------------
 
         private$..df_layout <- df
+
+        df
       }
 
     ),
@@ -58,15 +61,16 @@ LayoutMgr <-
                             type = NULL) {
 
 
+        p <- private
 
         if(!is.null(dataset_mgr) && inherits(dataset_mgr, "DataSetMgr")) {
 
-          private$..dataset_mgr <- dataset_mgr
+          p$..dataset_mgr <- dataset_mgr
         } else {
-          private$..dataset_mgr <- DataSetMgr$new()
+          p$..dataset_mgr <- DataSetMgr$new()
         }
 
-        private$..file_mgr <- FileMgr$new(dataset_mgr = private$..dataset_mgr)
+        p$..file_mgr <- FileMgr$new(dataset_mgr = p$..dataset_mgr)
 
         if(is.null(type))
           type <- self$get_best_type()
@@ -79,18 +83,18 @@ LayoutMgr <-
 
         # --- get the year in case it isn't the current working year
 
-        old_year <- private$..dataset_mgr$get(year)
+        old_year <- p$..dataset_mgr$get(year)
 
         if(is.null(year)) {
-          private$..year <- private$..dataset_mgr$get(year)
+          p$..year <- p$..dataset_mgr$get(year)
         } else {
-          private$..year <- year
-          private$..dataset_mgr$set(year = year)
+          p$..year <- year
+          p$..dataset_mgr$set(year = year)
         }
 
-        private$..type <- type
+        p$..type <- type
 
-        private$..df_layout <- self$get_layout(type)
+        p$..df_layout <- self$get_layout(type)
       },
 
       # =======================================================================
@@ -307,6 +311,14 @@ LayoutMgr <-
 
       },
 
+      values_exist = function(type = NULL) {
+
+        file <- self$get_values_filename(type)
+
+        return(!is.null(file) && file.exists(file))
+
+      },
+
       layout_exists = function(type = NULL) {
 
         file <- self$get_layout_filename(type)
@@ -337,11 +349,40 @@ LayoutMgr <-
 
       },
 
+      get_values_filename = function(type = NULL) {
+
+        if(is.null(type)) type <- private$..type
+
+        file <- tryCatch({
+
+          fil <- private$..file_mgr$apply(paste0(type,"_values_path"))
+
+
+        }, error = function(e) {
+
+          return(NULL)
+
+        })
+
+        return(file)
+
+      },
+
       get_best_type = function() {
 
-        types <- c("merged", "codebook", "sas")
+        types <- private$..types
 
         best <- purrr::map_lgl(types, ~self$layout_exists(.x)) %>%
+          which(.) %>% min()
+
+        types[best]
+      },
+
+      get_best_values_type = function() {
+
+        types <- private$..types
+
+        best <- purrr::map_lgl(types, ~self$values_exist(.x)) %>%
           which(.) %>% min()
 
         types[best]
@@ -350,6 +391,21 @@ LayoutMgr <-
       get_best_layout = function() {
 
         private$..df_layout <- self$get_layout(self$get_best_type())
+
+        private$..df_layout
+      },
+
+      get_best_values = function() {
+
+        fname <- self$get_values_filename(self$get_best_values_type())
+
+        readRDS(fname)
+
+
+      },
+
+      existing_layouts = function() {
+
 
       },
 

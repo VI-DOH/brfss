@@ -67,11 +67,11 @@ FileMgr <-
 
     public = list(
 
-      initialize = function(init = FALSE, dataset_mgr = NULL, simple = FALSE,
-                            root = NULL, use_excel = TRUE) {
+      initialize = function(dataset_mgr = NULL, simple = FALSE,
+                            root = NULL) {
 
-        private$..filename <- here::here("data/naming_patterns.rds")
-
+        # private$..filename <- here::here("data/naming_patterns.rds")
+        #
         if(!simple) {
           if(!is.null(dataset_mgr) && inherits(dataset_mgr, "DataSetMgr")) {
 
@@ -83,22 +83,15 @@ FileMgr <-
           }
 
         }
-        if(init) {
-
-          df_patterns <- init.patterns(root)
-          df_patterns %>% saveRDS("./data/naming_patterns.rds")
-        }
-
-        if(use_excel) {
 
           private$..patterns <- openxlsx::read.xlsx(
             xlsxFile = "./data/patterns.xlsx", sheet = 1)
 
-        } else if(file.exists(private$..filename)) {
-          private$..patterns <- readRDS(private$..filename)
-        } else {
-          self$refresh()
-        }
+        # } else if(file.exists(private$..filename)) {
+        #   private$..patterns <- readRDS(private$..filename)
+        # } else {
+        #   self$refresh()
+        # }
 
 
 

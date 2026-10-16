@@ -984,7 +984,7 @@ AsciiRawDataMgr <- R6::R6Class(
       if(!missing(geog)) {
 
         geog_mgr$geog <- geog
-        fip <- ggeog_mgr$fips
+        fips <- geog_mgr$fips
         df <- df %>% filter(`_STATE` == fips)
       }
 
@@ -1348,13 +1348,13 @@ SasRawDataMgr <- R6::R6Class(
           dplyr::select(`_STATE`, `_LLCPWT`, all_of(col))
       )
 
-      browser()
+
       geog_mgr <- GeogMgr$new()
 
       if(!missing(geog)) {
 
         geog_mgr$geog <- geog
-        fip <- ggeog_mgr$fips
+        fips <- geog_mgr$fips
         df <- df %>% filter(`_STATE` == fips)
       }
 
